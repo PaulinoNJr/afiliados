@@ -39,6 +39,15 @@ Site completo para divulgar produtos de afiliado do Mercado Livre, com:
 4. Em `Authentication > URL Configuration`, adicione:
 - `Site URL`: URL do seu domínio da Vercel (ou `http://localhost:3000` para teste)
 - `Redirect URLs`: inclua `https://SEU-DOMINIO.vercel.app/admin.html`
+5. Defina manualmente seu primeiro usuário administrador no SQL Editor:
+
+```sql
+update public.user_profiles
+set role = 'admin'
+where user_id = (
+  select id from auth.users where email = 'seu-email@dominio.com'
+);
+```
 
 ## 2) Configurar variáveis do Supabase no frontend
 
@@ -76,11 +85,14 @@ Abra:
 
 1. Acesse `login.html` e faça login com usuário existente no Supabase Auth.
 2. Após login, você é redirecionado para `admin.html`.
-3. No admin:
+3. O sistema usa dois perfis:
+- `admin`: cria usuários e gerencia todos os produtos.
+- `produtor`: gerencia apenas os próprios produtos.
+4. No admin:
 - Cole o link de afiliado e clique em "Preencher automaticamente".
 - Ajuste manualmente campos se necessário.
 - Salve produto.
-4. A `index.html` pública lista os produtos em cards responsivos.
+5. A `index.html` pública lista os produtos em cards responsivos.
 
 ## Limitações da captura automática
 

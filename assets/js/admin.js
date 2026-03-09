@@ -2,10 +2,13 @@
   const state = {
     session: null,
     products: [],
-    editingId: null
+    editingId: null,
+    role: 'produtor',
+    isAdmin: false
   };
 
   const refs = {
+    userRoleBadge: document.getElementById('userRoleBadge'),
     userEmail: document.getElementById('userEmail'),
     logoutBtn: document.getElementById('logoutBtn'),
     status: document.getElementById('statusMessage'),
@@ -18,6 +21,7 @@
     newUserEmail: document.getElementById('newUserEmail'),
     newUserPassword: document.getElementById('newUserPassword'),
     newUserPasswordConfirm: document.getElementById('newUserPasswordConfirm'),
+    createUserCard: document.getElementById('createUserCard'),
 
     linkAfiliado: document.getElementById('linkAfiliado'),
     autoFillBtn: document.getElementById('autoFillBtn'),
@@ -63,6 +67,20 @@
 
   function setListLoading(isLoading) {
     refs.listLoading.classList.toggle('d-none', !isLoading);
+  }
+
+  function applyRoleUI() {
+    refs.userRoleBadge.textContent = state.isAdmin ? 'admin' : 'produtor';
+    refs.userRoleBadge.className = state.isAdmin ? 'badge text-bg-primary' : 'badge text-bg-secondary';
+    refs.emptyAdminState.textContent = state.isAdmin
+      ? 'Nenhum produto cadastrado no sistema.'
+      : 'Nenhum produto cadastrado por este usuário.';
+
+    if (!state.isAdmin) {
+      refs.createUserCard.classList.add('d-none');
+    } else {
+      refs.createUserCard.classList.remove('d-none');
+    }
   }
 
   function resetForm() {
@@ -147,11 +165,16 @@
     setListLoading(true);
 
     try {
-      const { data, error } = await window.db
+      let query = window.db
         .from('produtos')
-        .select('id, titulo, preco, imagem_url, link_afiliado, descricao, created_at')
-        .eq('created_by', state.session.user.id)
+        .select('id, titulo, preco, imagem_url, link_afiliado, descricao, created_at, created_by')
         .order('created_at', { ascending: false });
+
+      if (!state.isAdmin) {
+        query = query.eq('created_by', state.session.user.id);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -230,11 +253,16 @@
 
     try {
       if (state.editingId) {
-        const { error } = await window.db
+        let query = window.db
           .from('produtos')
           .update(payload)
-          .eq('id', state.editingId)
-          .eq('created_by', state.session.user.id);
+          .eq('id', state.editingId);
+
+        if (!state.isAdmin) {
+          query = query.eq('created_by', state.session.user.id);
+        }
+
+        const { error } = await query;
 
         if (error) throw error;
 
@@ -266,11 +294,16 @@
     if (!confirmed) return;
 
     try {
-      const { error } = await window.db
+      let query = window.db
         .from('produtos')
         .delete()
-        .eq('id', id)
-        .eq('created_by', state.session.user.id);
+        .eq('id', id);
+
+      if (!state.isAdmin) {
+        query = query.eq('created_by', state.session.user.id);
+      }
+
+      const { error } = await query;
 
       if (error) throw error;
 
@@ -284,6 +317,11 @@
   async function createUser(event) {
     event.preventDefault();
     hideStatus();
+
+    if (!state.isAdmin) {
+      showStatus('Apenas perfil admin pode criar novos usuários.', 'danger');
+      return;
+    }
 
     const email = refs.newUserEmail.value.trim();
     const password = refs.newUserPassword.value;
@@ -335,6 +373,11 @@
       state.session = await window.Auth.requireAuth('login.html');
       if (!state.session) return;
 
+      const profile = await window.Auth.getProfile();
+      state.role = profile?.role || 'produtor';
+      state.isAdmin = state.role === 'admin';
+      applyRoleUI();
+
       refs.userEmail.textContent = state.session.user.email || 'Usuário autenticado';
 
       refs.logoutBtn.addEventListener('click', async () => {
@@ -343,7 +386,9 @@
       });
 
       refs.form.addEventListener('submit', saveProduct);
-      refs.createUserForm.addEventListener('submit', createUser);
+      if (state.isAdmin) {
+        refs.createUserForm.addEventListener('submit', createUser);
+      }
       refs.autoFillBtn.addEventListener('click', fillFromLink);
       refs.linkAfiliado.addEventListener('blur', () => {
         if (refs.linkAfiliado.value.trim()) fillFromLink();

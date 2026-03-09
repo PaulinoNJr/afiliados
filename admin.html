@@ -13,6 +13,7 @@
     <div class="container">
       <a class="navbar-brand fw-bold" href="index.html">Afiliados ML</a>
       <div class="ms-auto d-flex align-items-center gap-3">
+        <span id="userRoleBadge" class="badge text-bg-secondary">perfil</span>
         <small id="userEmail" class="text-secondary d-none d-md-inline"></small>
         <button id="logoutBtn" class="btn btn-outline-danger btn-sm" type="button">Sair</button>
       </div>
@@ -74,7 +75,7 @@
             </div>
           </div>
 
-          <div class="card border-0 shadow-sm mt-4">
+          <div id="createUserCard" class="card border-0 shadow-sm mt-4">
             <div class="card-body p-4">
               <h2 class="h5 mb-3">Cadastrar novo usuário</h2>
               <form id="createUserForm" novalidate>

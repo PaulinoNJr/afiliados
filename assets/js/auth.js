@@ -37,6 +37,38 @@
     return { data, error };
   }
 
+  async function getProfile() {
+    ensureClient();
+
+    const session = await getSession();
+    if (!session?.user?.id) return null;
+
+    const userId = session.user.id;
+
+    const { data, error } = await window.db
+      .from('user_profiles')
+      .select('user_id, role')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (data) return data;
+
+    const { data: createdProfile, error: insertError } = await window.db
+      .from('user_profiles')
+      .insert({ user_id: userId, role: 'produtor' })
+      .select('user_id, role')
+      .single();
+
+    if (insertError) throw insertError;
+    return createdProfile;
+  }
+
+  async function getRole() {
+    const profile = await getProfile();
+    return profile?.role || 'produtor';
+  }
+
   async function logout() {
     ensureClient();
     return window.db.auth.signOut();
@@ -62,6 +94,8 @@
 
   window.Auth = {
     getSession,
+    getProfile,
+    getRole,
     login,
     register,
     logout,
