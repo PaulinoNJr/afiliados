@@ -11,6 +11,7 @@
     userRoleBadge: document.getElementById('userRoleBadge'),
     userEmail: document.getElementById('userEmail'),
     logoutBtn: document.getElementById('logoutBtn'),
+    manageUsersLink: document.getElementById('manageUsersLink'),
     status: document.getElementById('statusMessage'),
 
     form: document.getElementById('productForm'),
@@ -78,8 +79,10 @@
 
     if (!state.isAdmin) {
       refs.createUserCard.classList.add('d-none');
+      refs.manageUsersLink.classList.add('d-none');
     } else {
       refs.createUserCard.classList.remove('d-none');
+      refs.manageUsersLink.classList.remove('d-none');
     }
   }
 

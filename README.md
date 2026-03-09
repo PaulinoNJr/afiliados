@@ -13,6 +13,7 @@ Site completo para divulgar produtos de afiliado do Mercado Livre, com:
 ```
 .
 |-- admin.html
+|-- users.html
 |-- login.html
 |-- index.html
 |-- vercel.json
@@ -26,7 +27,8 @@ Site completo para divulgar produtos de afiliado do Mercado Livre, com:
 |       |-- auth.js
 |       |-- login.js
 |       |-- index.js
-|       `-- admin.js
+|       |-- admin.js
+|       `-- users.js
 `-- supabase/
     `-- schema.sql
 ```
@@ -80,11 +82,15 @@ Abra:
 3. O sistema usa dois perfis:
 - `admin`: cria usuários e gerencia todos os produtos.
 - `produtor`: gerencia apenas os próprios produtos.
-4. No admin:
+4. O `admin` também acessa `users.html` para:
+- listar usuários
+- alterar perfil (`admin`/`produtor`)
+- criar novos usuários
+5. No admin:
 - Cole o link de afiliado e clique em "Preencher automaticamente".
 - Ajuste manualmente campos se necessário.
 - Salve produto.
-5. A `index.html` pública lista os produtos em cards responsivos.
+6. A `index.html` pública lista os produtos em cards responsivos.
 
 ## Limitações da captura automática
 

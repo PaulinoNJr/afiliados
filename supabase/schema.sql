@@ -4,10 +4,16 @@ create extension if not exists pgcrypto;
 
 create table if not exists public.user_profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
+  user_email text,
   role text not null default 'produtor' check (role in ('admin', 'produtor')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.user_profiles
+  add column if not exists user_email text;
+
+create index if not exists idx_user_profiles_user_email on public.user_profiles (lower(user_email));
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -32,9 +38,10 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.user_profiles (user_id, role)
-  values (new.id, 'produtor')
-  on conflict (user_id) do nothing;
+  insert into public.user_profiles (user_id, user_email, role)
+  values (new.id, new.email, 'produtor')
+  on conflict (user_id) do update
+    set user_email = excluded.user_email;
 
   return new;
 end;
@@ -45,6 +52,33 @@ create trigger trg_auth_user_created
 after insert on auth.users
 for each row
 execute function public.handle_new_user_profile();
+
+create or replace function public.handle_auth_user_email_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update public.user_profiles
+  set user_email = new.email
+  where user_id = new.id;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_auth_user_email_updated on auth.users;
+create trigger trg_auth_user_email_updated
+after update of email on auth.users
+for each row
+execute function public.handle_auth_user_email_change();
+
+update public.user_profiles p
+set user_email = u.email
+from auth.users u
+where u.id = p.user_id
+  and (p.user_email is null or p.user_email <> u.email);
 
 create or replace function public.is_admin()
 returns boolean
