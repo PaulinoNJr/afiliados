@@ -63,9 +63,38 @@
       title.className = 'h6 mb-2';
       title.textContent = item.titulo || 'Produto sem título';
 
+      const descriptionText = item.descricao || 'Sem descrição.';
+
       const desc = document.createElement('p');
-      desc.className = 'text-secondary small mb-3';
-      desc.textContent = item.descricao || 'Sem descrição.';
+      desc.className = 'text-secondary small mb-1 product-desc is-collapsed';
+      desc.textContent = descriptionText;
+
+      const descMeta = document.createElement('div');
+      descMeta.className = 'mb-3';
+
+      const descDots = document.createElement('span');
+      descDots.className = 'text-secondary small';
+      descDots.textContent = '.... ';
+
+      const toggleDescBtn = document.createElement('button');
+      toggleDescBtn.type = 'button';
+      toggleDescBtn.className = 'btn btn-link btn-sm p-0 product-desc-toggle';
+      toggleDescBtn.textContent = 'ver mais...';
+
+      toggleDescBtn.addEventListener('click', () => {
+        const isCollapsed = desc.classList.toggle('is-collapsed');
+        descDots.classList.toggle('d-none', !isCollapsed);
+        toggleDescBtn.textContent = isCollapsed ? 'ver mais...' : 'ver menos';
+      });
+
+      const shouldShowToggle = Boolean((item.descricao || '').trim());
+      if (shouldShowToggle) {
+        descMeta.append(descDots, toggleDescBtn);
+      } else {
+        desc.classList.remove('is-collapsed');
+        desc.classList.remove('mb-1');
+        desc.classList.add('mb-3');
+      }
 
       const price = document.createElement('div');
       price.className = 'price-tag mb-3';
@@ -78,7 +107,9 @@
       link.target = '_blank';
       link.rel = 'noopener noreferrer nofollow';
 
-      card.append(image, title, desc, price, link);
+      card.append(image, title, desc);
+      if (shouldShowToggle) card.append(descMeta);
+      card.append(price, link);
       col.appendChild(card);
       refs.productsGrid.appendChild(col);
     });

@@ -45,6 +45,22 @@ body {
   color: #116530;
 }
 
+.product-desc {
+  line-height: 1.35;
+}
+
+.product-desc.is-collapsed {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-desc-toggle {
+  font-size: 0.8rem;
+  line-height: 1;
+  text-decoration: none;
+}
+
 .table td,
 .table th {
   vertical-align: middle;

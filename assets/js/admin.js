@@ -13,6 +13,11 @@
     form: document.getElementById('productForm'),
     saveBtn: document.getElementById('saveBtn'),
     cancelEditBtn: document.getElementById('cancelEditBtn'),
+    createUserForm: document.getElementById('createUserForm'),
+    createUserBtn: document.getElementById('createUserBtn'),
+    newUserEmail: document.getElementById('newUserEmail'),
+    newUserPassword: document.getElementById('newUserPassword'),
+    newUserPasswordConfirm: document.getElementById('newUserPasswordConfirm'),
 
     linkAfiliado: document.getElementById('linkAfiliado'),
     autoFillBtn: document.getElementById('autoFillBtn'),
@@ -49,6 +54,11 @@
     refs.saveBtn.textContent = isLoading
       ? (state.editingId ? 'Atualizando...' : 'Salvando...')
       : (state.editingId ? 'Atualizar produto' : 'Salvar produto');
+  }
+
+  function setCreateUserLoading(isLoading) {
+    refs.createUserBtn.disabled = isLoading;
+    refs.createUserBtn.textContent = isLoading ? 'Criando...' : 'Criar usuário';
   }
 
   function setListLoading(isLoading) {
@@ -271,6 +281,50 @@
     }
   }
 
+  async function createUser(event) {
+    event.preventDefault();
+    hideStatus();
+
+    const email = refs.newUserEmail.value.trim();
+    const password = refs.newUserPassword.value;
+    const confirmPassword = refs.newUserPasswordConfirm.value;
+
+    if (!email || !password || !confirmPassword) {
+      showStatus('Preencha email, senha e confirmação de senha.', 'warning');
+      return;
+    }
+
+    if (password.length < 6) {
+      showStatus('A senha deve ter pelo menos 6 caracteres.', 'warning');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      showStatus('As senhas não coincidem.', 'warning');
+      return;
+    }
+
+    setCreateUserLoading(true);
+
+    try {
+      const { data, error } = await window.Auth.register(email, password);
+      if (error) throw error;
+
+      refs.createUserForm.reset();
+
+      if (data?.user && !data?.session) {
+        showStatus('Usuário criado. Ele precisa confirmar o email antes de entrar.', 'success');
+        return;
+      }
+
+      showStatus('Usuário criado com sucesso.', 'success');
+    } catch (err) {
+      showStatus(`Erro ao criar usuário: ${err.message}`, 'danger');
+    } finally {
+      setCreateUserLoading(false);
+    }
+  }
+
   async function init() {
     if (window.AppConfig?.missingConfig) {
       showStatus('Configure SUPABASE_URL e SUPABASE_ANON_KEY em assets/js/config.js.', 'warning');
@@ -289,6 +343,7 @@
       });
 
       refs.form.addEventListener('submit', saveProduct);
+      refs.createUserForm.addEventListener('submit', createUser);
       refs.autoFillBtn.addEventListener('click', fillFromLink);
       refs.linkAfiliado.addEventListener('blur', () => {
         if (refs.linkAfiliado.value.trim()) fillFromLink();

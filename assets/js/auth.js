@@ -20,7 +20,20 @@
 
   async function register(email, password) {
     ensureClient();
-    const { data, error } = await window.db.auth.signUp({ email, password });
+
+    const isolatedClient = window.supabase.createClient(
+      window.AppConfig.SUPABASE_URL,
+      window.AppConfig.SUPABASE_ANON_KEY,
+      {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false
+        }
+      }
+    );
+
+    const { data, error } = await isolatedClient.auth.signUp({ email, password });
     return { data, error };
   }
 
