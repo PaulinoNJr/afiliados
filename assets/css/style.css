@@ -30,7 +30,7 @@ body {
 
 .product-image {
   width: 100%;
-  aspect-ratio: 4 / 3;
+  height: clamp(160px, 22vw, 220px);
   object-fit: cover;
   border-radius: 0.8rem;
   background-color: #edf2fb;
