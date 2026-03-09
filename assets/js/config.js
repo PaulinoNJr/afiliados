@@ -1,12 +1,12 @@
 ﻿(() => {
   // Defina seus valores aqui antes de publicar.
   // Como a anon key do Supabase é pública por design, este arquivo pode ficar no frontend.
-  const SUPABASE_URL = window.SUPABASE_URL || 'https://SEU-PROJETO.supabase.co';
-  const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'SUA_SUPABASE_ANON_KEY';
+  const SUPABASE_URL = window.SUPABASE_URL || 'https://rnxhejdrmhqqseruhbvi.supabase.co';
+  const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'sb_publishable_JEv7lhnvE7aR0IexvBlnmw_afBKhEeO';
 
   const missingConfig =
-    SUPABASE_URL.includes('SEU-PROJETO') ||
-    SUPABASE_ANON_KEY.includes('SUA_SUPABASE_ANON_KEY');
+    SUPABASE_URL.includes('https://rnxhejdrmhqqseruhbvi.supabase.co') ||
+    SUPABASE_ANON_KEY.includes('sb_publishable_JEv7lhnvE7aR0IexvBlnmw_afBKhEeO');
 
   const hasSdk = typeof window.supabase !== 'undefined';
 
