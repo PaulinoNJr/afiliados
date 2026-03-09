@@ -1,0 +1,9 @@
+﻿{
+  "name": "afiliados-mercado-livre",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Catálogo de produtos de afiliado com Supabase + Vercel",
+  "scripts": {
+    "dev": "vercel dev"
+  }
+}

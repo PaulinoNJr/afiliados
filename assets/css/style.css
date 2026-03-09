@@ -1,0 +1,54 @@
+﻿:root {
+  --bg-soft: #f3f6fb;
+  --text-main: #152238;
+  --accent: #0d6efd;
+}
+
+body {
+  color: var(--text-main);
+  background: linear-gradient(180deg, #ffffff 0%, var(--bg-soft) 100%);
+}
+
+.hero-section {
+  background:
+    radial-gradient(circle at 80% 20%, rgba(13, 110, 253, 0.12), transparent 42%),
+    linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+}
+
+.card {
+  border-radius: 1rem;
+}
+
+.product-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 0.8rem 1.6rem rgba(15, 23, 42, 0.14);
+}
+
+.product-image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 0.8rem;
+  background-color: #edf2fb;
+}
+
+.price-tag {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #116530;
+}
+
+.table td,
+.table th {
+  vertical-align: middle;
+}
+
+@media (max-width: 768px) {
+  .hero-section .display-6 {
+    font-size: 1.8rem;
+  }
+}
