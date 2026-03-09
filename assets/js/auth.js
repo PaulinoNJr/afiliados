@@ -18,6 +18,12 @@
     return { data, error };
   }
 
+  async function register(email, password) {
+    ensureClient();
+    const { data, error } = await window.db.auth.signUp({ email, password });
+    return { data, error };
+  }
+
   async function logout() {
     ensureClient();
     return window.db.auth.signOut();
@@ -44,6 +50,7 @@
   window.Auth = {
     getSession,
     login,
+    register,
     logout,
     requireAuth,
     redirectIfAuthenticated

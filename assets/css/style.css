@@ -29,11 +29,14 @@ body {
 }
 
 .product-image {
+  display: block;
   width: 100%;
-  height: clamp(160px, 22vw, 220px);
-  object-fit: cover;
+  height: clamp(120px, 18vw, 170px);
+  object-fit: contain;
+  padding: 0.4rem;
   border-radius: 0.8rem;
-  background-color: #edf2fb;
+  background-color: #ffffff;
+  border: 1px solid #e9eef6;
 }
 
 .price-tag {

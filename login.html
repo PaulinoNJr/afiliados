@@ -17,22 +17,50 @@
             <div class="card-body p-4 p-md-5">
               <div class="text-center mb-4">
                 <h1 class="h4 mb-1">Área administrativa</h1>
-                <p class="text-secondary mb-0">Entre com seu usuário do Supabase Auth</p>
+                <p class="text-secondary mb-0">Entre ou crie sua conta no Supabase Auth</p>
+              </div>
+
+              <div class="d-grid gap-2 mb-3">
+                <div class="btn-group" role="group" aria-label="Alternar entre login e cadastro">
+                  <button id="tabLogin" type="button" class="btn btn-primary">Entrar</button>
+                  <button id="tabRegister" type="button" class="btn btn-outline-primary">Cadastrar</button>
+                </div>
               </div>
 
               <div id="statusMessage" class="alert d-none" role="alert"></div>
 
-              <form id="loginForm" novalidate>
-                <div class="mb-3">
-                  <label for="email" class="form-label">Email</label>
-                  <input type="email" id="email" class="form-control" required autocomplete="email" />
-                </div>
-                <div class="mb-3">
-                  <label for="password" class="form-label">Senha</label>
-                  <input type="password" id="password" class="form-control" required autocomplete="current-password" />
-                </div>
-                <button id="loginBtn" type="submit" class="btn btn-primary w-100">Entrar</button>
-              </form>
+              <section id="loginSection">
+                <form id="loginForm" novalidate>
+                  <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" id="email" class="form-control" required autocomplete="email" />
+                  </div>
+                  <div class="mb-3">
+                    <label for="password" class="form-label">Senha</label>
+                    <input type="password" id="password" class="form-control" required autocomplete="current-password" />
+                  </div>
+                  <button id="loginBtn" type="submit" class="btn btn-primary w-100">Entrar</button>
+                </form>
+              </section>
+
+              <section id="registerSection" class="d-none">
+                <form id="registerForm" novalidate>
+                  <div class="mb-3">
+                    <label for="registerEmail" class="form-label">Email</label>
+                    <input type="email" id="registerEmail" class="form-control" required autocomplete="email" />
+                  </div>
+                  <div class="mb-3">
+                    <label for="registerPassword" class="form-label">Senha</label>
+                    <input type="password" id="registerPassword" class="form-control" minlength="6" required autocomplete="new-password" />
+                    <small class="text-muted">Mínimo de 6 caracteres.</small>
+                  </div>
+                  <div class="mb-3">
+                    <label for="registerPasswordConfirm" class="form-label">Confirmar senha</label>
+                    <input type="password" id="registerPasswordConfirm" class="form-control" minlength="6" required autocomplete="new-password" />
+                  </div>
+                  <button id="registerBtn" type="submit" class="btn btn-primary w-100">Criar conta</button>
+                </form>
+              </section>
 
               <div class="text-center mt-4">
                 <a href="index.html" class="link-secondary">Voltar para a página inicial</a>
