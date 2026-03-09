@@ -39,15 +39,7 @@ Site completo para divulgar produtos de afiliado do Mercado Livre, com:
 4. Em `Authentication > URL Configuration`, adicione:
 - `Site URL`: URL do seu domínio da Vercel (ou `http://localhost:3000` para teste)
 - `Redirect URLs`: inclua `https://SEU-DOMINIO.vercel.app/admin.html`
-5. Defina manualmente seu primeiro usuário administrador no SQL Editor:
-
-```sql
-update public.user_profiles
-set role = 'admin'
-where user_id = (
-  select id from auth.users where email = 'seu-email@dominio.com'
-);
-```
+5. O `schema.sql` já promove automaticamente `paulino.covabra@gmail.com` para perfil `admin`.
 
 ## 2) Configurar variáveis do Supabase no frontend
 

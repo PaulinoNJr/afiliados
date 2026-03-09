@@ -142,7 +142,10 @@ grant select on public.produtos to anon;
 grant select, insert, update, delete on public.produtos to authenticated;
 grant select, insert, update on public.user_profiles to authenticated;
 
--- Defina manualmente seu primeiro admin (troque o email):
--- update public.user_profiles
--- set role = 'admin'
--- where user_id = (select id from auth.users where email = 'seu-email@dominio.com');
+-- Garante que este usuario seja admin (idempotente).
+insert into public.user_profiles (user_id, role)
+select id, 'admin'
+from auth.users
+where lower(email) = lower('paulino.covabra@gmail.com')
+on conflict (user_id)
+do update set role = 'admin';
