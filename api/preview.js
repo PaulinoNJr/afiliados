@@ -97,89 +97,165 @@ function collectJsonLdItems(root, output = []) {
   return output;
 }
 
+function pushPriceCandidate(list, rawValue, source, baseScore, context = '') {
+  const value = parseMoneyValue(rawValue);
+  if (value === null) return;
+
+  let score = baseScore;
+  const text = String(context).toLowerCase();
+
+  // Penalizações fortes para valores que normalmente não são o preço principal do produto.
+  if (/frete|shipping|entrega/.test(text)) score -= 120;
+  if (/cupom|cashback|coins|pontos/.test(text)) score -= 30;
+  if (/de\s+r\$\s*[\d.,]+/.test(text)) score -= 20;
+
+  // Bonificações para sinais de preço principal.
+  if (/itemprop=["']price["']|product:price:amount|offers|price|pre[cç]o|amount/.test(text)) score += 12;
+  if (/\bpor\s+r\$\s*[\d.,]+|à vista|a vista|pre[cç]o final/.test(text)) score += 10;
+
+  if (score <= 0) return;
+
+  list.push({ value, source, score });
+}
+
 function parsePriceFromTitle(html) {
-  const candidates = [
+  const found = [];
+  const titleCandidates = [
     { source: 'meta:og:title', text: parseMetaTag(html, 'og:title') },
     { source: 'meta:twitter:title', text: parseMetaTag(html, 'twitter:title') },
     { source: 'tag:title', text: html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || null }
   ];
 
-  for (const candidate of candidates) {
-    if (!candidate.text) continue;
+  for (const item of titleCandidates) {
+    if (!item.text) continue;
 
-    const match = String(candidate.text).match(/R\$\s*([\d.]+(?:,\d{1,2})?)/i);
+    const match = String(item.text).match(/R\$\s*([\d.]+(?:,\d{1,2})?)/i);
     if (!match?.[1]) continue;
 
-    const value = parseMoneyValue(match[1]);
-    if (value !== null) {
-      return {
-        value,
-        source: `title:${candidate.source}`
-      };
-    }
+    pushPriceCandidate(found, match[1], `title:${item.source}`, 90, item.text);
   }
 
-  return null;
+  return found;
 }
 
 function parsePriceFromText(html) {
-  const matches = [...html.matchAll(/R\$\s*([\d.]+,\d{2})/gi)];
-  if (!matches.length) return null;
+  const found = [];
+  const regex = /R\$\s*([\d.]+(?:,\d{1,2})?)/gi;
+  let match;
+  let processed = 0;
 
-  const candidates = [];
-  for (const match of matches) {
-    const value = parseMoneyValue(match[1]);
-    if (value === null) continue;
-
+  while ((match = regex.exec(html)) !== null && processed < 600) {
+    processed += 1;
     const index = match.index || 0;
-    const context = html.slice(Math.max(0, index - 80), Math.min(html.length, index + 120)).toLowerCase();
-    let score = 0;
+    const before = html.slice(Math.max(0, index - 18), index).toLowerCase();
+    const after = html.slice(index, Math.min(html.length, index + 72)).toLowerCase();
+    const context = `${before} ${after}`;
 
-    // Penaliza textos de frete/parcela que normalmente não representam o preço principal do produto.
-    if (/frete|shipping|entrega|parcelas?|x sem juros|juros|cupom/.test(context)) score -= 3;
-    if (/price|pre[cç]o|amount|offer|valor/.test(context)) score += 2;
-    if (/og:title|itemprop=["']price["']|application\/ld\+json/.test(context)) score += 3;
+    let baseScore = 35;
+    if (/\bpor\s*$|à vista\s*$|a vista\s*$/.test(before)) baseScore += 20;
+    if (/\bde\s*$|antes\s*$|pre[cç]o antigo\s*$/.test(before)) baseScore -= 25;
+    if (/\b\d{1,2}\s*x(?:\s*de)?\s*$/.test(before)) baseScore -= 90;
 
-    candidates.push({ value, score });
+    pushPriceCandidate(found, match[1], 'text:fallback', baseScore, context);
   }
 
-  candidates.sort((a, b) => (b.score - a.score) || (b.value - a.value));
-  if (!candidates[0]) return null;
+  return found;
+}
+
+function selectBestPriceCandidate(candidates) {
+  if (!candidates.length) return null;
+
+  const grouped = new Map();
+  for (const candidate of candidates) {
+    const cents = Math.round(candidate.value * 100);
+    const current = grouped.get(cents) || {
+      value: candidate.value,
+      totalScore: 0,
+      count: 0,
+      sources: new Set(),
+      bestSource: candidate.source,
+      bestScore: candidate.score
+    };
+
+    current.totalScore += candidate.score;
+    current.count += 1;
+    current.sources.add(candidate.source);
+    if (candidate.score > current.bestScore) {
+      current.bestScore = candidate.score;
+      current.bestSource = candidate.source;
+    }
+
+    grouped.set(cents, current);
+  }
+
+  const ranked = [...grouped.values()].map((item) => ({
+    ...item,
+    sourceCount: item.sources.size,
+    finalScore: item.totalScore + (item.sources.size * 12) + (item.count * 2)
+  }));
+
+  ranked.sort((a, b) =>
+    (b.finalScore - a.finalScore) ||
+    (b.sourceCount - a.sourceCount) ||
+    (b.bestScore - a.bestScore) ||
+    (b.value - a.value)
+  );
 
   return {
-    value: candidates[0].value,
-    source: 'text-fallback'
+    value: ranked[0].value,
+    source: ranked[0].bestSource,
+    confidence: ranked[0].finalScore,
+    ranked: ranked.slice(0, 5).map((item) => ({
+      value: item.value,
+      source: item.bestSource,
+      finalScore: item.finalScore,
+      sourceCount: item.sourceCount
+    }))
   };
 }
 
 function parsePrice(html) {
-  const metaKeys = [
-    'product:price:amount',
-    'og:price:amount',
-    'price:amount',
-    'price',
-    'twitter:data1'
-  ];
+  const candidates = [];
 
-  for (const key of metaKeys) {
-    const raw = parseMetaTag(html, key);
-    if (!raw) continue;
+  const metaTags = html.match(/<meta\s+[^>]*>/gi) || [];
+  for (const tag of metaTags) {
+    const content = tag.match(/\bcontent=["']([^"']+)["']/i)?.[1]?.trim();
+    if (!content) continue;
 
-    const value = parseMoneyValue(raw);
-    if (value !== null) {
-      return {
-        value,
-        source: `meta:${key}`
-      };
+    const property = tag.match(/\bproperty=["']([^"']+)["']/i)?.[1]?.toLowerCase() || '';
+    const name = tag.match(/\bname=["']([^"']+)["']/i)?.[1]?.toLowerCase() || '';
+    const itemprop = tag.match(/\bitemprop=["']([^"']+)["']/i)?.[1]?.toLowerCase() || '';
+
+    if (property === 'product:price:amount') {
+      pushPriceCandidate(candidates, content, 'meta:product:price:amount', 140, tag);
+      continue;
+    }
+
+    if (property === 'og:price:amount' || name === 'price:amount') {
+      pushPriceCandidate(candidates, content, 'meta:price:amount', 130, tag);
+      continue;
+    }
+
+    if (itemprop === 'price') {
+      pushPriceCandidate(candidates, content, 'meta:itemprop:price', 125, tag);
+      continue;
+    }
+
+    if (property === 'price' || name === 'price') {
+      pushPriceCandidate(candidates, content, 'meta:price', 95, tag);
+      continue;
+    }
+
+    if (name === 'twitter:data1') {
+      pushPriceCandidate(candidates, content, 'meta:twitter:data1', 45, tag);
     }
   }
 
-  const titlePrice = parsePriceFromTitle(html);
-  if (titlePrice !== null) {
-    return titlePrice;
+  for (const candidate of parsePriceFromTitle(html)) {
+    candidates.push(candidate);
   }
 
-  // Fallback para JSON-LD com campo "price"
+  // JSON-LD com ofertas normalmente contém o preço correto do produto.
   const scripts = [...html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)];
   for (const script of scripts) {
     try {
@@ -191,36 +267,26 @@ function parsePrice(html) {
 
       for (const item of items) {
         const offers = Array.isArray(item?.offers) ? item.offers : [item?.offers].filter(Boolean);
+
         for (const offer of offers) {
-          const offerPrice = offer?.price;
-          if (!offerPrice) continue;
-
-          const value = parseMoneyValue(offerPrice);
-          if (value !== null) {
-            return {
-              value,
-              source: 'jsonld:offers.price'
-            };
-          }
+          pushPriceCandidate(candidates, offer?.price, 'jsonld:offers.price', 135, 'jsonld offer price');
+          pushPriceCandidate(candidates, offer?.lowPrice, 'jsonld:offers.lowPrice', 120, 'jsonld offer low price');
+          pushPriceCandidate(candidates, offer?.highPrice, 'jsonld:offers.highPrice', 112, 'jsonld offer high price');
+          pushPriceCandidate(candidates, offer?.priceSpecification?.price, 'jsonld:offers.priceSpecification.price', 118, 'jsonld offer price specification');
         }
 
-        if (!offers.length && item?.price) {
-          const value = parseMoneyValue(item.price);
-          if (value !== null) {
-            return {
-              value,
-              source: 'jsonld:price'
-            };
-          }
-        }
+        pushPriceCandidate(candidates, item?.price, 'jsonld:item.price', 110, 'jsonld item price');
       }
     } catch {
       // JSON-LD inválido é ignorado.
     }
   }
 
-  // Último fallback: procurar padrão textual de preço em reais
-  return parsePriceFromText(html);
+  for (const candidate of parsePriceFromText(html)) {
+    candidates.push(candidate);
+  }
+
+  return selectBestPriceCandidate(candidates);
 }
 
 module.exports = async (req, res) => {
@@ -285,6 +351,7 @@ module.exports = async (req, res) => {
       image: parseImage(html, baseUrl),
       price: priceResult?.value ?? null,
       price_source: priceResult?.source || null,
+      price_confidence: priceResult?.confidence ?? null,
       source_url: baseUrl
     };
 
@@ -293,7 +360,9 @@ module.exports = async (req, res) => {
       title_found: Boolean(data.title),
       image_found: Boolean(data.image),
       price: data.price,
-      price_source: data.price_source
+      price_source: data.price_source,
+      price_confidence: data.price_confidence,
+      price_top_candidates: priceResult?.ranked || []
     });
 
     return res.status(200).json({
