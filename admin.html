@@ -20,34 +20,83 @@
     </div>
   </nav>
 
-  <main class="py-4 py-lg-5">
+  <main class="py-4 py-lg-5 admin-main">
     <div class="container">
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-        <div>
-          <h1 class="h3 mb-1">Cadastro de produtos</h1>
-          <p class="text-secondary mb-0">Área protegida para gerenciar seu catálogo público.</p>
+      <section class="admin-hero-panel p-4 p-lg-5 mb-4">
+        <div class="row g-4 align-items-center">
+          <div class="col-12 col-xl-8">
+            <p class="admin-eyebrow mb-2">Painel administrativo</p>
+            <h1 class="h2 mb-2">Gestão profissional de catálogo</h1>
+            <p class="mb-0 text-secondary">
+              Centralize cadastros, monitore qualidade dos anúncios e mantenha seu catálogo pronto para conversão.
+            </p>
+          </div>
+          <div class="col-12 col-xl-4">
+            <div class="d-grid gap-2 d-sm-flex justify-content-xl-end">
+              <a id="manageUsersLink" href="users.html" class="btn btn-outline-dark d-none">Gerenciar usuários</a>
+              <a href="index.html" class="btn btn-outline-primary">Ver página pública</a>
+            </div>
+          </div>
         </div>
-        <div class="d-flex gap-2">
-          <a id="manageUsersLink" href="users.html" class="btn btn-outline-dark d-none">Gerenciar usuários</a>
-          <a href="index.html" class="btn btn-outline-primary">Ver página pública</a>
+      </section>
+
+      <section class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-lg-3">
+          <article class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <p class="stat-label mb-1">Produtos cadastrados</p>
+              <p id="statTotalProducts" class="stat-value mb-0">0</p>
+            </div>
+          </article>
         </div>
-      </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <article class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <p class="stat-label mb-1">Preço médio</p>
+              <p id="statAveragePrice" class="stat-value mb-0">R$ 0,00</p>
+            </div>
+          </article>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <article class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <p class="stat-label mb-1">Com descrição</p>
+              <p id="statWithDescription" class="stat-value mb-0">0%</p>
+            </div>
+          </article>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <article class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <p class="stat-label mb-1">Atualização recente</p>
+              <p id="statLastUpdate" class="stat-value-sm mb-0">Sem registros</p>
+            </div>
+          </article>
+        </div>
+      </section>
 
       <div id="statusMessage" class="alert d-none" role="alert"></div>
 
       <div class="row g-4">
-        <div class="col-12 col-xl-5">
-          <div class="card border-0 shadow-sm">
+        <div class="col-12 col-xxl-4">
+          <div class="card border-0 shadow-sm admin-form-card">
             <div class="card-body p-4">
-              <h2 class="h5 mb-3">Novo produto</h2>
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                  <h2 id="formTitle" class="h5 mb-1">Novo produto</h2>
+                  <p class="text-secondary small mb-0">Preencha manualmente ou use captura automática.</p>
+                </div>
+                <button id="clearFormBtn" type="button" class="btn btn-sm btn-outline-secondary">Limpar</button>
+              </div>
+
               <form id="productForm" novalidate>
                 <div class="mb-3">
                   <label for="linkAfiliado" class="form-label">Link de afiliado</label>
                   <div class="input-group">
                     <input id="linkAfiliado" type="url" class="form-control" placeholder="https://..." required />
-                    <button id="autoFillBtn" class="btn btn-outline-primary" type="button">Preencher automaticamente</button>
+                    <button id="autoFillBtn" class="btn btn-outline-primary" type="button">Preencher</button>
                   </div>
-                  <small class="text-muted">A busca automática usa a função `api/preview.js` e pode falhar em páginas bloqueadas.</small>
+                  <small class="text-muted">Captura automática pode falhar em páginas bloqueadas por anti-bot.</small>
                 </div>
 
                 <div class="mb-3">
@@ -62,12 +111,12 @@
 
                 <div class="mb-3">
                   <label for="preco" class="form-label">Preço (R$)</label>
-                  <input id="preco" type="number" class="form-control" min="0" step="0.01" required />
+                  <input id="preco" type="text" class="form-control" inputmode="decimal" placeholder="0,00" required />
                 </div>
 
                 <div class="mb-3">
-                  <label for="descricao" class="form-label">Descrição (opcional)</label>
-                  <textarea id="descricao" class="form-control" rows="3" placeholder="Resumo do produto"></textarea>
+                  <label for="descricao" class="form-label">Descrição</label>
+                  <textarea id="descricao" class="form-control" rows="4" placeholder="Resumo do produto"></textarea>
                 </div>
 
                 <div class="d-flex gap-2">
@@ -75,18 +124,61 @@
                   <button id="cancelEditBtn" type="button" class="btn btn-outline-secondary d-none">Cancelar edição</button>
                 </div>
               </form>
+
+              <hr class="my-4" />
+
+              <div class="product-preview">
+                <p class="text-uppercase small fw-semibold text-secondary mb-2">Prévia do anúncio</p>
+                <div class="card border-0 bg-light-subtle">
+                  <div class="card-body">
+                    <img id="previewImage" class="preview-image mb-3" alt="Prévia do produto" />
+                    <h3 id="previewTitle" class="h6 mb-2">Produto sem título</h3>
+                    <p id="previewDescription" class="small text-secondary mb-2">Adicione uma descrição para melhorar a conversão.</p>
+                    <p id="previewPrice" class="fw-bold mb-2">R$ 0,00</p>
+                    <a id="previewLink" class="small text-decoration-none" href="#" target="_blank" rel="noopener noreferrer nofollow">Abrir link</a>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-
         </div>
 
-        <div class="col-12 col-xl-7">
+        <div class="col-12 col-xxl-8">
           <div class="card border-0 shadow-sm">
             <div class="card-body p-4">
               <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                 <h2 class="h5 mb-0">Produtos cadastrados</h2>
-                <button id="reloadBtn" class="btn btn-outline-primary btn-sm" type="button">Atualizar lista</button>
+                <div class="d-flex flex-wrap gap-2">
+                  <button id="exportCsvBtn" class="btn btn-outline-dark btn-sm" type="button">Exportar CSV</button>
+                  <button id="reloadBtn" class="btn btn-outline-primary btn-sm" type="button">Atualizar lista</button>
+                </div>
               </div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-12 col-md-6">
+                  <input id="adminSearchInput" type="search" class="form-control" placeholder="Buscar por nome, descrição ou link..." />
+                </div>
+                <div class="col-6 col-md-3">
+                  <select id="adminFilterSelect" class="form-select">
+                    <option value="all">Todos</option>
+                    <option value="complete">Completos</option>
+                    <option value="incomplete">Incompletos</option>
+                    <option value="missing_image">Sem imagem</option>
+                    <option value="missing_description">Sem descrição</option>
+                  </select>
+                </div>
+                <div class="col-6 col-md-3">
+                  <select id="adminSortSelect" class="form-select">
+                    <option value="newest">Mais recentes</option>
+                    <option value="oldest">Mais antigos</option>
+                    <option value="price_desc">Maior preço</option>
+                    <option value="price_asc">Menor preço</option>
+                    <option value="title_asc">Nome (A-Z)</option>
+                  </select>
+                </div>
+              </div>
+
+              <p id="listSummary" class="small text-secondary mb-3">0 produtos encontrados.</p>
 
               <div id="listLoading" class="text-center py-4 d-none">
                 <div class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></div>
@@ -94,11 +186,13 @@
               </div>
 
               <div class="table-responsive">
-                <table class="table align-middle" id="productsTable">
+                <table class="table align-middle admin-table" id="productsTable">
                   <thead>
                     <tr>
                       <th>Produto</th>
+                      <th>Qualidade</th>
                       <th>Preço</th>
+                      <th>Criado em</th>
                       <th class="text-end">Ações</th>
                     </tr>
                   </thead>
@@ -107,7 +201,7 @@
               </div>
 
               <div id="emptyAdminState" class="text-center py-4 text-secondary d-none">
-                Nenhum produto cadastrado por este usuário.
+                Nenhum produto encontrado para os filtros selecionados.
               </div>
             </div>
           </div>

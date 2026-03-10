@@ -49,6 +49,36 @@ function parseImage(html, baseUrl) {
   }
 }
 
+function decodeHtmlEntities(value) {
+  if (!value) return '';
+
+  const named = value
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&nbsp;/gi, ' ');
+
+  // Suporte básico para entidades numéricas (decimal e hexadecimal).
+  return named
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
+    .replace(/&#x([a-f\d]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+}
+
+function normalizeText(raw, maxLength = 500) {
+  if (raw === null || raw === undefined) return null;
+
+  const plain = decodeHtmlEntities(String(raw))
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!plain) return null;
+  if (plain.length <= maxLength) return plain;
+  return `${plain.slice(0, maxLength - 3).trim()}...`;
+}
+
 function parseMoneyValue(raw) {
   if (raw === null || raw === undefined) return null;
   const str = String(raw).replace(/[^\d,.-]/g, '').trim();
@@ -95,6 +125,59 @@ function collectJsonLdItems(root, output = []) {
   }
 
   return output;
+}
+
+function parseDescription(html) {
+  const candidates = [];
+
+  const metaCandidates = [
+    { source: 'meta:og:description', value: parseMetaTag(html, 'og:description'), score: 110 },
+    { source: 'meta:description', value: parseMetaTag(html, 'description'), score: 100 },
+    { source: 'meta:twitter:description', value: parseMetaTag(html, 'twitter:description'), score: 90 }
+  ];
+
+  for (const candidate of metaCandidates) {
+    const text = normalizeText(candidate.value, 500);
+    if (!text) continue;
+    candidates.push({
+      value: text,
+      source: candidate.source,
+      score: candidate.score
+    });
+  }
+
+  const scripts = [...html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)];
+  for (const script of scripts) {
+    try {
+      const content = script[1].trim();
+      if (!content) continue;
+
+      const json = JSON.parse(content);
+      const items = collectJsonLdItems(json);
+
+      for (const item of items) {
+        const text = normalizeText(item?.description, 500);
+        if (!text) continue;
+
+        const type = String(item?.['@type'] || '').toLowerCase();
+        candidates.push({
+          value: text,
+          source: type.includes('product') ? 'jsonld:product.description' : 'jsonld:item.description',
+          score: type.includes('product') ? 105 : 85
+        });
+      }
+    } catch {
+      // JSON-LD inválido é ignorado.
+    }
+  }
+
+  if (!candidates.length) return null;
+
+  candidates.sort((a, b) => (b.score - a.score) || (b.value.length - a.value.length));
+  return {
+    value: candidates[0].value,
+    source: candidates[0].source
+  };
 }
 
 function pushPriceCandidate(list, rawValue, source, baseScore, context = '') {
@@ -345,6 +428,7 @@ module.exports = async (req, res) => {
     const html = await response.text();
     const baseUrl = response.url || parsed.toString();
     const priceResult = parsePrice(html);
+    const descriptionResult = parseDescription(html);
 
     const data = {
       title: parseTitle(html),
@@ -352,6 +436,8 @@ module.exports = async (req, res) => {
       price: priceResult?.value ?? null,
       price_source: priceResult?.source || null,
       price_confidence: priceResult?.confidence ?? null,
+      description: descriptionResult?.value ?? null,
+      description_source: descriptionResult?.source || null,
       source_url: baseUrl
     };
 
@@ -362,7 +448,9 @@ module.exports = async (req, res) => {
       price: data.price,
       price_source: data.price_source,
       price_confidence: data.price_confidence,
-      price_top_candidates: priceResult?.ranked || []
+      price_top_candidates: priceResult?.ranked || [],
+      description_found: Boolean(data.description),
+      description_source: data.description_source
     });
 
     return res.status(200).json({
