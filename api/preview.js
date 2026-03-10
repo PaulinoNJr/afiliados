@@ -180,6 +180,180 @@ function parseDescription(html) {
   };
 }
 
+function isMercadoLivreHost(hostname) {
+  const host = String(hostname || '').toLowerCase();
+  return host.includes('mercadolivre.com.br') || host.includes('mercadolibre.com');
+}
+
+function isLikelyProductPath(pathname) {
+  return /\/(?:p|up)\//i.test(String(pathname || '')) || /MLB\d{7,}/i.test(String(pathname || ''));
+}
+
+function normalizeSlug(value) {
+  return decodeHtmlEntities(String(value || ''))
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s*-\s*r\$\s*[\d.,]+.*$/i, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function extractMercadoLivreItemIdFromUrl(urlValue) {
+  let parsed;
+  try {
+    parsed = typeof urlValue === 'string' ? new URL(urlValue) : urlValue;
+  } catch {
+    return null;
+  }
+
+  const fromParams = [
+    parsed.searchParams.get('wid'),
+    parsed.searchParams.get('item_id'),
+    parsed.searchParams.get('itemId'),
+    parsed.searchParams.get('id')
+  ].find((value) => /MLB\d{7,}/i.test(String(value || '')));
+
+  if (fromParams) {
+    const match = String(fromParams).match(/MLB\d{7,}/i);
+    if (match?.[0]) return match[0].toUpperCase();
+  }
+
+  const fromPath = `${parsed.pathname}${parsed.search}`.match(/MLB\d{7,}/i);
+  return fromPath?.[0]?.toUpperCase() || null;
+}
+
+function isGenericAffiliateDescription(text) {
+  const normalized = normalizeText(text, 500)?.toLowerCase() || '';
+  if (!normalized) return false;
+
+  return (
+    normalized.includes('visite a página e encontre todos os produtos') ||
+    normalized.includes('perfil social') ||
+    normalized.includes('achadinhos em um só lugar') ||
+    normalized.includes('todos os produtos em um só lugar')
+  );
+}
+
+function extractMercadoLivreProductLinks(html) {
+  const rawLinks = [...html.matchAll(/https:\/\/www\.mercadolivre\.com\.br\/[^"'<>\s)]+/gi)].map((match) => match[0]);
+  const links = new Set();
+
+  for (const rawLink of rawLinks) {
+    const decoded = decodeHtmlEntities(rawLink).replace(/\\u002F/g, '/');
+    let parsed;
+    try {
+      parsed = new URL(decoded);
+    } catch {
+      continue;
+    }
+
+    if (!isMercadoLivreHost(parsed.hostname)) continue;
+    if (parsed.pathname.includes('/social/')) continue;
+
+    const full = parsed.toString();
+    const hasProductShape =
+      /\/(?:p|up)\//i.test(parsed.pathname) ||
+      /MLB\d{7,}/i.test(`${parsed.pathname}${parsed.search}`) ||
+      /[?&]wid=MLB\d{7,}/i.test(full) ||
+      /item_id=MLB\d{7,}/i.test(full);
+
+    if (!hasProductShape) continue;
+    links.add(full);
+  }
+
+  return [...links];
+}
+
+function scoreMercadoLivreProductLink(link, { preferredItemId = null, titleSlug = '' } = {}) {
+  let score = 0;
+
+  let parsed;
+  try {
+    parsed = new URL(link);
+  } catch {
+    return -999;
+  }
+
+  if (/\/(?:p|up)\//i.test(parsed.pathname)) score += 45;
+  if (/[?&]wid=MLB\d{7,}/i.test(parsed.search)) score += 20;
+
+  const itemId = extractMercadoLivreItemIdFromUrl(parsed);
+  if (itemId) score += 15;
+  if (preferredItemId && itemId === preferredItemId) score += 90;
+
+  if (titleSlug) {
+    const pathSlug = normalizeSlug(parsed.pathname);
+    const pathTokens = pathSlug.split('-').filter(Boolean);
+    const titleTokens = titleSlug.split('-').filter(Boolean);
+    const significantTitleTokens = titleTokens.filter((token) => token.length > 2);
+    const matchedTokens = significantTitleTokens.filter((token) => pathTokens.includes(token));
+
+    if (pathSlug.includes(titleSlug)) {
+      score += 45;
+    }
+
+    score += Math.min(matchedTokens.length, 12) * 8;
+
+    const numericTitleTokens = significantTitleTokens.filter((token) => /\d/.test(token));
+    const matchedNumericTokens = numericTitleTokens.filter((token) => pathTokens.includes(token));
+    score += matchedNumericTokens.length * 24;
+
+    if (numericTitleTokens.length && !matchedNumericTokens.length) {
+      score -= 70;
+    }
+  }
+
+  if (parsed.pathname.includes('/social/')) score -= 1000;
+
+  return score;
+}
+
+async function resolveMercadoLivreProductPage({ html, sourceUrl, requestHeaders }) {
+  let sourceParsed;
+  try {
+    sourceParsed = new URL(sourceUrl);
+  } catch {
+    return null;
+  }
+
+  if (!isMercadoLivreHost(sourceParsed.hostname)) return null;
+
+  const preferredItemId = extractMercadoLivreItemIdFromUrl(sourceParsed);
+  const ogTitle = parseMetaTag(html, 'og:title') || parseMetaTag(html, 'title') || '';
+  const titleSlug = normalizeSlug(ogTitle);
+
+  const links = extractMercadoLivreProductLinks(html);
+  if (!links.length) return null;
+
+  const ranked = links
+    .map((link, index) => ({
+      link,
+      index,
+      score: scoreMercadoLivreProductLink(link, { preferredItemId, titleSlug })
+    }))
+    .sort((a, b) => (b.score - a.score) || (a.index - b.index));
+
+  const best = ranked[0];
+  if (!best || best.score < 40) return null;
+
+  if (best.link === sourceParsed.toString()) return null;
+
+  const response = await fetch(best.link, {
+    headers: requestHeaders,
+    redirect: 'follow'
+  });
+
+  if (!response.ok) return null;
+
+  return {
+    html: await response.text(),
+    url: response.url || best.link,
+    link: best.link,
+    score: best.score
+  };
+}
+
 function pushPriceCandidate(list, rawValue, source, baseScore, context = '') {
   const value = parseMoneyValue(rawValue);
   if (value === null) return;
@@ -406,11 +580,13 @@ module.exports = async (req, res) => {
       url: parsed.toString()
     });
 
+    const requestHeaders = {
+      'user-agent': 'Mozilla/5.0 (compatible; AffiliateCatalogBot/1.0; +https://vercel.com)',
+      'accept-language': 'pt-BR,pt;q=0.9,en;q=0.8'
+    };
+
     const response = await fetch(parsed.toString(), {
-      headers: {
-        'user-agent': 'Mozilla/5.0 (compatible; AffiliateCatalogBot/1.0; +https://vercel.com)',
-        'accept-language': 'pt-BR,pt;q=0.9,en;q=0.8'
-      },
+      headers: requestHeaders,
       redirect: 'follow'
     });
 
@@ -427,22 +603,69 @@ module.exports = async (req, res) => {
 
     const html = await response.text();
     const baseUrl = response.url || parsed.toString();
-    const priceResult = parsePrice(html);
-    const descriptionResult = parseDescription(html);
+    const baseParsed = new URL(baseUrl);
+
+    let finalHtml = html;
+    let finalSourceUrl = baseUrl;
+    let productResolution = null;
+
+    const initialDescription = parseDescription(html);
+    const shouldResolveProductPage =
+      isMercadoLivreHost(baseParsed.hostname) &&
+      (!isLikelyProductPath(baseParsed.pathname) || isGenericAffiliateDescription(initialDescription?.value));
+
+    if (shouldResolveProductPage) {
+      try {
+        productResolution = await resolveMercadoLivreProductPage({
+          html,
+          sourceUrl: baseUrl,
+          requestHeaders
+        });
+      } catch (resolutionError) {
+        console.warn('[preview] product page resolution failed', {
+          source_url: baseUrl,
+          message: resolutionError.message
+        });
+      }
+
+      if (productResolution?.html) {
+        finalHtml = productResolution.html;
+        finalSourceUrl = productResolution.url || finalSourceUrl;
+      }
+    }
+
+    const title = parseTitle(finalHtml) || parseTitle(html);
+    const image = parseImage(finalHtml, finalSourceUrl) || parseImage(html, baseUrl);
+    const priceResult = parsePrice(finalHtml) || parsePrice(html);
+
+    const primaryDescription = parseDescription(html);
+    const resolvedDescription = finalHtml !== html ? parseDescription(finalHtml) : null;
+    const shouldPreferResolvedDescription =
+      Boolean(resolvedDescription?.value) &&
+      (
+        !primaryDescription?.value ||
+        isGenericAffiliateDescription(primaryDescription.value) ||
+        resolvedDescription.value.length > (primaryDescription.value?.length || 0) + 40
+      );
+
+    const descriptionResult = shouldPreferResolvedDescription ? resolvedDescription : primaryDescription;
 
     const data = {
-      title: parseTitle(html),
-      image: parseImage(html, baseUrl),
+      title,
+      image,
       price: priceResult?.value ?? null,
       price_source: priceResult?.source || null,
       price_confidence: priceResult?.confidence ?? null,
       description: descriptionResult?.value ?? null,
       description_source: descriptionResult?.source || null,
-      source_url: baseUrl
+      source_url: finalSourceUrl,
+      resolved_product_url: productResolution?.url || null
     };
 
     console.info('[preview] extraction result', {
-      source_url: baseUrl,
+      source_url: finalSourceUrl,
+      original_url: baseUrl,
+      resolved_product_url: data.resolved_product_url,
       title_found: Boolean(data.title),
       image_found: Boolean(data.image),
       price: data.price,
