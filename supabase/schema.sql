@@ -18,6 +18,7 @@ create index if not exists idx_user_profiles_user_email on public.user_profiles 
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
+set search_path = pg_catalog, public
 as $$
 begin
   new.updated_at = now();
