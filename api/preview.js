@@ -18,6 +18,14 @@ function extractMercadoLivreItemId(value) {
   return match?.[0]?.toUpperCase() || null;
 }
 
+function hasMercadoLivreProductPath(pathname) {
+  const path = String(pathname || '');
+  return (
+    /\/up\/MLB[A-Z]{0,3}\d{7,}/i.test(path) ||
+    /\/p\/MLB[A-Z]{0,3}\d{7,}/i.test(path)
+  );
+}
+
 function parseMetaTag(html, key) {
   const safeKey = escapeRegex(key);
   const tags = html.match(/<meta\s+[^>]*>/gi) || [];
@@ -123,6 +131,14 @@ function decodeHtmlEntities(value) {
   return named
     .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
     .replace(/&#x([a-f\d]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+}
+
+function safeDecodeURIComponent(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 }
 
 function normalizeText(raw, maxLength = 500) {
@@ -252,7 +268,7 @@ function isMercadoLivreHost(hostname) {
 }
 
 function isLikelyProductPath(pathname) {
-  return /\/(?:p|up)\//i.test(String(pathname || '')) || MERCADO_LIVRE_ITEM_ID_REGEX.test(String(pathname || ''));
+  return hasMercadoLivreProductPath(pathname) || MERCADO_LIVRE_ITEM_ID_REGEX.test(String(pathname || ''));
 }
 
 function normalizeSlug(value) {
@@ -300,12 +316,104 @@ function isGenericAffiliateDescription(text) {
   );
 }
 
+function isGenericMarketplaceTitle(text) {
+  const normalized = normalizeText(text, 220)?.toLowerCase() || '';
+  if (!normalized) return true;
+
+  return (
+    normalized === 'mercado livre' ||
+    normalized === 'mercadolivre' ||
+    normalized === 'mercado livre brasil' ||
+    normalized.includes('perfil social') ||
+    normalized.includes('mercado livre brasil')
+  );
+}
+
 function extractMercadoLivreProductLinks(html) {
-  const rawLinks = [...html.matchAll(/https:\/\/www\.mercadolivre\.com\.br\/[^"'<>\s)]+/gi)].map((match) => match[0]);
+  const rawLinks = [
+    ...[...html.matchAll(/https:\/\/(?:www\.)?(?:mercadolivre\.com\.br|mercadolibre\.com)\/[^"'<>\s)]+/gi)].map((match) => match[0]),
+    ...[...html.matchAll(/https:\\\/\\\/(?:www\.)?(?:mercadolivre\.com\.br|mercadolibre\.com)\\\/[^"'<>\s)]+/gi)].map((match) => match[0]),
+    ...[...html.matchAll(/https%3A%2F%2F(?:www\.)?(?:mercadolivre\.com\.br|mercadolibre\.com)%2F[^"'<>\s)]+/gi)].map((match) => match[0])
+  ];
   const links = new Set();
+  const visitedCandidates = new Set();
+
+  const enqueueCandidate = (rawValue) => {
+    if (!rawValue) return;
+
+    let normalized = decodeHtmlEntities(String(rawValue))
+      .replace(/\\u002F/gi, '/')
+      .replace(/\\\//g, '/')
+      .trim();
+
+    if (!normalized) return;
+
+    if (/^https%3a/i.test(normalized)) {
+      normalized = safeDecodeURIComponent(normalized);
+    }
+
+    if (/^https?:\/\/.+%[0-9a-f]{2}/i.test(normalized)) {
+      const decodedUrl = safeDecodeURIComponent(normalized);
+      if (/^https?:\/\//i.test(decodedUrl)) {
+        normalized = decodedUrl;
+      }
+    }
+
+    if (visitedCandidates.has(normalized)) return;
+    visitedCandidates.add(normalized);
+
+    let parsed;
+    try {
+      parsed = new URL(normalized);
+    } catch {
+      return;
+    }
+
+    if (!isMercadoLivreHost(parsed.hostname)) return;
+    if (parsed.pathname.includes('/social/')) return;
+
+    const full = parsed.toString();
+    const hasProductShape =
+      hasMercadoLivreProductPath(parsed.pathname) ||
+      MERCADO_LIVRE_ITEM_ID_REGEX.test(`${parsed.pathname}${parsed.search}`) ||
+      /[?&]wid=MLB[A-Z]{0,3}\d{7,}/i.test(full) ||
+      /item_id=MLB[A-Z]{0,3}\d{7,}/i.test(full);
+
+    if (hasProductShape) {
+      links.add(full);
+    }
+
+    for (const [, paramValue] of parsed.searchParams.entries()) {
+      if (!paramValue) continue;
+      const maybeUrl = decodeHtmlEntities(paramValue);
+      if (!/(?:https?:\/\/|https%3A%2F%2F|mercadolivre\.com\.br|mercadolibre\.com)/i.test(maybeUrl)) continue;
+      enqueueCandidate(maybeUrl);
+    }
+  };
 
   for (const rawLink of rawLinks) {
-    const decoded = decodeHtmlEntities(rawLink).replace(/\\u002F/g, '/');
+    const decoded = decodeHtmlEntities(rawLink)
+      .replace(/\\u002F/gi, '/')
+      .replace(/\\\//g, '/');
+
+    enqueueCandidate(decoded);
+  }
+
+  const encodedUrlMatches = [...html.matchAll(/https%3A%2F%2F(?:www\.)?(?:mercadolivre\.com\.br|mercadolibre\.com)%2F[^"'<>\s)]+/gi)];
+  for (const match of encodedUrlMatches) {
+    enqueueCandidate(match[0]);
+  }
+
+  if (links.size) {
+    return [...links];
+  }
+
+  // Fallback legado: tentativa direta para formatos sem escape.
+  for (const rawLink of rawLinks) {
+    const decoded = decodeHtmlEntities(rawLink)
+      .replace(/\\u002F/gi, '/')
+      .replace(/\\\//g, '/');
+
     let parsed;
     try {
       parsed = new URL(decoded);
@@ -318,7 +426,7 @@ function extractMercadoLivreProductLinks(html) {
 
     const full = parsed.toString();
     const hasProductShape =
-      /\/(?:p|up)\//i.test(parsed.pathname) ||
+      hasMercadoLivreProductPath(parsed.pathname) ||
       MERCADO_LIVRE_ITEM_ID_REGEX.test(`${parsed.pathname}${parsed.search}`) ||
       /[?&]wid=MLB[A-Z]{0,3}\d{7,}/i.test(full) ||
       /item_id=MLB[A-Z]{0,3}\d{7,}/i.test(full);
@@ -340,7 +448,7 @@ function scoreMercadoLivreProductLink(link, { preferredItemId = null, titleSlug 
     return -999;
   }
 
-  if (/\/(?:p|up)\//i.test(parsed.pathname)) score += 45;
+  if (hasMercadoLivreProductPath(parsed.pathname)) score += 45;
   if (/[?&]wid=MLB[A-Z]{0,3}\d{7,}/i.test(parsed.search)) score += 20;
 
   const itemId = extractMercadoLivreItemIdFromUrl(parsed);
@@ -726,14 +834,56 @@ module.exports = async (req, res) => {
 
     const descriptionResult = shouldPreferResolvedDescription ? resolvedDescription : primaryDescription;
 
+    let finalTitle = title;
+    let finalPrice = priceResult?.value ?? null;
+    let finalPriceSource = priceResult?.source || null;
+    let finalPriceConfidence = priceResult?.confidence ?? null;
+    let finalDescription = descriptionResult?.value ?? null;
+    let finalDescriptionSource = descriptionResult?.source || null;
+
+    let finalSourceParsed = null;
+    try {
+      finalSourceParsed = new URL(finalSourceUrl);
+    } catch {
+      // Sem URL válida: segue com os dados atuais.
+    }
+
+    const isSocialSource = Boolean(
+      finalSourceParsed &&
+      isMercadoLivreHost(finalSourceParsed.hostname) &&
+      finalSourceParsed.pathname.includes('/social/')
+    );
+
+    if (isSocialSource && !productResolution) {
+      if (isGenericMarketplaceTitle(finalTitle)) {
+        finalTitle = null;
+      }
+
+      if (isGenericAffiliateDescription(finalDescription)) {
+        finalDescription = null;
+        finalDescriptionSource = null;
+      }
+
+      const weakPriceSource =
+        !finalPriceSource ||
+        finalPriceSource.startsWith('text:') ||
+        finalPriceSource.startsWith('title:');
+
+      if (weakPriceSource || (typeof finalPriceConfidence === 'number' && finalPriceConfidence < 120)) {
+        finalPrice = null;
+        finalPriceSource = null;
+        finalPriceConfidence = null;
+      }
+    }
+
     const data = {
-      title,
+      title: finalTitle,
       image,
-      price: priceResult?.value ?? null,
-      price_source: priceResult?.source || null,
-      price_confidence: priceResult?.confidence ?? null,
-      description: descriptionResult?.value ?? null,
-      description_source: descriptionResult?.source || null,
+      price: finalPrice,
+      price_source: finalPriceSource,
+      price_confidence: finalPriceConfidence,
+      description: finalDescription,
+      description_source: finalDescriptionSource,
       source_url: finalSourceUrl,
       resolved_product_url: productResolution?.url || null
     };
