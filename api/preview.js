@@ -154,6 +154,36 @@ function normalizeText(raw, maxLength = 500) {
   return `${plain.slice(0, maxLength - 3).trim()}...`;
 }
 
+function normalizeMultilineText(raw, maxLength = 6000) {
+  if (raw === null || raw === undefined) return null;
+
+  const withBreaks = decodeHtmlEntities(String(raw))
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li|h1|h2|h3|h4|h5|h6|section|article)>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .replace(/\r\n?/g, '\n');
+
+  const normalized = withBreaks
+    .split('\n')
+    .map((line) => line.replace(/[ \t]+/g, ' ').trim())
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  if (!normalized) return null;
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, maxLength - 3).trim()}...`;
+}
+
+function parseMercadoLivrePdpDescription(html) {
+  const match =
+    html.match(/<p[^>]*class=["'][^"']*ui-pdp-description__content[^"']*["'][^>]*>([\s\S]*?)<\/p>/i) ||
+    html.match(/<div[^>]*class=["'][^"']*ui-pdp-description__content[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
+
+  if (!match?.[1]) return null;
+  return normalizeMultilineText(match[1], 6000);
+}
+
 function parseMoneyValue(raw) {
   if (raw === null || raw === undefined) return null;
   const str = String(raw).replace(/[^\d,.-]/g, '').trim();
@@ -204,6 +234,15 @@ function collectJsonLdItems(root, output = []) {
 
 function parseDescription(html) {
   const candidates = [];
+
+  const pdpDescription = parseMercadoLivrePdpDescription(html);
+  if (pdpDescription) {
+    candidates.push({
+      value: pdpDescription,
+      source: 'html:pdp.description',
+      score: 190
+    });
+  }
 
   const metaCandidates = [
     { source: 'meta:og:description', value: parseMetaTag(html, 'og:description'), score: 110 },
