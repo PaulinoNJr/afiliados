@@ -11,6 +11,13 @@ function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+const MERCADO_LIVRE_ITEM_ID_REGEX = /MLB[A-Z]{0,3}\d{7,}/i;
+
+function extractMercadoLivreItemId(value) {
+  const match = String(value || '').match(MERCADO_LIVRE_ITEM_ID_REGEX);
+  return match?.[0]?.toUpperCase() || null;
+}
+
 function parseMetaTag(html, key) {
   const safeKey = escapeRegex(key);
   const tags = html.match(/<meta\s+[^>]*>/gi) || [];
@@ -26,12 +33,64 @@ function parseMetaTag(html, key) {
   return null;
 }
 
-function parseTitle(html) {
-  const og = parseMetaTag(html, 'og:title');
-  if (og) return og;
+function sanitizeMercadoLivreTitle(value) {
+  const text = normalizeText(value, 220);
+  if (!text) return null;
 
-  const match = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-  return match?.[1]?.trim() || null;
+  let cleaned = text
+    .replace(/\s*\|\s*Mercado\s*Livre\s*$/i, '')
+    .replace(/\s*-\s*R\$\s*[\d.]+(?:,\d{1,2})?(?:\s*.*)?$/i, '')
+    .trim();
+
+  if (!cleaned) cleaned = text;
+  return cleaned;
+}
+
+function parseTitle(html) {
+  const candidates = [];
+
+  const ogTitle = sanitizeMercadoLivreTitle(parseMetaTag(html, 'og:title'));
+  if (ogTitle) {
+    candidates.push({ value: ogTitle, score: 120 });
+  }
+
+  const twitterTitle = sanitizeMercadoLivreTitle(parseMetaTag(html, 'twitter:title'));
+  if (twitterTitle) {
+    candidates.push({ value: twitterTitle, score: 100 });
+  }
+
+  const pageTitle = sanitizeMercadoLivreTitle(html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || null);
+  if (pageTitle) {
+    candidates.push({ value: pageTitle, score: 90 });
+  }
+
+  const scripts = [...html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)];
+  for (const script of scripts) {
+    try {
+      const content = script[1].trim();
+      if (!content) continue;
+
+      const json = JSON.parse(content);
+      const items = collectJsonLdItems(json);
+
+      for (const item of items) {
+        const name = sanitizeMercadoLivreTitle(item?.name);
+        if (!name) continue;
+
+        const type = String(item?.['@type'] || '').toLowerCase();
+        candidates.push({
+          value: name,
+          score: type.includes('product') ? 140 : 80
+        });
+      }
+    } catch {
+      // JSON-LD inválido é ignorado.
+    }
+  }
+
+  if (!candidates.length) return null;
+  candidates.sort((a, b) => (b.score - a.score) || (b.value.length - a.value.length));
+  return candidates[0].value;
 }
 
 function parseImage(html, baseUrl) {
@@ -139,10 +198,17 @@ function parseDescription(html) {
   for (const candidate of metaCandidates) {
     const text = normalizeText(candidate.value, 500);
     if (!text) continue;
+    const normalized = text.toLowerCase();
+    const isEcommerceGeneric =
+      normalized.includes('compre online com segurança') ||
+      normalized.includes('compra garantida') ||
+      normalized.includes('entrega rápida') ||
+      normalized.includes('devolução grátis');
+
     candidates.push({
       value: text,
       source: candidate.source,
-      score: candidate.score
+      score: candidate.score - (isEcommerceGeneric ? 60 : 0)
     });
   }
 
@@ -163,7 +229,7 @@ function parseDescription(html) {
         candidates.push({
           value: text,
           source: type.includes('product') ? 'jsonld:product.description' : 'jsonld:item.description',
-          score: type.includes('product') ? 105 : 85
+          score: type.includes('product') ? 125 : 85
         });
       }
     } catch {
@@ -186,7 +252,7 @@ function isMercadoLivreHost(hostname) {
 }
 
 function isLikelyProductPath(pathname) {
-  return /\/(?:p|up)\//i.test(String(pathname || '')) || /MLB\d{7,}/i.test(String(pathname || ''));
+  return /\/(?:p|up)\//i.test(String(pathname || '')) || MERCADO_LIVRE_ITEM_ID_REGEX.test(String(pathname || ''));
 }
 
 function normalizeSlug(value) {
@@ -212,15 +278,14 @@ function extractMercadoLivreItemIdFromUrl(urlValue) {
     parsed.searchParams.get('item_id'),
     parsed.searchParams.get('itemId'),
     parsed.searchParams.get('id')
-  ].find((value) => /MLB\d{7,}/i.test(String(value || '')));
+  ].find((value) => MERCADO_LIVRE_ITEM_ID_REGEX.test(String(value || '')));
 
   if (fromParams) {
-    const match = String(fromParams).match(/MLB\d{7,}/i);
-    if (match?.[0]) return match[0].toUpperCase();
+    const id = extractMercadoLivreItemId(fromParams);
+    if (id) return id;
   }
 
-  const fromPath = `${parsed.pathname}${parsed.search}`.match(/MLB\d{7,}/i);
-  return fromPath?.[0]?.toUpperCase() || null;
+  return extractMercadoLivreItemId(`${parsed.pathname}${parsed.search}`);
 }
 
 function isGenericAffiliateDescription(text) {
@@ -254,9 +319,9 @@ function extractMercadoLivreProductLinks(html) {
     const full = parsed.toString();
     const hasProductShape =
       /\/(?:p|up)\//i.test(parsed.pathname) ||
-      /MLB\d{7,}/i.test(`${parsed.pathname}${parsed.search}`) ||
-      /[?&]wid=MLB\d{7,}/i.test(full) ||
-      /item_id=MLB\d{7,}/i.test(full);
+      MERCADO_LIVRE_ITEM_ID_REGEX.test(`${parsed.pathname}${parsed.search}`) ||
+      /[?&]wid=MLB[A-Z]{0,3}\d{7,}/i.test(full) ||
+      /item_id=MLB[A-Z]{0,3}\d{7,}/i.test(full);
 
     if (!hasProductShape) continue;
     links.add(full);
@@ -276,7 +341,7 @@ function scoreMercadoLivreProductLink(link, { preferredItemId = null, titleSlug 
   }
 
   if (/\/(?:p|up)\//i.test(parsed.pathname)) score += 45;
-  if (/[?&]wid=MLB\d{7,}/i.test(parsed.search)) score += 20;
+  if (/[?&]wid=MLB[A-Z]{0,3}\d{7,}/i.test(parsed.search)) score += 20;
 
   const itemId = extractMercadoLivreItemIdFromUrl(parsed);
   if (itemId) score += 15;
@@ -326,13 +391,24 @@ async function resolveMercadoLivreProductPage({ html, sourceUrl, requestHeaders 
   const links = extractMercadoLivreProductLinks(html);
   if (!links.length) return null;
 
-  const ranked = links
+  let ranked = links
     .map((link, index) => ({
       link,
       index,
       score: scoreMercadoLivreProductLink(link, { preferredItemId, titleSlug })
     }))
     .sort((a, b) => (b.score - a.score) || (a.index - b.index));
+
+  const sourceLooksLikeProduct = isLikelyProductPath(sourceParsed.pathname);
+  if (sourceLooksLikeProduct && preferredItemId) {
+    const sameItemCandidates = ranked.filter((item) => {
+      return extractMercadoLivreItemIdFromUrl(item.link) === preferredItemId;
+    });
+
+    if (sameItemCandidates.length) {
+      ranked = sameItemCandidates;
+    }
+  }
 
   const best = ranked[0];
   if (!best || best.score < 40) return null;
