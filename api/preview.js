@@ -306,6 +306,47 @@ function isMercadoLivreHost(hostname) {
   return host.includes('mercadolivre.com.br') || host.includes('mercadolibre.com');
 }
 
+function isMercadoLivreVerificationPath(pathname) {
+  const path = String(pathname || '').toLowerCase();
+  return path.includes('/gz/account-verification') || path.includes('/gz/webdevice/config');
+}
+
+function isMercadoLivreVerificationUrl(urlValue) {
+  try {
+    const parsed = typeof urlValue === 'string' ? new URL(urlValue) : urlValue;
+    return isMercadoLivreHost(parsed.hostname) && isMercadoLivreVerificationPath(parsed.pathname);
+  } catch {
+    return false;
+  }
+}
+
+function extractMercadoLivreVerificationTargetUrl(urlValue) {
+  let parsed;
+  try {
+    parsed = typeof urlValue === 'string' ? new URL(urlValue) : urlValue;
+  } catch {
+    return null;
+  }
+
+  if (!isMercadoLivreHost(parsed.hostname) || !isMercadoLivreVerificationPath(parsed.pathname)) {
+    return null;
+  }
+
+  const goParam = parsed.searchParams.get('go');
+  if (!goParam) return null;
+
+  const decoded = decodeHtmlEntities(safeDecodeURIComponent(goParam));
+  if (!/^https?:\/\//i.test(decoded)) return null;
+
+  try {
+    const target = new URL(decoded);
+    if (!isMercadoLivreHost(target.hostname)) return null;
+    return target.toString();
+  } catch {
+    return null;
+  }
+}
+
 function isLikelyProductPath(pathname) {
   return hasMercadoLivreProductPath(pathname) || MERCADO_LIVRE_ITEM_ID_REGEX.test(String(pathname || ''));
 }
@@ -569,11 +610,20 @@ async function resolveMercadoLivreProductPage({ html, sourceUrl, requestHeaders 
 
   if (!response.ok) return null;
 
+  const resolvedUrl = response.url || best.link;
+  const resolvedHtml = await response.text();
+  const blockedByVerification = isMercadoLivreVerificationUrl(resolvedUrl);
+  const intendedUrl = blockedByVerification
+    ? extractMercadoLivreVerificationTargetUrl(resolvedUrl) || best.link
+    : null;
+
   return {
-    html: await response.text(),
-    url: response.url || best.link,
+    html: resolvedHtml,
+    url: resolvedUrl,
     link: best.link,
-    score: best.score
+    score: best.score,
+    blocked_by_verification: blockedByVerification,
+    intended_url: intendedUrl
   };
 }
 
@@ -851,7 +901,8 @@ module.exports = async (req, res) => {
         });
       }
 
-      if (productResolution?.html) {
+      const hasUsableProductResolution = Boolean(productResolution?.html && !productResolution?.blocked_by_verification);
+      if (hasUsableProductResolution) {
         finalHtml = productResolution.html;
         finalSourceUrl = productResolution.url || finalSourceUrl;
       }
@@ -873,6 +924,7 @@ module.exports = async (req, res) => {
 
     const descriptionResult = shouldPreferResolvedDescription ? resolvedDescription : primaryDescription;
 
+    const hasUsableProductResolution = Boolean(productResolution && !productResolution.blocked_by_verification);
     let finalTitle = title;
     let finalPrice = priceResult?.value ?? null;
     let finalPriceSource = priceResult?.source || null;
@@ -893,7 +945,7 @@ module.exports = async (req, res) => {
       finalSourceParsed.pathname.includes('/social/')
     );
 
-    if (isSocialSource && !productResolution) {
+    if (isSocialSource && !hasUsableProductResolution) {
       if (isGenericMarketplaceTitle(finalTitle)) {
         finalTitle = null;
       }
@@ -915,6 +967,10 @@ module.exports = async (req, res) => {
       }
     }
 
+    const resolvedProductUrl = productResolution?.blocked_by_verification
+      ? (productResolution?.intended_url || null)
+      : (productResolution?.url || null);
+
     const data = {
       title: finalTitle,
       image,
@@ -924,13 +980,14 @@ module.exports = async (req, res) => {
       description: finalDescription,
       description_source: finalDescriptionSource,
       source_url: finalSourceUrl,
-      resolved_product_url: productResolution?.url || null
+      resolved_product_url: resolvedProductUrl
     };
 
     console.info('[preview] extraction result', {
       source_url: finalSourceUrl,
       original_url: baseUrl,
       resolved_product_url: data.resolved_product_url,
+      blocked_by_verification: Boolean(productResolution?.blocked_by_verification),
       title_found: Boolean(data.title),
       image_found: Boolean(data.image),
       price: data.price,
