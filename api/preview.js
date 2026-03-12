@@ -175,6 +175,63 @@ function normalizeMultilineText(raw, maxLength = 6000) {
   return `${normalized.slice(0, maxLength - 3).trim()}...`;
 }
 
+function parseMercadoLivreSocialFeaturedData(html) {
+  if (!/rl-social-desktop|ui-ms-profile|poly-component__title/i.test(String(html || ''))) {
+    return null;
+  }
+
+  const anchorMatch =
+    html.match(/<a[^>]*class=["'][^"']*poly-component__title[^"']*["'][^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/i) ||
+    html.match(/<a[^>]*href=["']([^"']+)["'][^>]*class=["'][^"']*poly-component__title[^"']*["'][^>]*>([\s\S]*?)<\/a>/i);
+
+  if (!anchorMatch) return null;
+
+  const href = decodeHtmlEntities(anchorMatch[1] || '').trim();
+  const title = normalizeText(anchorMatch[2], 220);
+  const anchorIndex = anchorMatch.index || 0;
+  const cardWindow = html.slice(anchorIndex, Math.min(html.length, anchorIndex + 12000));
+
+  let price = null;
+  const currentPriceBlock = cardWindow.match(/<div[^>]*class=["'][^"']*poly-price__current[^"']*["'][^>]*>([\s\S]*?)<\/div>/i)?.[1] || '';
+  if (currentPriceBlock) {
+    const fraction = currentPriceBlock.match(/andes-money-amount__fraction[^>]*>([\d.]+)</i)?.[1] || null;
+    const cents = currentPriceBlock.match(/andes-money-amount__cents[^>]*>(\d{1,2})</i)?.[1] || null;
+    const composed = fraction ? `${fraction}${cents ? `,${String(cents).padStart(2, '0')}` : ''}` : null;
+    price = parseMoneyValue(composed);
+  }
+
+  if (price === null) {
+    const nowLabelMatch = cardWindow.match(/aria-label=["'][^"']*(?:ahora|agora):\s*([\d.]+)(?:\s*(?:reales|real|reais|real))?(?:\s*con\s*(\d{1,2})\s*(?:centavos|centavo))?/i);
+    if (nowLabelMatch?.[1]) {
+      const raw = `${nowLabelMatch[1]}${nowLabelMatch[2] ? `,${String(nowLabelMatch[2]).padStart(2, '0')}` : ''}`;
+      price = parseMoneyValue(raw);
+    }
+  }
+
+  const sellerRaw = cardWindow.match(/<span[^>]*class=["'][^"']*poly-component__seller[^"']*["'][^>]*>([\s\S]*?)<\/span>/i)?.[1] || null;
+  const sellerText = normalizeText(sellerRaw, 140);
+  const seller = sellerText
+    ? sellerText.replace(/^por\s+/i, '').replace(/\s*loja oficial\s*$/i, '').trim()
+    : null;
+
+  const shippingRaw = cardWindow.match(/<div[^>]*class=["'][^"']*poly-component__shipping[^"']*["'][^>]*>([\s\S]*?)<\/div>/i)?.[1] || null;
+  const shipping = normalizeText(shippingRaw, 220);
+
+  const descriptionParts = [];
+  if (seller) descriptionParts.push(`Vendido por ${seller}.`);
+  if (shipping) {
+    const normalizedShipping = shipping.endsWith('.') ? shipping : `${shipping}.`;
+    descriptionParts.push(normalizedShipping);
+  }
+
+  return {
+    title,
+    href: href || null,
+    price,
+    description: descriptionParts.length ? descriptionParts.join(' ') : null
+  };
+}
+
 function parseMercadoLivrePdpDescription(html) {
   const match =
     html.match(/<p[^>]*class=["'][^"']*ui-pdp-description__content[^"']*["'][^>]*>([\s\S]*?)<\/p>/i) ||
@@ -234,6 +291,15 @@ function collectJsonLdItems(root, output = []) {
 
 function parseDescription(html) {
   const candidates = [];
+
+  const socialFeatured = parseMercadoLivreSocialFeaturedData(html);
+  if (socialFeatured?.description) {
+    candidates.push({
+      value: socialFeatured.description,
+      source: 'html:social.featured.summary',
+      score: 88
+    });
+  }
 
   const pdpDescription = parseMercadoLivrePdpDescription(html);
   if (pdpDescription) {
@@ -747,6 +813,17 @@ function selectBestPriceCandidate(candidates) {
 function parsePrice(html) {
   const candidates = [];
 
+  const socialFeatured = parseMercadoLivreSocialFeaturedData(html);
+  if (socialFeatured?.price !== null && socialFeatured?.price !== undefined) {
+    pushPriceCandidate(
+      candidates,
+      socialFeatured.price,
+      'html:social.featured.price',
+      165,
+      'social featured current price'
+    );
+  }
+
   const metaTags = html.match(/<meta\s+[^>]*>/gi) || [];
   for (const tag of metaTags) {
     const content = tag.match(/\bcontent=["']([^"']+)["']/i)?.[1]?.trim();
@@ -923,6 +1000,7 @@ module.exports = async (req, res) => {
       );
 
     const descriptionResult = shouldPreferResolvedDescription ? resolvedDescription : primaryDescription;
+    const socialFeaturedData = parseMercadoLivreSocialFeaturedData(html);
 
     const hasUsableProductResolution = Boolean(productResolution && !productResolution.blocked_by_verification);
     let finalTitle = title;
@@ -964,6 +1042,22 @@ module.exports = async (req, res) => {
         finalPrice = null;
         finalPriceSource = null;
         finalPriceConfidence = null;
+      }
+
+      if ((finalPrice === null || finalPrice === undefined) && socialFeaturedData?.price !== null && socialFeaturedData?.price !== undefined) {
+        finalPrice = socialFeaturedData.price;
+        finalPriceSource = 'html:social.featured.price';
+        finalPriceConfidence = 160;
+      }
+
+      if (!finalDescription && socialFeaturedData?.description) {
+        finalDescription = socialFeaturedData.description;
+        finalDescriptionSource = 'html:social.featured.summary';
+      }
+
+      if (!finalDescription && finalTitle) {
+        finalDescription = `Produto identificado via perfil social: ${finalTitle}.`;
+        finalDescriptionSource = 'fallback:social.title';
       }
     }
 
