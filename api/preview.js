@@ -367,6 +367,19 @@ function parseDescription(html) {
   };
 }
 
+function selectHtmlDescriptionCandidate(html, maxLength = 6000) {
+  const parsed = parseDescription(html);
+  if (!parsed?.value) return null;
+
+  const description = normalizeMultilineText(parsed.value, maxLength);
+  if (!description || isGenericAffiliateDescription(description)) return null;
+
+  return {
+    description,
+    source: parsed.source
+  };
+}
+
 function isMercadoLivreHost(hostname) {
   const host = String(hostname || '').toLowerCase();
   return host.includes('mercadolivre.com.br') || host.includes('mercadolibre.com');
@@ -642,10 +655,46 @@ async function getMercadoLivreProduct(link, requestHeaders = {}) {
           ? itemData.pictures.map((picture) => picture?.url).filter(Boolean)
           : [];
 
-        const description = normalizeMultilineText(
-          descData?.plain_text || descData?.text || itemData?.short_description || null,
-          6000
-        );
+        const descriptionPlainText = normalizeMultilineText(descData?.plain_text || null, 6000);
+        const descriptionText = normalizeMultilineText(descData?.text || null, 6000);
+        const fallbackShortDescription = normalizeMultilineText(itemData?.short_description || null, 6000);
+        let description = descriptionPlainText || descriptionText || fallbackShortDescription || null;
+        let descriptionSource = descriptionPlainText
+          ? 'api:items.description.plain_text'
+          : descriptionText
+            ? 'api:items.description.text'
+            : fallbackShortDescription
+              ? 'api:items.short_description'
+              : null;
+
+        if (!description || isGenericAffiliateDescription(description)) {
+          const fallbackFromInitialHtml = selectHtmlDescriptionCandidate(html, 6000);
+          if (fallbackFromInitialHtml) {
+            description = fallbackFromInitialHtml.description;
+            descriptionSource = fallbackFromInitialHtml.source;
+          }
+        }
+
+        const permalink = typeof itemData?.permalink === 'string' ? itemData.permalink : null;
+        if ((!description || isGenericAffiliateDescription(description)) && permalink) {
+          try {
+            const permalinkResponse = await fetch(permalink, {
+              headers: requestHeaders,
+              redirect: 'follow'
+            });
+
+            if (permalinkResponse.ok) {
+              const permalinkHtml = await permalinkResponse.text();
+              const fallbackFromPermalinkHtml = selectHtmlDescriptionCandidate(permalinkHtml, 6000);
+              if (fallbackFromPermalinkHtml) {
+                description = fallbackFromPermalinkHtml.description;
+                descriptionSource = fallbackFromPermalinkHtml.source;
+              }
+            }
+          } catch {
+            // Fallback HTML é opcional e não deve abortar o item principal.
+          }
+        }
 
         return {
           id: itemData.id,
@@ -656,6 +705,7 @@ async function getMercadoLivreProduct(link, requestHeaders = {}) {
           thumbnail: itemData.thumbnail || pictures[0] || parseImage(html, finalUrl),
           pictures,
           description,
+          description_source: descriptionSource,
           source_url: finalUrl,
           item_source: candidate.source
         };
@@ -1169,7 +1219,7 @@ module.exports = async (req, res) => {
         price_source: apiProduct.price !== null ? 'api:items.price' : null,
         price_confidence: apiProduct.price !== null ? 220 : null,
         description: apiProduct.description || null,
-        description_source: apiProduct.description ? 'api:items.description' : null,
+        description_source: apiProduct.description_source || null,
         source_url: apiProduct.source_url || parsed.toString(),
         resolved_product_url: apiProduct.permalink || null,
         ml_item_id: apiProduct.id || null,
