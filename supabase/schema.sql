@@ -127,9 +127,20 @@ create table if not exists public.produtos (
   imagem_url text,
   link_afiliado text not null,
   descricao text,
+  ml_item_id text,
+  ml_currency text,
+  ml_permalink text,
+  ml_thumbnail text,
+  ml_pictures jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
   created_by uuid not null references auth.users(id) on delete cascade
 );
+
+alter table public.produtos add column if not exists ml_item_id text;
+alter table public.produtos add column if not exists ml_currency text;
+alter table public.produtos add column if not exists ml_permalink text;
+alter table public.produtos add column if not exists ml_thumbnail text;
+alter table public.produtos add column if not exists ml_pictures jsonb not null default '[]'::jsonb;
 
 create index if not exists idx_produtos_created_at on public.produtos (created_at desc);
 create index if not exists idx_produtos_created_by on public.produtos (created_by);

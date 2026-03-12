@@ -8,7 +8,14 @@
     editingId: null,
     role: 'produtor',
     isAdmin: false,
-    lastAutoFillUrl: ''
+    lastAutoFillUrl: '',
+    productMeta: {
+      ml_item_id: null,
+      ml_currency: null,
+      ml_permalink: null,
+      ml_thumbnail: null,
+      ml_pictures: []
+    }
   };
 
   const refs = {
@@ -53,6 +60,52 @@
     tableBody: document.getElementById('productsTableBody'),
     emptyAdminState: document.getElementById('emptyAdminState')
   };
+
+  function createEmptyProductMeta() {
+    return {
+      ml_item_id: null,
+      ml_currency: null,
+      ml_permalink: null,
+      ml_thumbnail: null,
+      ml_pictures: []
+    };
+  }
+
+  function normalizePictures(value) {
+    if (!Array.isArray(value)) return [];
+
+    return value
+      .map((item) => String(item || '').trim())
+      .filter((item) => /^https?:\/\//i.test(item));
+  }
+
+  function extractProductMeta(data = {}) {
+    return {
+      ml_item_id: isFilled(data.ml_item_id) ? String(data.ml_item_id).trim() : null,
+      ml_currency: isFilled(data.ml_currency) ? String(data.ml_currency).trim() : null,
+      ml_permalink: isFilled(data.ml_permalink) ? String(data.ml_permalink).trim() : null,
+      ml_thumbnail: isFilled(data.ml_thumbnail) ? String(data.ml_thumbnail).trim() : null,
+      ml_pictures: normalizePictures(data.ml_pictures)
+    };
+  }
+
+  function mergeProductMeta(data = {}, { overwrite = true } = {}) {
+    const incoming = extractProductMeta(data);
+    const keys = ['ml_item_id', 'ml_currency', 'ml_permalink', 'ml_thumbnail'];
+
+    keys.forEach((key) => {
+      const value = incoming[key];
+      if (!value) return;
+
+      if (overwrite || !isFilled(state.productMeta[key])) {
+        state.productMeta[key] = value;
+      }
+    });
+
+    if (incoming.ml_pictures.length && (overwrite || !state.productMeta.ml_pictures.length)) {
+      state.productMeta.ml_pictures = incoming.ml_pictures;
+    }
+  }
 
   function defaultImage() {
     return 'https://via.placeholder.com/640x480?text=Produto';
@@ -269,6 +322,7 @@
     refs.form.reset();
     state.editingId = null;
     state.lastAutoFillUrl = '';
+    state.productMeta = createEmptyProductMeta();
     refs.cancelEditBtn.classList.add('d-none');
     updateFormHeader();
     setSaveLoading(false);
@@ -281,6 +335,7 @@
 
   function beginEdit(item) {
     state.editingId = item.id;
+    state.productMeta = extractProductMeta(item);
 
     refs.linkAfiliado.value = item.link_afiliado || '';
     refs.titulo.value = item.titulo || '';
@@ -437,7 +492,7 @@
     try {
       let query = window.db
         .from('produtos')
-        .select('id, titulo, preco, imagem_url, link_afiliado, descricao, created_at, created_by')
+        .select('id, titulo, preco, imagem_url, link_afiliado, descricao, created_at, created_by, ml_item_id, ml_currency, ml_permalink, ml_thumbnail, ml_pictures')
         .order('created_at', { ascending: false });
 
       if (!state.isAdmin) {
@@ -458,6 +513,8 @@
   }
 
   function applyAutoFillData(data, { overwrite = true } = {}) {
+    mergeProductMeta(data, { overwrite });
+
     if (data.title && (overwrite || !isFilled(refs.titulo.value))) {
       refs.titulo.value = data.title;
     }
@@ -472,6 +529,14 @@
 
     if (data.description && (overwrite || !isFilled(refs.descricao.value))) {
       refs.descricao.value = data.description;
+    }
+
+    if (
+      !isFilled(refs.imagemUrl.value) &&
+      state.productMeta.ml_thumbnail &&
+      (overwrite || !isFilled(refs.imagemUrl.value))
+    ) {
+      refs.imagemUrl.value = state.productMeta.ml_thumbnail;
     }
   }
 
@@ -590,7 +655,12 @@
       titulo,
       imagem_url: imagem_url || null,
       preco,
-      descricao: descricao || null
+      descricao: descricao || null,
+      ml_item_id: state.productMeta.ml_item_id || null,
+      ml_currency: state.productMeta.ml_currency || null,
+      ml_permalink: state.productMeta.ml_permalink || null,
+      ml_thumbnail: state.productMeta.ml_thumbnail || null,
+      ml_pictures: state.productMeta.ml_pictures.length ? state.productMeta.ml_pictures : []
     };
 
     setSaveLoading(true);

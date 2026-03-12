@@ -447,7 +447,232 @@ function extractMercadoLivreItemIdFromUrl(urlValue) {
     if (id) return id;
   }
 
-  return extractMercadoLivreItemId(`${parsed.pathname}${parsed.search}`);
+  for (const [, value] of parsed.searchParams.entries()) {
+    const directId = extractMercadoLivreItemId(value);
+    if (directId) return directId;
+
+    const embeddedItemId = String(value || '').match(/item_id[:=](MLB[A-Z]{0,3}\d{7,})/i)?.[1];
+    if (embeddedItemId) {
+      const id = extractMercadoLivreItemId(embeddedItemId);
+      if (id) return id;
+    }
+  }
+
+  const fromText = extractMercadoLivreItemIdsFromText(`${parsed.pathname}${parsed.search}`);
+  if (fromText.length) {
+    fromText.sort((a, b) => {
+      const aDigits = a.replace(/\D/g, '').length;
+      const bDigits = b.replace(/\D/g, '').length;
+      return (bDigits - aDigits) || (b.length - a.length);
+    });
+    return fromText[0];
+  }
+
+  return null;
+}
+
+function extractMercadoLivreItemIdsFromText(value) {
+  const matches = String(value || '').match(/MLB[A-Z]{0,3}\d{7,}/gi) || [];
+  const unique = new Set();
+
+  for (const match of matches) {
+    const normalized = extractMercadoLivreItemId(match);
+    if (normalized) unique.add(normalized);
+  }
+
+  return [...unique];
+}
+
+function scoreMercadoLivreItemIdCandidate({ id, source }) {
+  const digits = String(id || '').replace(/\D/g, '').length;
+  let score = digits * 2;
+
+  if (source === 'query:wid' || source === 'query:item_id' || source === 'query:itemId') {
+    score += 120;
+  } else if (source === 'query:go') {
+    score += 95;
+  } else if (source.startsWith('social:featured')) {
+    score += 85;
+  } else if (source.startsWith('social:link')) {
+    score += 80;
+  } else if (source === 'url:path-search') {
+    score += 55;
+  } else {
+    score += 30;
+  }
+
+  if (digits >= 10) score += 22;
+  if (digits <= 8) score -= 16;
+
+  return score;
+}
+
+function collectMercadoLivreItemIdCandidates({ finalUrl, html }) {
+  const candidates = [];
+  const seen = new Set();
+
+  const pushCandidate = (id, source, url = null) => {
+    const normalizedId = extractMercadoLivreItemId(id);
+    if (!normalizedId) return;
+
+    const key = `${normalizedId}|${source}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+
+    candidates.push({
+      id: normalizedId,
+      source,
+      url,
+      score: scoreMercadoLivreItemIdCandidate({ id: normalizedId, source })
+    });
+  };
+
+  let parsedFinalUrl = null;
+  try {
+    parsedFinalUrl = typeof finalUrl === 'string' ? new URL(finalUrl) : finalUrl;
+  } catch {
+    parsedFinalUrl = null;
+  }
+
+  if (parsedFinalUrl) {
+    const queryCandidates = [
+      ['wid', parsedFinalUrl.searchParams.get('wid')],
+      ['item_id', parsedFinalUrl.searchParams.get('item_id')],
+      ['itemId', parsedFinalUrl.searchParams.get('itemId')],
+      ['id', parsedFinalUrl.searchParams.get('id')]
+    ];
+
+    for (const [name, value] of queryCandidates) {
+      if (!value) continue;
+      pushCandidate(value, `query:${name}`, parsedFinalUrl.toString());
+    }
+
+    const goParam = parsedFinalUrl.searchParams.get('go');
+    if (goParam) {
+      const decodedGo = decodeHtmlEntities(safeDecodeURIComponent(goParam));
+      pushCandidate(decodedGo, 'query:go', decodedGo);
+
+      try {
+        const goUrl = new URL(decodedGo);
+        pushCandidate(goUrl.searchParams.get('wid'), 'query:go:wid', goUrl.toString());
+        pushCandidate(goUrl.searchParams.get('item_id'), 'query:go:item_id', goUrl.toString());
+      } catch {
+        // Ignora URL inválida no parâmetro go.
+      }
+    }
+
+    const fromUrlText = extractMercadoLivreItemIdsFromText(`${parsedFinalUrl.pathname}${parsedFinalUrl.search}`);
+    for (const id of fromUrlText) {
+      pushCandidate(id, 'url:path-search', parsedFinalUrl.toString());
+    }
+  }
+
+  const socialFeatured = parseMercadoLivreSocialFeaturedData(html);
+  if (socialFeatured?.href) {
+    pushCandidate(extractMercadoLivreItemIdFromUrl(socialFeatured.href), 'social:featured.href', socialFeatured.href);
+    for (const id of extractMercadoLivreItemIdsFromText(socialFeatured.href)) {
+      pushCandidate(id, 'social:featured.href:text', socialFeatured.href);
+    }
+  }
+
+  const socialLinks = extractMercadoLivreProductLinks(html).slice(0, 10);
+  for (const link of socialLinks) {
+    pushCandidate(extractMercadoLivreItemIdFromUrl(link), 'social:link:url', link);
+    for (const id of extractMercadoLivreItemIdsFromText(link)) {
+      pushCandidate(id, 'social:link:text', link);
+    }
+  }
+
+  candidates.sort((a, b) => (b.score - a.score) || (b.id.length - a.id.length));
+  return candidates;
+}
+
+async function getMercadoLivreProduct(link, requestHeaders = {}) {
+  try {
+    const response = await fetch(link, {
+      method: 'GET',
+      headers: requestHeaders,
+      redirect: 'follow'
+    });
+
+    if (!response.ok) {
+      throw new Error(`Falha ao acessar link de origem. Status: ${response.status}`);
+    }
+
+    const finalUrl = response.url || link;
+    const html = await response.text();
+    const itemCandidates = collectMercadoLivreItemIdCandidates({ finalUrl, html });
+
+    if (!itemCandidates.length) {
+      throw new Error('Não foi possível encontrar o ID do produto.');
+    }
+
+    let lastError = null;
+
+    for (const candidate of itemCandidates.slice(0, 8)) {
+      try {
+        const itemResponse = await fetch(`https://api.mercadolibre.com/items/${candidate.id}`, {
+          headers: requestHeaders,
+          redirect: 'follow'
+        });
+
+        if (!itemResponse.ok) {
+          throw new Error(`Falha ao consultar item ${candidate.id}. Status: ${itemResponse.status}`);
+        }
+
+        const itemData = await itemResponse.json();
+        if (!itemData?.id) {
+          throw new Error(`Resposta inválida para item ${candidate.id}.`);
+        }
+
+        let descData = null;
+        try {
+          const descResponse = await fetch(`https://api.mercadolibre.com/items/${itemData.id}/description`, {
+            headers: requestHeaders,
+            redirect: 'follow'
+          });
+          if (descResponse.ok) {
+            descData = await descResponse.json();
+          }
+        } catch {
+          // Descrição pode falhar e não deve abortar o item principal.
+        }
+
+        const pictures = Array.isArray(itemData.pictures)
+          ? itemData.pictures.map((picture) => picture?.url).filter(Boolean)
+          : [];
+
+        const description = normalizeMultilineText(
+          descData?.plain_text || descData?.text || itemData?.short_description || null,
+          6000
+        );
+
+        return {
+          id: itemData.id,
+          title: normalizeText(itemData.title, 220),
+          price: parseMoneyValue(itemData.price),
+          currency: normalizeText(itemData.currency_id, 20),
+          permalink: itemData.permalink || candidate.url || finalUrl,
+          thumbnail: itemData.thumbnail || pictures[0] || parseImage(html, finalUrl),
+          pictures,
+          description,
+          source_url: finalUrl,
+          item_source: candidate.source
+        };
+      } catch (candidateError) {
+        lastError = candidateError;
+      }
+    }
+
+    if (lastError) throw lastError;
+    throw new Error('Não foi possível consultar os dados do produto na API do Mercado Livre.');
+  } catch (error) {
+    console.warn('[preview] mercadolivre api lookup failed', {
+      url: link,
+      message: error.message
+    });
+    return null;
+  }
 }
 
 function isGenericAffiliateDescription(text) {
@@ -935,6 +1160,49 @@ module.exports = async (req, res) => {
       'accept-language': 'pt-BR,pt;q=0.9,en;q=0.8'
     };
 
+    const apiProduct = await getMercadoLivreProduct(parsed.toString(), requestHeaders);
+    if (apiProduct?.title) {
+      const data = {
+        title: apiProduct.title,
+        image: apiProduct.thumbnail || (apiProduct.pictures?.[0] || null),
+        price: apiProduct.price ?? null,
+        price_source: apiProduct.price !== null ? 'api:items.price' : null,
+        price_confidence: apiProduct.price !== null ? 220 : null,
+        description: apiProduct.description || null,
+        description_source: apiProduct.description ? 'api:items.description' : null,
+        source_url: apiProduct.source_url || parsed.toString(),
+        resolved_product_url: apiProduct.permalink || null,
+        ml_item_id: apiProduct.id || null,
+        ml_currency: apiProduct.currency || null,
+        ml_permalink: apiProduct.permalink || null,
+        ml_thumbnail: apiProduct.thumbnail || null,
+        ml_pictures: Array.isArray(apiProduct.pictures) ? apiProduct.pictures : []
+      };
+
+      console.info('[preview] extraction result', {
+        source: 'mercadolivre_api',
+        source_url: data.source_url,
+        resolved_product_url: data.resolved_product_url,
+        title_found: Boolean(data.title),
+        image_found: Boolean(data.image),
+        price: data.price,
+        price_source: data.price_source,
+        description_found: Boolean(data.description),
+        description_source: data.description_source,
+        ml_item_id: data.ml_item_id,
+        item_source: apiProduct.item_source || null
+      });
+
+      return res.status(200).json({
+        ok: true,
+        data,
+        limitations: [
+          'A extração principal foi feita pela API pública do Mercado Livre.',
+          'Se a API ou o item estiver indisponível, o sistema usa fallback por metadados HTML.'
+        ]
+      });
+    }
+
     const response = await fetch(parsed.toString(), {
       headers: requestHeaders,
       redirect: 'follow'
@@ -1064,6 +1332,7 @@ module.exports = async (req, res) => {
     const resolvedProductUrl = productResolution?.blocked_by_verification
       ? (productResolution?.intended_url || null)
       : (productResolution?.url || null);
+    const mlItemId = extractMercadoLivreItemIdFromUrl(resolvedProductUrl || finalSourceUrl || baseUrl);
 
     const data = {
       title: finalTitle,
@@ -1074,7 +1343,12 @@ module.exports = async (req, res) => {
       description: finalDescription,
       description_source: finalDescriptionSource,
       source_url: finalSourceUrl,
-      resolved_product_url: resolvedProductUrl
+      resolved_product_url: resolvedProductUrl,
+      ml_item_id: mlItemId,
+      ml_currency: null,
+      ml_permalink: resolvedProductUrl || null,
+      ml_thumbnail: image || null,
+      ml_pictures: image ? [image] : []
     };
 
     console.info('[preview] extraction result', {
