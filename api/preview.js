@@ -175,6 +175,257 @@ function normalizeMultilineText(raw, maxLength = 6000) {
   return `${normalized.slice(0, maxLength - 3).trim()}...`;
 }
 
+function getOpenClawConfig() {
+  const baseUrl = String(process.env.OPENCLAW_BASE_URL || '').trim().replace(/\/+$/, '');
+  const token = String(process.env.OPENCLAW_GATEWAY_TOKEN || '').trim();
+  const password = String(process.env.OPENCLAW_GATEWAY_PASSWORD || '').trim();
+
+  if (!baseUrl) return null;
+  if (!token && !password) return null;
+
+  const agentId = String(process.env.OPENCLAW_AGENT_ID || 'main').trim() || 'main';
+  const model = String(process.env.OPENCLAW_MODEL || `openclaw:${agentId}`).trim() || `openclaw:${agentId}`;
+  const timeoutMs = Math.max(3000, Number(process.env.OPENCLAW_TIMEOUT_MS || 30000) || 30000);
+
+  return {
+    baseUrl,
+    agentId,
+    model,
+    timeoutMs,
+    authHeader: `Bearer ${token || password}`
+  };
+}
+
+function extractAssistantTextFromChatCompletion(payload) {
+  const content = payload?.choices?.[0]?.message?.content;
+
+  if (typeof content === 'string') {
+    return content.trim();
+  }
+
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === 'string') return part;
+        if (typeof part?.text === 'string') return part.text;
+        return '';
+      })
+      .join('\n')
+      .trim();
+  }
+
+  return null;
+}
+
+function extractJsonObjectFromText(value) {
+  const text = String(value || '').trim();
+  if (!text) return null;
+
+  const directCandidates = [
+    text,
+    text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
+  ];
+
+  for (const candidate of directCandidates) {
+    if (!candidate) continue;
+
+    try {
+      return JSON.parse(candidate);
+    } catch {
+      // Continua para heurística abaixo.
+    }
+  }
+
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start === -1 || end === -1 || end <= start) return null;
+
+  try {
+    return JSON.parse(text.slice(start, end + 1));
+  } catch {
+    return null;
+  }
+}
+
+function normalizeOpenClawProductPayload(raw, originalUrl) {
+  if (!raw || typeof raw !== 'object') return null;
+
+  const title = normalizeText(raw.title || raw.name || null, 220);
+  const image = normalizeText(raw.image || raw.image_url || raw.thumbnail || null, 2000);
+  const description = normalizeMultilineText(raw.description || raw.descricao || null, 6000);
+  const price = typeof raw.price === 'number'
+    ? Number.isFinite(raw.price) && raw.price > 0 ? Number(raw.price.toFixed(2)) : null
+    : parseMoneyValue(raw.price);
+
+  const sourceUrl = normalizeText(raw.source_url || raw.sourceUrl || originalUrl || null, 2000);
+  const resolvedProductUrl = normalizeText(
+    raw.resolved_product_url || raw.resolvedUrl || raw.product_url || raw.productUrl || null,
+    2000
+  );
+
+  const hasSignal = Boolean(title || image || description || price !== null);
+  if (!hasSignal) return null;
+
+  return {
+    title,
+    image,
+    price,
+    description,
+    source_url: sourceUrl,
+    resolved_product_url: resolvedProductUrl
+  };
+}
+
+function hasPreviewSignal(data) {
+  return Boolean(
+    data &&
+    (
+      data.title ||
+      data.image ||
+      data.description ||
+      (typeof data.price === 'number' && Number.isFinite(data.price) && data.price > 0)
+    )
+  );
+}
+
+function isCompletePreviewData(data) {
+  return Boolean(
+    data &&
+    data.title &&
+    data.image &&
+    data.description &&
+    typeof data.price === 'number' &&
+    Number.isFinite(data.price) &&
+    data.price > 0
+  );
+}
+
+function mergePreviewData(primary, secondary) {
+  if (!hasPreviewSignal(primary)) return secondary;
+  if (!hasPreviewSignal(secondary)) return primary;
+
+  const primaryHasPrice = typeof primary.price === 'number' && Number.isFinite(primary.price) && primary.price > 0;
+  const secondaryHasPrice = typeof secondary.price === 'number' && Number.isFinite(secondary.price) && secondary.price > 0;
+  const primaryPictures = Array.isArray(primary.ml_pictures) ? primary.ml_pictures.filter(Boolean) : [];
+  const secondaryPictures = Array.isArray(secondary.ml_pictures) ? secondary.ml_pictures.filter(Boolean) : [];
+
+  return {
+    title: primary.title || secondary.title || null,
+    image: primary.image || secondary.image || null,
+    price: primaryHasPrice ? primary.price : (secondaryHasPrice ? secondary.price : null),
+    price_source: primaryHasPrice ? (primary.price_source || null) : (secondary.price_source || null),
+    price_confidence: primaryHasPrice
+      ? (primary.price_confidence ?? secondary.price_confidence ?? null)
+      : (secondary.price_confidence ?? null),
+    description: primary.description || secondary.description || null,
+    description_source: primary.description
+      ? (primary.description_source || null)
+      : (secondary.description_source || null),
+    source_url: primary.source_url || secondary.source_url || null,
+    resolved_product_url: primary.resolved_product_url || secondary.resolved_product_url || null,
+    ml_item_id: primary.ml_item_id || secondary.ml_item_id || null,
+    ml_currency: primary.ml_currency || secondary.ml_currency || null,
+    ml_permalink: primary.ml_permalink || secondary.ml_permalink || null,
+    ml_thumbnail: primary.ml_thumbnail || secondary.ml_thumbnail || null,
+    ml_pictures: primaryPictures.length ? primaryPictures : secondaryPictures
+  };
+}
+
+function buildOpenClawPreviewData(product, originalUrl) {
+  if (!product) return null;
+
+  const sourceUrl = product.source_url || originalUrl || null;
+  const resolvedProductUrl = product.resolved_product_url || null;
+  const itemId = extractMercadoLivreItemIdFromUrl(resolvedProductUrl || sourceUrl || originalUrl || '');
+  const image = product.image || null;
+
+  return {
+    title: product.title || null,
+    image,
+    price: product.price ?? null,
+    price_source: product.price !== null ? 'openclaw:chat_completions' : null,
+    price_confidence: product.price !== null ? 260 : null,
+    description: product.description || null,
+    description_source: product.description ? 'openclaw:chat_completions' : null,
+    source_url: sourceUrl || originalUrl || null,
+    resolved_product_url: resolvedProductUrl,
+    ml_item_id: itemId,
+    ml_currency: null,
+    ml_permalink: resolvedProductUrl || null,
+    ml_thumbnail: image,
+    ml_pictures: image ? [image] : []
+  };
+}
+
+async function getOpenClawProduct(link) {
+  const config = getOpenClawConfig();
+  if (!config) return null;
+
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timeout = controller
+    ? setTimeout(() => controller.abort(new Error('Open.Claw timeout')), config.timeoutMs)
+    : null;
+
+  try {
+    const response = await fetch(`${config.baseUrl}/v1/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'authorization': config.authHeader,
+        'x-openclaw-agent-id': config.agentId
+      },
+      body: JSON.stringify({
+        model: config.model,
+        temperature: 0,
+        user: 'affiliate-preview',
+        messages: [
+          {
+            role: 'system',
+            content: [
+              'Você extrai dados de produto a partir de links de afiliado.',
+              'Abra o link informado, siga redirecionamentos até a página do produto e responda somente com JSON válido.',
+              'Campos obrigatórios do JSON: title, image, price, description, source_url, resolved_product_url.',
+              'Use null quando um campo não puder ser obtido com confiança.',
+              'Em price, retorne apenas número decimal sem símbolo de moeda.',
+              'Em image, retorne uma URL absoluta da imagem principal.',
+              'Não inclua markdown, comentários ou texto fora do JSON.'
+            ].join(' ')
+          },
+          {
+            role: 'user',
+            content: `Extraia os dados do produto deste link de afiliado: ${link}`
+          }
+        ]
+      }),
+      signal: controller?.signal
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Open.Claw HTTP ${response.status}: ${normalizeText(errorText, 160) || 'sem detalhes'}`);
+    }
+
+    const payload = await response.json();
+    const assistantText = extractAssistantTextFromChatCompletion(payload);
+    const parsedPayload = extractJsonObjectFromText(assistantText);
+    const product = normalizeOpenClawProductPayload(parsedPayload, link);
+
+    if (!product) {
+      throw new Error('Open.Claw não retornou um JSON de produto utilizável.');
+    }
+
+    return product;
+  } catch (error) {
+    console.warn('[preview] openclaw lookup failed', {
+      url: link,
+      message: error.message
+    });
+    return null;
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
+
 function parseMercadoLivreSocialFeaturedData(html) {
   if (!/rl-social-desktop|ui-ms-profile|poly-component__title/i.test(String(html || ''))) {
     return null;
@@ -1205,6 +1456,33 @@ module.exports = async (req, res) => {
       url: parsed.toString()
     });
 
+    const openClawProduct = await getOpenClawProduct(parsed.toString());
+    const openClawData = buildOpenClawPreviewData(openClawProduct, parsed.toString());
+
+    if (isCompletePreviewData(openClawData)) {
+      console.info('[preview] extraction result', {
+        source: 'openclaw',
+        source_url: openClawData.source_url,
+        resolved_product_url: openClawData.resolved_product_url,
+        title_found: Boolean(openClawData.title),
+        image_found: Boolean(openClawData.image),
+        price: openClawData.price,
+        price_source: openClawData.price_source,
+        description_found: Boolean(openClawData.description),
+        description_source: openClawData.description_source,
+        ml_item_id: openClawData.ml_item_id
+      });
+
+      return res.status(200).json({
+        ok: true,
+        data: openClawData,
+        limitations: [
+          'A extração principal foi feita via Open.Claw.',
+          'Se a Open.Claw falhar ou retornar dados parciais, o sistema usa fallback local de extração.'
+        ]
+      });
+    }
+
     const requestHeaders = {
       'user-agent': 'Mozilla/5.0 (compatible; AffiliateCatalogBot/1.0; +https://vercel.com)',
       'accept-language': 'pt-BR,pt;q=0.9,en;q=0.8'
@@ -1212,7 +1490,7 @@ module.exports = async (req, res) => {
 
     const apiProduct = await getMercadoLivreProduct(parsed.toString(), requestHeaders);
     if (apiProduct?.title) {
-      const data = {
+      const apiData = {
         title: apiProduct.title,
         image: apiProduct.thumbnail || (apiProduct.pictures?.[0] || null),
         price: apiProduct.price ?? null,
@@ -1228,9 +1506,10 @@ module.exports = async (req, res) => {
         ml_thumbnail: apiProduct.thumbnail || null,
         ml_pictures: Array.isArray(apiProduct.pictures) ? apiProduct.pictures : []
       };
+      const data = mergePreviewData(openClawData, apiData);
 
       console.info('[preview] extraction result', {
-        source: 'mercadolivre_api',
+        source: hasPreviewSignal(openClawData) ? 'openclaw+mercadolivre_api' : 'mercadolivre_api',
         source_url: data.source_url,
         resolved_product_url: data.resolved_product_url,
         title_found: Boolean(data.title),
@@ -1247,8 +1526,10 @@ module.exports = async (req, res) => {
         ok: true,
         data,
         limitations: [
-          'A extração principal foi feita pela API pública do Mercado Livre.',
-          'Se a API ou o item estiver indisponível, o sistema usa fallback por metadados HTML.'
+          hasPreviewSignal(openClawData)
+            ? 'A extração combinou Open.Claw com a API pública do Mercado Livre.'
+            : 'A extração principal foi feita pela API pública do Mercado Livre.',
+          'Se a Open.Claw, a API ou o item estiverem indisponíveis, o sistema usa fallback por metadados HTML.'
         ]
       });
     }
@@ -1263,6 +1544,18 @@ module.exports = async (req, res) => {
         url: parsed.toString(),
         status: response.status
       });
+
+      if (hasPreviewSignal(openClawData)) {
+        return res.status(200).json({
+          ok: true,
+          data: openClawData,
+          limitations: [
+            'A Open.Claw retornou dados utilizáveis, mas o acesso direto à URL externa falhou.',
+            `Falha ao acessar URL externa. Status: ${response.status}`
+          ]
+        });
+      }
+
       return res.status(502).json({
         ok: false,
         error: `Falha ao acessar URL externa. Status: ${response.status}`
@@ -1384,7 +1677,7 @@ module.exports = async (req, res) => {
       : (productResolution?.url || null);
     const mlItemId = extractMercadoLivreItemIdFromUrl(resolvedProductUrl || finalSourceUrl || baseUrl);
 
-    const data = {
+    const htmlData = {
       title: finalTitle,
       image,
       price: finalPrice,
@@ -1400,8 +1693,10 @@ module.exports = async (req, res) => {
       ml_thumbnail: image || null,
       ml_pictures: image ? [image] : []
     };
+    const data = mergePreviewData(openClawData, htmlData);
 
     console.info('[preview] extraction result', {
+      source: hasPreviewSignal(openClawData) ? 'openclaw+html' : 'html',
       source_url: finalSourceUrl,
       original_url: baseUrl,
       resolved_product_url: data.resolved_product_url,
@@ -1420,7 +1715,9 @@ module.exports = async (req, res) => {
       ok: true,
       data,
       limitations: [
-        'A extração depende de metadados públicos da página.',
+        hasPreviewSignal(openClawData)
+          ? 'A extração combinou Open.Claw com metadados públicos da página.'
+          : 'A extração depende de metadados públicos da página.',
         'Caso o site bloqueie bots ou renderize dados apenas via JavaScript, o preenchimento pode falhar.',
         'Quando a extração falhar, use o preenchimento manual no formulário.'
       ]

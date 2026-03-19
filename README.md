@@ -75,6 +75,31 @@ Abra:
 4. Deploy.
 5. Atualize `Authentication > URL Configuration` no Supabase com a URL final da Vercel.
 
+## 5) Integrar com Open.Claw
+
+O endpoint [`/api/preview`](./api/preview.js) agora tenta usar a Open.Claw como fonte principal para extrair:
+
+- nome do produto
+- imagem principal
+- preço
+- descrição
+
+Configure estas variáveis de ambiente na Vercel ou no ambiente local:
+
+- `OPENCLAW_BASE_URL`: base HTTP do Gateway OpenClaw com `chatCompletions` habilitado. Ex.: `http://127.0.0.1:18789`
+- `OPENCLAW_GATEWAY_TOKEN`: token bearer do Gateway
+- `OPENCLAW_GATEWAY_PASSWORD`: alternativa ao token, se o Gateway estiver em modo password
+- `OPENCLAW_AGENT_ID`: agente alvo. Padrão: `main`
+- `OPENCLAW_MODEL`: opcional. Padrão: `openclaw:<agentId>`
+- `OPENCLAW_TIMEOUT_MS`: timeout da chamada HTTP. Padrão: `30000`
+
+Observações:
+
+- A Open.Claw é usada primeiro; se falhar ou retornar dados parciais, o sistema continua com o fallback atual.
+- A URL em `OPENCLAW_BASE_URL` precisa ser alcançável pelo ambiente onde o endpoint roda. `127.0.0.1` funciona em `vercel dev`, mas não no deploy hospedado da Vercel.
+- O endpoint `/v1/chat/completions` da OpenClaw deve estar habilitado no Gateway.
+- Mantenha o Gateway privado. O bearer token da Open.Claw deve ser tratado como credencial sensível de operador.
+
 ## Fluxo de uso
 
 1. Acesse `login.html` e faça login com usuário existente no Supabase Auth.
@@ -94,10 +119,11 @@ Abra:
 
 ## Limitações da captura automática
 
-A captura automática depende do HTML retornado pelo link de afiliado. Alguns cenários podem impedir extração total:
+A captura automática pode usar Open.Claw, API pública do Mercado Livre e metadados HTML. Alguns cenários ainda podem impedir extração total:
 
 - Bloqueio anti-bot do site de destino
 - Conteúdo renderizado apenas por JavaScript no lado do cliente
 - Ausência de metatags (`og:title`, `og:image`, `product:price`)
+- Open.Claw não configurada, indisponível ou sem acesso ao link de destino
 
 Nesses casos, o formulário permite edição manual de título, imagem e preço.
