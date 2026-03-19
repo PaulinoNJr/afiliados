@@ -100,6 +100,83 @@ Observações:
 - O endpoint `/v1/chat/completions` da OpenClaw deve estar habilitado no Gateway.
 - Mantenha o Gateway privado. O bearer token da Open.Claw deve ser tratado como credencial sensível de operador.
 
+### Teste local com `vercel dev`
+
+1. Inicie a Open.Claw com o endpoint `chatCompletions` habilitado.
+2. Crie um arquivo `.env.local` na raiz do projeto com algo como:
+
+```env
+OPENCLAW_BASE_URL=http://127.0.0.1:18789
+OPENCLAW_GATEWAY_TOKEN=seu-token-forte
+OPENCLAW_AGENT_ID=main
+OPENCLAW_MODEL=openclaw:main
+OPENCLAW_TIMEOUT_MS=30000
+```
+
+3. Suba o projeto com:
+
+```bash
+vercel dev
+```
+
+4. Teste a configuração da Open.Claw:
+
+```bash
+curl "http://localhost:3000/api/preview-debug"
+```
+
+5. Teste conectividade/autenticação com o gateway:
+
+```bash
+curl "http://localhost:3000/api/preview-debug?probe=1"
+```
+
+6. Teste extração com um link de afiliado:
+
+```bash
+curl "http://localhost:3000/api/preview-debug?url=https%3A%2F%2Fmeli.la%2F2uK99UE"
+```
+
+Leituras esperadas:
+
+- `config.configured: true`: variáveis carregadas.
+- `probe.ok: true`: gateway respondeu.
+- `probe.parsed_json`: a Open.Claw conseguiu devolver JSON de produto.
+
+Se o `probe` vier com erro, o motivo é retornado no próprio JSON.
+
+### Deploy na Vercel
+
+Se o projeto estiver hospedado na Vercel, configure as mesmas variáveis em `Project Settings > Environment Variables`.
+
+Importante:
+
+- `OPENCLAW_BASE_URL=http://127.0.0.1:18789` não funciona na Vercel hospedada.
+- A Open.Claw precisa estar em uma URL privada alcançável pela função serverless, por exemplo:
+  - uma máquina/VPS na mesma rede privada
+  - um proxy interno protegido
+  - um host acessível via VPN/tailnet
+
+Depois do deploy, você pode validar pelo navegador ou `curl`:
+
+```bash
+curl "https://SEU-DOMINIO.vercel.app/api/preview-debug"
+curl "https://SEU-DOMINIO.vercel.app/api/preview-debug?probe=1"
+```
+
+### Diagnóstico rápido
+
+O endpoint [`/api/preview-debug`](./api/preview-debug.js) serve para isolar a Open.Claw do resto da captura:
+
+- sem query: mostra se a configuração existe
+- `?probe=1`: testa se o gateway responde
+- `?url=...`: testa a extração de um link de afiliado usando a Open.Claw
+
+No `admin.html`, a mensagem de preenchimento automático agora informa também quando:
+
+- a Open.Claw não está configurada
+- a Open.Claw falhou e o sistema caiu no fallback do Mercado Livre
+
 ## Fluxo de uso
 
 1. Acesse `login.html` e faça login com usuário existente no Supabase Auth.

@@ -10,6 +10,7 @@
     isAdmin: false,
     lastAutoFillUrl: '',
     autoFillSourceLabel: null,
+    autoFillDiagnostics: null,
     productMeta: {
       ml_item_id: null,
       ml_currency: null,
@@ -262,11 +263,18 @@
     const label = String(state.autoFillSourceLabel || '').trim();
     if (!label) {
       refs.previewSourceTag.textContent = '';
+      refs.previewSourceTag.removeAttribute('title');
       refs.previewSourceTag.classList.add('d-none');
       return;
     }
 
     refs.previewSourceTag.textContent = `Fonte: ${label}`;
+    const diagnosticsReason = String(state.autoFillDiagnostics?.reason || '').trim();
+    if (diagnosticsReason && label !== 'Open.Claw') {
+      refs.previewSourceTag.title = `Open.Claw: ${diagnosticsReason}`;
+    } else {
+      refs.previewSourceTag.removeAttribute('title');
+    }
     refs.previewSourceTag.classList.remove('d-none');
   }
 
@@ -371,6 +379,7 @@
     state.editingId = null;
     state.lastAutoFillUrl = '';
     state.autoFillSourceLabel = null;
+    state.autoFillDiagnostics = null;
     state.productMeta = createEmptyProductMeta();
     refs.cancelEditBtn.classList.add('d-none');
     updateFormHeader();
@@ -385,6 +394,7 @@
   function beginEdit(item) {
     state.editingId = item.id;
     state.autoFillSourceLabel = null;
+    state.autoFillDiagnostics = null;
     state.productMeta = extractProductMeta(item);
 
     refs.linkAfiliado.value = item.link_afiliado || '';
@@ -564,6 +574,7 @@
 
   function applyAutoFillData(data, { overwrite = true } = {}) {
     state.autoFillSourceLabel = inferCaptureSourceLabel(data);
+    state.autoFillDiagnostics = data.capture_diagnostics || null;
     mergeProductMeta(data, { overwrite });
 
     if (data.title && (overwrite || !isFilled(refs.titulo.value))) {
@@ -636,7 +647,18 @@
       }
 
       if (!silent) {
-        showStatus(`Preenchimento automático concluído (${filled.join(', ')}). Revise antes de salvar.`, 'success');
+        const diagnostics = data.capture_diagnostics || null;
+        const openClawNote =
+          diagnostics?.status === 'not_configured'
+            ? ` Open.Claw não configurada: ${diagnostics.reason}.`
+            : diagnostics?.status === 'error'
+              ? ` Open.Claw falhou: ${diagnostics.reason}.`
+              : '';
+
+        showStatus(
+          `Preenchimento automático concluído (${filled.join(', ')}). Fonte: ${inferCaptureSourceLabel(data) || 'desconhecida'}.${openClawNote} Revise antes de salvar.`,
+          'success'
+        );
       }
     } catch (err) {
       if (!silent) {

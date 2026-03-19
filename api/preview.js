@@ -180,14 +180,26 @@ function getOpenClawConfig() {
   const token = String(process.env.OPENCLAW_GATEWAY_TOKEN || '').trim();
   const password = String(process.env.OPENCLAW_GATEWAY_PASSWORD || '').trim();
 
-  if (!baseUrl) return null;
-  if (!token && !password) return null;
+  if (!baseUrl) {
+    return {
+      enabled: false,
+      reason: 'OPENCLAW_BASE_URL ausente'
+    };
+  }
+
+  if (!token && !password) {
+    return {
+      enabled: false,
+      reason: 'OPENCLAW_GATEWAY_TOKEN/OPENCLAW_GATEWAY_PASSWORD ausente'
+    };
+  }
 
   const agentId = String(process.env.OPENCLAW_AGENT_ID || 'main').trim() || 'main';
   const model = String(process.env.OPENCLAW_MODEL || `openclaw:${agentId}`).trim() || `openclaw:${agentId}`;
   const timeoutMs = Math.max(3000, Number(process.env.OPENCLAW_TIMEOUT_MS || 30000) || 30000);
 
   return {
+    enabled: true,
     baseUrl,
     agentId,
     model,
@@ -350,6 +362,13 @@ function withCaptureSource(data, source) {
   };
 }
 
+function withCaptureDiagnostics(data, diagnostics) {
+  return {
+    ...data,
+    capture_diagnostics: diagnostics || null
+  };
+}
+
 function buildOpenClawPreviewData(product, originalUrl) {
   if (!product) return null;
 
@@ -378,7 +397,17 @@ function buildOpenClawPreviewData(product, originalUrl) {
 
 async function getOpenClawProduct(link) {
   const config = getOpenClawConfig();
-  if (!config) return null;
+  if (!config?.enabled) {
+    return {
+      product: null,
+      diagnostics: {
+        attempted: false,
+        available: false,
+        status: 'not_configured',
+        reason: config?.reason || 'Open.Claw desabilitada'
+      }
+    };
+  }
 
   const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
   const timeout = controller
@@ -433,13 +462,29 @@ async function getOpenClawProduct(link) {
       throw new Error('Open.Claw não retornou um JSON de produto utilizável.');
     }
 
-    return product;
+    return {
+      product,
+      diagnostics: {
+        attempted: true,
+        available: true,
+        status: 'ok',
+        reason: null
+      }
+    };
   } catch (error) {
     console.warn('[preview] openclaw lookup failed', {
       url: link,
       message: error.message
     });
-    return null;
+    return {
+      product: null,
+      diagnostics: {
+        attempted: true,
+        available: true,
+        status: 'error',
+        reason: error.message
+      }
+    };
   } finally {
     if (timeout) clearTimeout(timeout);
   }
@@ -1475,7 +1520,9 @@ module.exports = async (req, res) => {
       url: parsed.toString()
     });
 
-    const openClawProduct = await getOpenClawProduct(parsed.toString());
+    const openClawResult = await getOpenClawProduct(parsed.toString());
+    const openClawProduct = openClawResult?.product || null;
+    const openClawDiagnostics = openClawResult?.diagnostics || null;
     const openClawData = buildOpenClawPreviewData(openClawProduct, parsed.toString());
 
     if (isCompletePreviewData(openClawData)) {
@@ -1494,7 +1541,7 @@ module.exports = async (req, res) => {
 
       return res.status(200).json({
         ok: true,
-        data: withCaptureSource(openClawData, 'openclaw'),
+        data: withCaptureDiagnostics(withCaptureSource(openClawData, 'openclaw'), openClawDiagnostics),
         limitations: [
           'A extração principal foi feita via Open.Claw.',
           'Se a Open.Claw falhar ou retornar dados parciais, o sistema usa fallback local de extração.'
@@ -1544,7 +1591,7 @@ module.exports = async (req, res) => {
       const captureSource = hasPreviewSignal(openClawData) ? 'openclaw+mercadolivre_api' : 'mercadolivre_api';
       return res.status(200).json({
         ok: true,
-        data: withCaptureSource(data, captureSource),
+        data: withCaptureDiagnostics(withCaptureSource(data, captureSource), openClawDiagnostics),
         limitations: [
           hasPreviewSignal(openClawData)
             ? 'A extração combinou Open.Claw com a API pública do Mercado Livre.'
@@ -1568,7 +1615,7 @@ module.exports = async (req, res) => {
       if (hasPreviewSignal(openClawData)) {
         return res.status(200).json({
           ok: true,
-          data: withCaptureSource(openClawData, 'openclaw'),
+          data: withCaptureDiagnostics(withCaptureSource(openClawData, 'openclaw'), openClawDiagnostics),
           limitations: [
             'A Open.Claw retornou dados utilizáveis, mas o acesso direto à URL externa falhou.',
             `Falha ao acessar URL externa. Status: ${response.status}`
@@ -1734,7 +1781,7 @@ module.exports = async (req, res) => {
     const captureSource = hasPreviewSignal(openClawData) ? 'openclaw+html' : 'html';
     return res.status(200).json({
       ok: true,
-      data: withCaptureSource(data, captureSource),
+      data: withCaptureDiagnostics(withCaptureSource(data, captureSource), openClawDiagnostics),
       limitations: [
         hasPreviewSignal(openClawData)
           ? 'A extração combinou Open.Claw com metadados públicos da página.'
