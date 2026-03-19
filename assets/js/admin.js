@@ -9,6 +9,7 @@
     role: 'produtor',
     isAdmin: false,
     lastAutoFillUrl: '',
+    autoFillSourceLabel: null,
     productMeta: {
       ml_item_id: null,
       ml_currency: null,
@@ -48,6 +49,7 @@
     previewDescription: document.getElementById('previewDescription'),
     previewPrice: document.getElementById('previewPrice'),
     previewLink: document.getElementById('previewLink'),
+    previewSourceTag: document.getElementById('previewSourceTag'),
 
     adminSearchInput: document.getElementById('adminSearchInput'),
     adminFilterSelect: document.getElementById('adminFilterSelect'),
@@ -225,6 +227,49 @@
     refs.formTitle.textContent = state.editingId ? 'Editar produto' : 'Novo produto';
   }
 
+  function inferCaptureSourceLabel(data = {}) {
+    const explicitLabel = String(data.capture_source_label || '').trim();
+    if (explicitLabel) return explicitLabel;
+
+    const explicitSource = String(data.capture_source || '').trim().toLowerCase();
+    if (explicitSource === 'openclaw') return 'Open.Claw';
+    if (explicitSource === 'mercadolivre_api' || explicitSource === 'html') return 'Mercado Livre';
+    if (explicitSource === 'openclaw+mercadolivre_api' || explicitSource === 'openclaw+html') {
+      return 'Open.Claw + Mercado Livre';
+    }
+
+    const candidates = [
+      String(data.description_source || '').toLowerCase(),
+      String(data.price_source || '').toLowerCase()
+    ].filter(Boolean);
+
+    const hasOpenClaw = candidates.some((value) => value.startsWith('openclaw:'));
+    const hasMercadoLivre = candidates.some((value) =>
+      value.startsWith('api:items.') ||
+      value.startsWith('html:') ||
+      value.startsWith('jsonld:') ||
+      value.startsWith('meta:') ||
+      value.startsWith('fallback:social.')
+    );
+
+    if (hasOpenClaw && hasMercadoLivre) return 'Open.Claw + Mercado Livre';
+    if (hasOpenClaw) return 'Open.Claw';
+    if (hasMercadoLivre || data.ml_item_id) return 'Mercado Livre';
+    return null;
+  }
+
+  function updatePreviewSourceTag() {
+    const label = String(state.autoFillSourceLabel || '').trim();
+    if (!label) {
+      refs.previewSourceTag.textContent = '';
+      refs.previewSourceTag.classList.add('d-none');
+      return;
+    }
+
+    refs.previewSourceTag.textContent = `Fonte: ${label}`;
+    refs.previewSourceTag.classList.remove('d-none');
+  }
+
   function updatePreview() {
     const title = refs.titulo.value.trim() || 'Produto sem título';
     const description = refs.descricao.value.trim() || 'Adicione uma descrição para melhorar a conversão.';
@@ -250,6 +295,8 @@
       refs.previewLink.classList.add('disabled', 'text-secondary');
       refs.previewLink.setAttribute('aria-disabled', 'true');
     }
+
+    updatePreviewSourceTag();
   }
 
   function resetPreview() {
@@ -260,6 +307,7 @@
     refs.previewLink.href = '#';
     refs.previewLink.classList.add('disabled', 'text-secondary');
     refs.previewLink.setAttribute('aria-disabled', 'true');
+    updatePreviewSourceTag();
   }
 
   function clearDraft() {
@@ -322,6 +370,7 @@
     refs.form.reset();
     state.editingId = null;
     state.lastAutoFillUrl = '';
+    state.autoFillSourceLabel = null;
     state.productMeta = createEmptyProductMeta();
     refs.cancelEditBtn.classList.add('d-none');
     updateFormHeader();
@@ -335,6 +384,7 @@
 
   function beginEdit(item) {
     state.editingId = item.id;
+    state.autoFillSourceLabel = null;
     state.productMeta = extractProductMeta(item);
 
     refs.linkAfiliado.value = item.link_afiliado || '';
@@ -513,6 +563,7 @@
   }
 
   function applyAutoFillData(data, { overwrite = true } = {}) {
+    state.autoFillSourceLabel = inferCaptureSourceLabel(data);
     mergeProductMeta(data, { overwrite });
 
     if (data.title && (overwrite || !isFilled(refs.titulo.value))) {

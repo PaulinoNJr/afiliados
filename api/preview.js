@@ -331,6 +331,25 @@ function mergePreviewData(primary, secondary) {
   };
 }
 
+function getCaptureSourceLabel(source) {
+  const normalized = String(source || '').trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized === 'openclaw') return 'Open.Claw';
+  if (normalized === 'mercadolivre_api') return 'Mercado Livre';
+  if (normalized === 'html') return 'Mercado Livre';
+  if (normalized === 'openclaw+mercadolivre_api') return 'Open.Claw + Mercado Livre';
+  if (normalized === 'openclaw+html') return 'Open.Claw + Mercado Livre';
+  return normalized;
+}
+
+function withCaptureSource(data, source) {
+  return {
+    ...data,
+    capture_source: source || null,
+    capture_source_label: getCaptureSourceLabel(source)
+  };
+}
+
 function buildOpenClawPreviewData(product, originalUrl) {
   if (!product) return null;
 
@@ -1475,7 +1494,7 @@ module.exports = async (req, res) => {
 
       return res.status(200).json({
         ok: true,
-        data: openClawData,
+        data: withCaptureSource(openClawData, 'openclaw'),
         limitations: [
           'A extração principal foi feita via Open.Claw.',
           'Se a Open.Claw falhar ou retornar dados parciais, o sistema usa fallback local de extração.'
@@ -1522,9 +1541,10 @@ module.exports = async (req, res) => {
         item_source: apiProduct.item_source || null
       });
 
+      const captureSource = hasPreviewSignal(openClawData) ? 'openclaw+mercadolivre_api' : 'mercadolivre_api';
       return res.status(200).json({
         ok: true,
-        data,
+        data: withCaptureSource(data, captureSource),
         limitations: [
           hasPreviewSignal(openClawData)
             ? 'A extração combinou Open.Claw com a API pública do Mercado Livre.'
@@ -1548,7 +1568,7 @@ module.exports = async (req, res) => {
       if (hasPreviewSignal(openClawData)) {
         return res.status(200).json({
           ok: true,
-          data: openClawData,
+          data: withCaptureSource(openClawData, 'openclaw'),
           limitations: [
             'A Open.Claw retornou dados utilizáveis, mas o acesso direto à URL externa falhou.',
             `Falha ao acessar URL externa. Status: ${response.status}`
@@ -1711,9 +1731,10 @@ module.exports = async (req, res) => {
       description_source: data.description_source
     });
 
+    const captureSource = hasPreviewSignal(openClawData) ? 'openclaw+html' : 'html';
     return res.status(200).json({
       ok: true,
-      data,
+      data: withCaptureSource(data, captureSource),
       limitations: [
         hasPreviewSignal(openClawData)
           ? 'A extração combinou Open.Claw com metadados públicos da página.'
