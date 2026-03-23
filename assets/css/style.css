@@ -240,10 +240,13 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 }
 
 .public-store-card {
+  --store-accent-preview: #0d6efd;
   padding: 1rem;
-  border: 1px solid #dfe8f4;
+  border: 1px solid color-mix(in srgb, var(--store-accent-preview) 18%, #dfe8f4);
   border-radius: 1rem;
-  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--store-accent-preview) 10%, transparent), transparent 30%),
+    linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
 }
 
 .store-banner-preview,
@@ -267,6 +270,28 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 
 .hero-side-card {
   min-height: 100%;
+}
+
+.store-identity-card {
+  --store-accent-preview: #0d6efd;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--store-accent-preview) 18%, #dfe8f4);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--store-accent-preview) 12%, transparent), transparent 30%),
+    linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+}
+
+.store-identity-avatar {
+  width: 58px;
+  height: 58px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid rgba(13, 110, 253, 0.15);
+  background: #ffffff;
 }
 
 .dashboard-profile-card {

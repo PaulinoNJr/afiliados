@@ -24,8 +24,8 @@
     <div class="container">
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
         <div>
-          <h1 class="h3 mb-1">Configurações da loja</h1>
-          <p class="text-secondary mb-0">Edite sua identidade pública e o endereço da vitrine.</p>
+          <h1 class="h3 mb-1">Configuracoes da loja</h1>
+          <p class="text-secondary mb-0">Edite sua identidade publica, seu visual e o endereco da vitrine.</p>
         </div>
         <a href="admin.html" class="btn btn-outline-primary">Voltar ao painel</a>
       </div>
@@ -38,10 +38,10 @@
             <div class="card-body p-4">
               <div class="d-flex justify-content-between align-items-start mb-3">
                 <div>
-                  <h2 class="h5 mb-1">Perfil público do afiliado</h2>
-                  <p class="text-secondary small mb-0">Esses dados aparecem no painel e ajudam a identificar sua operação.</p>
+                  <h2 class="h5 mb-1">Perfil publico do afiliado</h2>
+                  <p class="text-secondary small mb-0">As imagens enviadas ficam salvas no bucket <strong>store-assets</strong> do Supabase Storage, em uma pasta separada por usuario.</p>
                 </div>
-                <button id="saveStoreBtn" type="submit" form="storeProfileForm" class="btn btn-primary">Salvar alterações</button>
+                <button id="saveStoreBtn" type="submit" form="storeProfileForm" class="btn btn-primary">Salvar alteracoes</button>
               </div>
 
               <form id="storeProfileForm" novalidate>
@@ -59,7 +59,12 @@
                     <input id="phone" type="tel" class="form-control" maxlength="30" />
                   </div>
                   <div class="col-12 col-md-6">
-                    <label for="photoUrl" class="form-label">Foto (URL)</label>
+                    <label for="photoUpload" class="form-label">Foto do perfil</label>
+                    <input id="photoUpload" type="file" class="form-control" accept="image/*" />
+                    <small id="photoUploadStatus" class="d-block mt-2 text-secondary">Envie JPG, PNG, WEBP ou GIF com ate 5 MB.</small>
+                  </div>
+                  <div class="col-12">
+                    <label for="photoUrl" class="form-label">Foto do perfil por URL</label>
                     <input id="photoUrl" type="url" class="form-control" placeholder="https://foto..." />
                   </div>
                 </div>
@@ -72,23 +77,44 @@
                 </div>
 
                 <div class="mb-2">
-                  <label for="storeSlug" class="form-label">Slug público</label>
+                  <label for="storeSlug" class="form-label">Slug publico</label>
                   <div class="input-group">
                     <span class="input-group-text">/</span>
                     <input id="storeSlug" type="text" class="form-control" maxlength="80" placeholder="minha-loja" required />
                   </div>
-                  <small id="storeSlugFeedback" class="d-block mt-2 text-secondary">Use letras minúsculas, números e hífens.</small>
+                  <small id="storeSlugFeedback" class="d-block mt-2 text-secondary">Use letras minusculas, numeros e hifens.</small>
                 </div>
 
                 <div class="mb-3">
+                  <label for="headline" class="form-label">Headline da loja</label>
+                  <input id="headline" type="text" class="form-control" maxlength="120" placeholder="Ex.: Achados da semana com curadoria propria" />
+                </div>
+
+                <div class="row g-3">
+                  <div class="col-12 col-md-6">
+                    <label for="accentColor" class="form-label">Cor de destaque</label>
+                    <input id="accentColor" type="color" class="form-control form-control-color" value="#0d6efd" title="Escolha a cor principal da loja" />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="ctaLabel" class="form-label">Texto do botao</label>
+                    <input id="ctaLabel" type="text" class="form-control" maxlength="40" placeholder="Ver produto" />
+                  </div>
+                </div>
+
+                <div class="mb-3 mt-3">
                   <label for="storeBio" class="form-label">Bio</label>
                   <textarea id="storeBio" class="form-control" rows="4" maxlength="300" placeholder="Explique o foco da sua loja."></textarea>
                 </div>
 
                 <div class="mb-3">
-                  <label for="storeBannerUrl" class="form-label">Banner (URL)</label>
+                  <label for="bannerUpload" class="form-label">Banner da loja</label>
+                  <input id="bannerUpload" type="file" class="form-control" accept="image/*" />
+                  <small id="bannerUploadStatus" class="d-block mt-2 text-secondary">Tamanho recomendado do banner: 1600 x 480 px. Envie JPG, PNG, WEBP ou GIF com ate 5 MB.</small>
+                </div>
+
+                <div class="mb-3">
+                  <label for="storeBannerUrl" class="form-label">Banner por URL</label>
                   <input id="storeBannerUrl" type="url" class="form-control" placeholder="https://imagem..." />
-                  <small class="text-muted d-block mt-2">Tamanho recomendado do banner: 1600 x 480 px.</small>
                 </div>
               </form>
             </div>
@@ -98,22 +124,24 @@
         <div class="col-12 col-xl-5">
           <div class="card border-0 shadow-sm">
             <div class="card-body p-4">
-              <p class="text-uppercase small fw-semibold text-secondary mb-3">Prévia</p>
+              <p class="text-uppercase small fw-semibold text-secondary mb-3">Previa</p>
               <div class="dashboard-profile-card mb-3">
                 <img id="photoPreview" class="dashboard-avatar d-none" alt="Foto do perfil" />
                 <div>
                   <p id="profileNamePreview" class="fw-semibold mb-1">Seu nome</p>
-                  <p id="profilePhonePreview" class="small text-secondary mb-0">Telefone não informado</p>
+                  <p id="profilePhonePreview" class="small text-secondary mb-0">Telefone nao informado</p>
                 </div>
               </div>
-              <img id="storeBannerPreview" class="store-banner-preview d-none mb-3" alt="Prévia do banner da loja" />
-              <div class="public-store-card">
+              <img id="storeBannerPreview" class="store-banner-preview d-none mb-3" alt="Previa do banner da loja" />
+              <div id="storePreviewCard" class="public-store-card">
                 <p id="storeNamePreview" class="fw-semibold mb-1">Sua loja</p>
+                <p id="headlinePreview" class="small mb-2 text-secondary">Adicione uma headline para destacar sua proposta.</p>
                 <p id="storeBioPreview" class="small text-secondary mb-3">Adicione uma bio para apresentar sua loja.</p>
-                <p id="storePublicUrl" class="small mb-1 text-break">Página pública indisponível.</p>
+                <p id="storePublicUrl" class="small mb-3 text-break">Pagina publica indisponivel.</p>
                 <div class="d-grid gap-2">
-                  <a id="storePublicUrlLink" href="index.html" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener noreferrer">Abrir página pública</a>
-                  <a href="produtos.html" class="btn btn-outline-dark btn-sm">Abrir página administrativa</a>
+                  <a id="storePublicUrlLink" href="index.html" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener noreferrer">Abrir pagina publica</a>
+                  <a href="produtos.html" class="btn btn-outline-dark btn-sm">Abrir pagina administrativa</a>
+                  <button id="ctaPreviewBtn" type="button" class="btn btn-primary btn-sm" disabled>Ver produto</button>
                 </div>
               </div>
             </div>

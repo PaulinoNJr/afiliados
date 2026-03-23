@@ -1,8 +1,13 @@
 (() => {
+  const DEFAULT_ACCENT = '#0d6efd';
+  const DEFAULT_CTA = 'Ver produto';
+
   const state = {
     session: null,
     profile: null,
-    users: []
+    users: [],
+    selectedUser: null,
+    slugCheckNonce: 0
   };
 
   const refs = {
@@ -22,7 +27,28 @@
     usersLoading: document.getElementById('usersLoading'),
     reloadUsersBtn: document.getElementById('reloadUsersBtn'),
     usersTableBody: document.getElementById('usersTableBody'),
-    emptyUsersState: document.getElementById('emptyUsersState')
+    emptyUsersState: document.getElementById('emptyUsersState'),
+
+    userEditorCard: document.getElementById('userEditorCard'),
+    editorIntro: document.getElementById('editorIntro'),
+    selectedUserStoreLink: document.getElementById('selectedUserStoreLink'),
+    clearEditorBtn: document.getElementById('clearEditorBtn'),
+    editUserForm: document.getElementById('editUserForm'),
+    selectedUserEmail: document.getElementById('selectedUserEmail'),
+    editRole: document.getElementById('editRole'),
+    editFirstName: document.getElementById('editFirstName'),
+    editLastName: document.getElementById('editLastName'),
+    editPhone: document.getElementById('editPhone'),
+    editStoreName: document.getElementById('editStoreName'),
+    editStoreSlug: document.getElementById('editStoreSlug'),
+    editStoreSlugFeedback: document.getElementById('editStoreSlugFeedback'),
+    editHeadline: document.getElementById('editHeadline'),
+    editAccentColor: document.getElementById('editAccentColor'),
+    editCtaLabel: document.getElementById('editCtaLabel'),
+    editBio: document.getElementById('editBio'),
+    editPhotoUrl: document.getElementById('editPhotoUrl'),
+    editBannerUrl: document.getElementById('editBannerUrl'),
+    saveUserBtn: document.getElementById('saveUserBtn')
   };
 
   function showStatus(message, type = 'warning') {
@@ -40,6 +66,11 @@
     refs.createUserBtn.textContent = isLoading ? 'Criando...' : 'Criar usuario';
   }
 
+  function setSaveUserLoading(isLoading) {
+    refs.saveUserBtn.disabled = isLoading;
+    refs.saveUserBtn.textContent = isLoading ? 'Salvando...' : 'Salvar alteracoes';
+  }
+
   function setUsersLoading(isLoading) {
     refs.usersLoading.classList.toggle('d-none', !isLoading);
   }
@@ -47,6 +78,25 @@
   function formatDate(value) {
     if (!value) return '-';
     return new Date(value).toLocaleString('pt-BR');
+  }
+
+  function isValidHttpUrl(raw) {
+    try {
+      const parsed = new URL(raw);
+      return ['http:', 'https:'].includes(parsed.protocol);
+    } catch {
+      return false;
+    }
+  }
+
+  function normalizeAccentColor(value) {
+    const raw = String(value || '').trim().toLowerCase();
+    return /^#([0-9a-f]{6}|[0-9a-f]{3})$/.test(raw) ? raw : DEFAULT_ACCENT;
+  }
+
+  function setSlugFeedback(message, tone = 'secondary') {
+    refs.editStoreSlugFeedback.className = `d-block mt-2 text-${tone}`;
+    refs.editStoreSlugFeedback.textContent = message;
   }
 
   function updatePasswordValidation() {
@@ -87,11 +137,49 @@
     refs.userRoleBadge.className = state.profile.role === 'admin' ? 'badge text-bg-primary' : 'badge text-bg-secondary';
   }
 
+  function clearEditor() {
+    state.selectedUser = null;
+    refs.editUserForm.reset();
+    refs.userEditorCard.classList.add('d-none');
+    refs.selectedUserStoreLink.classList.add('d-none');
+    setSlugFeedback('Use letras minusculas, numeros e hifens.', 'secondary');
+  }
+
+  function populateEditor(user) {
+    state.selectedUser = user;
+
+    refs.selectedUserEmail.value = user.user_email || '';
+    refs.editRole.value = user.role || 'produtor';
+    refs.editFirstName.value = user.first_name || '';
+    refs.editLastName.value = user.last_name || '';
+    refs.editPhone.value = user.phone || '';
+    refs.editStoreName.value = user.store_name || '';
+    refs.editStoreSlug.value = user.slug || '';
+    refs.editHeadline.value = user.headline || '';
+    refs.editAccentColor.value = normalizeAccentColor(user.accent_color || DEFAULT_ACCENT);
+    refs.editCtaLabel.value = user.cta_label || DEFAULT_CTA;
+    refs.editBio.value = user.bio || '';
+    refs.editPhotoUrl.value = user.photo_url || '';
+    refs.editBannerUrl.value = user.banner_url || '';
+    refs.editorIntro.textContent = `Editando ${user.user_email || 'usuario sem email'}.`;
+    refs.userEditorCard.classList.remove('d-none');
+
+    if (user.slug) {
+      refs.selectedUserStoreLink.href = window.StoreUtils.getStoreUrl(user.slug);
+      refs.selectedUserStoreLink.classList.remove('d-none');
+    } else {
+      refs.selectedUserStoreLink.classList.add('d-none');
+    }
+
+    setSlugFeedback('Use letras minusculas, numeros e hifens.', 'secondary');
+  }
+
   function renderUsers() {
     refs.usersTableBody.innerHTML = '';
 
     if (!state.users.length) {
       refs.emptyUsersState.classList.remove('d-none');
+      clearEditor();
       return;
     }
 
@@ -99,49 +187,41 @@
 
     state.users.forEach((user) => {
       const tr = document.createElement('tr');
+      const isSelected = state.selectedUser?.user_id === user.user_id;
 
       const tdEmail = document.createElement('td');
-      tdEmail.textContent = user.user_email || `Sem email (${user.user_id.slice(0, 8)}...)`;
+      tdEmail.innerHTML = `
+        <div class="fw-semibold">${user.user_email || `Sem email (${user.user_id.slice(0, 8)}...)`}</div>
+        <div class="small text-secondary">${[user.first_name, user.last_name].filter(Boolean).join(' ') || 'Sem nome informado'}</div>
+      `;
+
+      const tdStore = document.createElement('td');
+      tdStore.innerHTML = `
+        <div class="fw-semibold">${user.store_name || 'Sem loja'}</div>
+        <div class="small text-secondary">${user.slug ? `/${user.slug}` : 'Slug nao definido'}</div>
+      `;
 
       const tdRole = document.createElement('td');
-      const roleSelect = document.createElement('select');
-      roleSelect.className = 'form-select form-select-sm';
-      roleSelect.innerHTML = `
-        <option value="produtor">produtor</option>
-        <option value="admin">admin</option>
-      `;
-      roleSelect.value = user.role || 'produtor';
+      const badge = document.createElement('span');
+      badge.className = user.role === 'admin' ? 'badge text-bg-primary' : 'badge text-bg-secondary';
+      badge.textContent = user.role || 'produtor';
+      tdRole.appendChild(badge);
 
-      const isCurrentUser = user.user_id === state.session.user.id;
-      if (isCurrentUser) {
-        roleSelect.disabled = true;
-      }
-
-      tdRole.appendChild(roleSelect);
-
-      const tdCreatedAt = document.createElement('td');
-      tdCreatedAt.className = 'small text-secondary';
-      tdCreatedAt.textContent = formatDate(user.created_at);
+      const tdUpdated = document.createElement('td');
+      tdUpdated.className = 'small text-secondary';
+      tdUpdated.textContent = formatDate(user.updated_at || user.created_at);
 
       const tdActions = document.createElement('td');
       tdActions.className = 'text-end';
 
-      const saveBtn = document.createElement('button');
-      saveBtn.type = 'button';
-      saveBtn.className = 'btn btn-sm btn-outline-primary';
-      saveBtn.textContent = 'Salvar perfil';
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = isSelected ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline-primary';
+      editBtn.textContent = isSelected ? 'Editando' : 'Editar';
+      editBtn.addEventListener('click', () => populateEditor(user));
 
-      if (isCurrentUser) {
-        saveBtn.disabled = true;
-        saveBtn.title = 'Voce nao pode alterar o proprio perfil aqui.';
-      } else {
-        saveBtn.addEventListener('click', async () => {
-          await updateUserRole(user.user_id, roleSelect.value);
-        });
-      }
-
-      tdActions.appendChild(saveBtn);
-      tr.append(tdEmail, tdRole, tdCreatedAt, tdActions);
+      tdActions.appendChild(editBtn);
+      tr.append(tdEmail, tdStore, tdRole, tdUpdated, tdActions);
       refs.usersTableBody.appendChild(tr);
     });
   }
@@ -152,12 +232,22 @@
     try {
       const { data, error } = await window.db
         .from('user_profiles')
-        .select('user_id, user_email, role, created_at')
+        .select('user_id, user_email, role, first_name, last_name, phone, store_name, slug, headline, accent_color, cta_label, bio, photo_url, banner_url, created_at, updated_at')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
       state.users = data || [];
+
+      if (state.selectedUser) {
+        const freshSelected = state.users.find((user) => user.user_id === state.selectedUser.user_id);
+        if (freshSelected) {
+          populateEditor(freshSelected);
+        } else {
+          clearEditor();
+        }
+      }
+
       renderUsers();
     } catch (err) {
       showStatus(`Erro ao carregar usuarios: ${err.message}`, 'danger');
@@ -166,26 +256,129 @@
     }
   }
 
-  async function updateUserRole(userId, role) {
+  async function validateSelectedUserSlug({ silent = false } = {}) {
+    const validation = window.StoreUtils.validateStoreSlug(refs.editStoreSlug.value);
+    refs.editStoreSlug.value = validation.slug;
+
+    if (!validation.ok) {
+      setSlugFeedback(validation.message, 'danger');
+      return { ok: false, slug: validation.slug };
+    }
+
+    const nonce = ++state.slugCheckNonce;
+    setSlugFeedback('Verificando disponibilidade...', 'secondary');
+
+    try {
+      const availability = await window.StoreUtils.checkSlugAvailability(validation.slug, state.selectedUser?.user_id || null);
+      if (nonce !== state.slugCheckNonce) return { ok: false, stale: true, slug: validation.slug };
+
+      if (!availability.available) {
+        setSlugFeedback(availability.reason, 'danger');
+        if (!silent) showStatus(availability.reason, 'warning');
+        return { ok: false, slug: availability.slug };
+      }
+
+      setSlugFeedback(availability.reason, 'success');
+      return { ok: true, slug: availability.slug };
+    } catch (err) {
+      setSlugFeedback(`Erro ao validar slug: ${err.message}`, 'danger');
+      if (!silent) showStatus(`Erro ao validar slug: ${err.message}`, 'danger');
+      return { ok: false, slug: validation.slug };
+    }
+  }
+
+  async function updateSelectedUser(event) {
+    event.preventDefault();
     hideStatus();
+
+    if (!state.selectedUser) {
+      showStatus('Selecione um usuario para editar.', 'warning');
+      return;
+    }
+
+    const firstName = refs.editFirstName.value.trim();
+    const lastName = refs.editLastName.value.trim();
+    const phone = refs.editPhone.value.trim();
+    const storeName = refs.editStoreName.value.trim();
+    const headline = refs.editHeadline.value.trim();
+    const accentColor = normalizeAccentColor(refs.editAccentColor.value);
+    const ctaLabel = refs.editCtaLabel.value.trim() || DEFAULT_CTA;
+    const bio = refs.editBio.value.trim();
+    const photoUrl = refs.editPhotoUrl.value.trim();
+    const bannerUrl = refs.editBannerUrl.value.trim();
+    const role = refs.editRole.value;
+
+    if (!firstName) {
+      showStatus('Informe o nome do usuario.', 'warning');
+      return;
+    }
+
+    if (!storeName) {
+      showStatus('Informe o nome da loja.', 'warning');
+      return;
+    }
 
     if (!['admin', 'produtor'].includes(role)) {
       showStatus('Perfil invalido.', 'warning');
       return;
     }
 
+    if (state.selectedUser.user_id === state.session.user.id && role !== 'admin') {
+      showStatus('Para evitar bloqueio do painel, seu proprio usuario precisa continuar como admin aqui.', 'warning');
+      return;
+    }
+
+    if (photoUrl && !isValidHttpUrl(photoUrl)) {
+      showStatus('Informe uma URL valida para a foto ou deixe o campo vazio.', 'warning');
+      return;
+    }
+
+    if (bannerUrl && !isValidHttpUrl(bannerUrl)) {
+      showStatus('Informe uma URL valida para o banner ou deixe o campo vazio.', 'warning');
+      return;
+    }
+
+    const slugResult = await validateSelectedUserSlug();
+    if (!slugResult.ok) return;
+
+    setSaveUserLoading(true);
+
     try {
-      const { error } = await window.db
+      const { data, error } = await window.db
         .from('user_profiles')
-        .update({ role })
-        .eq('user_id', userId);
+        .update({
+          role,
+          first_name: firstName,
+          last_name: lastName || null,
+          phone: phone || null,
+          store_name: storeName,
+          slug: slugResult.slug,
+          headline: headline || null,
+          accent_color: accentColor,
+          cta_label: ctaLabel,
+          bio: bio || null,
+          photo_url: photoUrl || null,
+          banner_url: bannerUrl || null
+        })
+        .eq('user_id', state.selectedUser.user_id)
+        .select('user_id, user_email, role, first_name, last_name, phone, store_name, slug, headline, accent_color, cta_label, bio, photo_url, banner_url, created_at, updated_at')
+        .single();
 
       if (error) throw error;
 
-      showStatus('Perfil atualizado com sucesso.', 'success');
+      state.selectedUser = data;
+
+      if (data.user_id === state.session.user.id) {
+        state.profile = data;
+        applyHeader();
+      }
+
+      showStatus('Usuario atualizado com sucesso.', 'success');
       await loadUsers();
     } catch (err) {
-      showStatus(`Erro ao atualizar perfil: ${err.message}`, 'danger');
+      showStatus(`Erro ao atualizar usuario: ${err.message}`, 'danger');
+    } finally {
+      setSaveUserLoading(false);
     }
   }
 
@@ -267,6 +460,23 @@
       refs.newUserPasswordConfirm.addEventListener('input', updatePasswordValidation);
       refs.createUserForm.addEventListener('submit', createUser);
       refs.reloadUsersBtn.addEventListener('click', loadUsers);
+      refs.clearEditorBtn.addEventListener('click', clearEditor);
+      refs.editUserForm.addEventListener('submit', updateSelectedUser);
+
+      refs.editPhone.addEventListener('input', () => {
+        refs.editPhone.value = window.StoreUtils.formatPhone(refs.editPhone.value);
+      });
+
+      refs.editStoreSlug.addEventListener('input', () => {
+        refs.editStoreSlug.value = window.StoreUtils.normalizeStoreSlug(refs.editStoreSlug.value);
+        const validation = window.StoreUtils.validateStoreSlug(refs.editStoreSlug.value);
+        setSlugFeedback(validation.message, validation.ok ? 'secondary' : 'danger');
+      });
+
+      refs.editStoreSlug.addEventListener('blur', async () => {
+        if (!refs.editStoreSlug.value.trim()) return;
+        await validateSelectedUserSlug({ silent: true });
+      });
 
       updatePasswordValidation();
       await loadUsers();

@@ -84,6 +84,71 @@
     };
   }
 
+  function formatPhone(value) {
+    const digits = String(value || '').replace(/\D/g, '').slice(0, 11);
+
+    if (!digits) return '';
+    if (digits.length <= 2) return `(${digits}`;
+    if (digits.length <= 3) return `(${digits.slice(0, 2)})${digits.slice(2)}`;
+    if (digits.length <= 7) return `(${digits.slice(0, 2)})${digits.slice(2, 3)}.${digits.slice(3)}`;
+
+    return `(${digits.slice(0, 2)})${digits.slice(2, 3)}.${digits.slice(3, 7)}-${digits.slice(7)}`;
+  }
+
+  function sanitizeFileName(fileName) {
+    const normalized = String(fileName || 'arquivo')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9._-]+/g, '-')
+      .replace(/-{2,}/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    return normalized || 'arquivo';
+  }
+
+  async function uploadStoreAsset(file, { userId, assetType = 'asset' } = {}) {
+    if (!window.db) {
+      throw new Error('Supabase nao configurado.');
+    }
+
+    if (!(file instanceof File)) {
+      throw new Error('Selecione um arquivo valido.');
+    }
+
+    if (!userId) {
+      throw new Error('Usuario nao identificado para upload.');
+    }
+
+    if (!String(file.type || '').startsWith('image/')) {
+      throw new Error('Envie apenas imagens para a loja.');
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      throw new Error('A imagem deve ter no maximo 5 MB.');
+    }
+
+    const safeType = normalizeStoreSlug(assetType) || 'asset';
+    const safeName = sanitizeFileName(file.name);
+    const path = `${userId}/${safeType}/${Date.now()}-${safeName}`;
+
+    const { error: uploadError } = await window.db.storage
+      .from('store-assets')
+      .upload(path, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (uploadError) throw uploadError;
+
+    const { data } = window.db.storage.from('store-assets').getPublicUrl(path);
+
+    return {
+      path,
+      publicUrl: data?.publicUrl || null
+    };
+  }
+
   async function checkSlugAvailability(slug, currentProfileId = null) {
     if (!window.db) {
       throw new Error('Supabase não configurado.');
@@ -160,8 +225,10 @@
     isReservedSlug,
     getStoreSlugFromPath,
     getStoreUrl,
+    formatPhone,
     validatePasswordRules,
     checkSlugAvailability,
+    uploadStoreAsset,
     extractProductFromUrl
   };
 })();

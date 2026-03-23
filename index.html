@@ -1,12 +1,12 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Produtos Afiliados | Página Inicial</title>
-  <meta name="description" content="Produtos de afiliado do Mercado Livre selecionados para você." />
-  <meta property="og:title" content="Produtos Afiliados | Página Inicial" />
-  <meta property="og:description" content="Produtos de afiliado do Mercado Livre selecionados para você." />
+  <title>Produtos Afiliados | Pagina Inicial</title>
+  <meta name="description" content="Produtos de afiliado do Mercado Livre selecionados para voce." />
+  <meta property="og:title" content="Produtos Afiliados | Pagina Inicial" />
+  <meta property="og:description" content="Produtos de afiliado do Mercado Livre selecionados para voce." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="/" />
   <meta property="og:image" content="https://via.placeholder.com/1200x630?text=Afiliados+ML" />
@@ -17,12 +17,12 @@
   <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm sticky-top">
     <div class="container">
       <a class="navbar-brand fw-bold" href="index.html">Afiliados ML</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Alternar navegação">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Alternar navegacao">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarMain">
         <div class="ms-auto d-flex gap-2 mt-3 mt-lg-0">
-          <a id="navAdmin" class="btn btn-outline-primary btn-sm" href="login.html">Área administrativa</a>
+          <a id="navAdmin" class="btn btn-outline-primary btn-sm" href="login.html">Area administrativa</a>
           <button id="navLogout" class="btn btn-outline-danger btn-sm d-none" type="button">Sair</button>
         </div>
       </div>
@@ -35,22 +35,26 @@
         <div class="col-lg-7">
           <span id="heroBadge" class="badge text-bg-primary mb-3">Produtos selecionados</span>
           <h1 id="heroTitle" class="display-6 fw-bold mb-3">Encontre ofertas recomendadas com links de afiliado</h1>
-          <p id="heroDescription" class="lead text-secondary mb-0">Catálogo atualizado com produtos do Mercado Livre. Clique e veja os detalhes no anúncio oficial.</p>
-          <div id="storeMetaBar" class="d-none mt-3">
-            <a id="storeMetaLink" class="btn btn-outline-primary btn-sm" href="index.html" target="_blank" rel="noopener noreferrer">Abrir endereço público</a>
-          </div>
+          <p id="heroDescription" class="lead text-secondary mb-0">Catalogo atualizado com produtos do Mercado Livre. Clique e veja os detalhes no anuncio oficial.</p>
         </div>
         <div class="col-lg-5">
           <div class="card shadow-sm border-0 p-3 hero-side-card">
             <div id="storeBannerWrapper" class="d-none mb-3">
               <img id="storeBannerImage" class="store-hero-banner" alt="Banner da loja" />
             </div>
+            <div id="storeIdentityCard" class="store-identity-card d-none mb-3">
+              <img id="storeIdentityAvatar" class="store-identity-avatar d-none" alt="Foto da loja" />
+              <div>
+                <p id="storeIdentityName" class="fw-semibold mb-1">Loja</p>
+                <p id="storeIdentityHeadline" class="small text-secondary mb-0">Produtos organizados por esta loja.</p>
+              </div>
+            </div>
             <label for="searchInput" class="form-label mb-2">Buscar produto</label>
             <div class="input-group">
-              <input id="searchInput" type="search" class="form-control" placeholder="Digite nome ou descrição" />
+              <input id="searchInput" type="search" class="form-control" placeholder="Digite nome ou descricao" />
               <button id="refreshBtn" class="btn btn-primary" type="button">Atualizar</button>
             </div>
-            <small id="searchHelperText" class="text-muted mt-2">Os produtos mais recentes aparecem primeiro.</small>
+            <small id="searchHelperText" class="text-muted mt-2">A busca filtra os produtos abaixo em tempo real.</small>
           </div>
         </div>
       </div>
@@ -62,9 +66,9 @@
       <div id="statusMessage" class="alert d-none" role="alert"></div>
       <div id="notFoundState" class="card border-0 shadow-sm d-none">
         <div class="card-body text-center py-5">
-          <h2 class="h5">Loja não encontrada</h2>
-          <p class="text-secondary mb-3">Esse endereço público não existe ou ainda não foi configurado.</p>
-          <a href="index.html" class="btn btn-outline-primary">Voltar para a página inicial</a>
+          <h2 class="h5">Loja nao encontrada</h2>
+          <p class="text-secondary mb-3">Esse endereco publico nao existe ou ainda nao foi configurado.</p>
+          <a href="index.html" class="btn btn-outline-primary">Voltar para a pagina inicial</a>
         </div>
       </div>
       <div id="loading" class="text-center py-5">
@@ -74,16 +78,24 @@
       <div id="emptyState" class="card border-0 shadow-sm d-none">
         <div class="card-body text-center py-5">
           <h2 id="emptyStateTitle" class="h5">Nenhum produto cadastrado ainda</h2>
-          <p id="emptyStateDescription" class="text-secondary mb-0">Volte em breve para ver novas recomendações.</p>
+          <p id="emptyStateDescription" class="text-secondary mb-0">Volte em breve para ver novas recomendacoes.</p>
         </div>
       </div>
-      <div id="productsGrid" class="row g-4"></div>
+      <section id="productsSection" class="d-none">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <div>
+            <h2 id="productsSectionTitle" class="h4 mb-1">Produtos</h2>
+            <p id="productsSearchSummary" class="text-secondary mb-0">Os produtos mais recentes aparecem primeiro.</p>
+          </div>
+        </div>
+        <div id="productsGrid" class="row g-4"></div>
+      </section>
     </div>
   </main>
 
   <footer class="py-4 border-top bg-white">
     <div class="container small text-secondary text-center">
-      Catálogo de afiliados Mercado Livre.
+      Catalogo de afiliados Mercado Livre.
     </div>
   </footer>
 

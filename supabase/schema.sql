@@ -58,6 +58,9 @@ create table if not exists public.user_profiles (
   phone text,
   store_name text,
   slug text,
+  headline text,
+  accent_color text,
+  cta_label text,
   bio text,
   photo_url text,
   banner_url text,
@@ -73,6 +76,9 @@ alter table public.user_profiles
   add column if not exists phone text,
   add column if not exists store_name text,
   add column if not exists slug text,
+  add column if not exists headline text,
+  add column if not exists accent_color text,
+  add column if not exists cta_label text,
   add column if not exists bio text,
   add column if not exists photo_url text,
   add column if not exists banner_url text,
@@ -80,7 +86,9 @@ alter table public.user_profiles
   add column if not exists updated_at timestamptz not null default now();
 
 alter table public.user_profiles
-  alter column role set default 'produtor';
+  alter column role set default 'produtor',
+  alter column accent_color set default '#0d6efd',
+  alter column cta_label set default 'Ver produto';
 
 update public.user_profiles
 set role = 'produtor'
@@ -133,9 +141,22 @@ begin
   new.first_name := nullif(trim(coalesce(new.first_name, '')), '');
   new.last_name := nullif(trim(coalesce(new.last_name, '')), '');
   new.phone := nullif(trim(coalesce(new.phone, '')), '');
+  new.headline := nullif(trim(coalesce(new.headline, '')), '');
+  new.cta_label := nullif(trim(coalesce(new.cta_label, '')), '');
   new.photo_url := nullif(trim(coalesce(new.photo_url, '')), '');
   new.bio := nullif(trim(coalesce(new.bio, '')), '');
   new.banner_url := nullif(trim(coalesce(new.banner_url, '')), '');
+  new.accent_color := lower(nullif(trim(coalesce(new.accent_color, '')), ''));
+
+  if new.accent_color is null then
+    new.accent_color := '#0d6efd';
+  elsif new.accent_color !~ '^#([0-9a-f]{6}|[0-9a-f]{3})$' then
+    raise exception 'Cor de destaque invalida.';
+  end if;
+
+  if new.cta_label is null then
+    new.cta_label := 'Ver produto';
+  end if;
 
   fallback_store_name := coalesce(
     nullif(trim(new.store_name), ''),
@@ -247,6 +268,16 @@ set store_name = coalesce(
   'Minha loja'
 );
 
+update public.user_profiles
+set accent_color = '#0d6efd'
+where accent_color is null
+   or trim(accent_color) = '';
+
+update public.user_profiles
+set cta_label = 'Ver produto'
+where cta_label is null
+   or trim(cta_label) = '';
+
 update public.user_profiles profile
 set slug = public.generate_unique_store_slug(
   coalesce(profile.slug, profile.store_name, profile.user_email, profile.user_id::text),
@@ -350,6 +381,9 @@ select
   profile.photo_url,
   profile.store_name,
   profile.slug,
+  profile.headline,
+  profile.accent_color,
+  profile.cta_label,
   profile.bio,
   profile.banner_url,
   profile.created_at,
@@ -518,6 +552,60 @@ grant select on public.public_store_profiles to anon, authenticated;
 grant select on public.public_store_products to anon, authenticated;
 grant select, insert, update on public.user_profiles to authenticated;
 grant select, insert, update, delete on public.produtos to authenticated;
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'store-assets',
+  'store-assets',
+  true,
+  5242880,
+  array['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+)
+on conflict (id) do update
+set public = excluded.public,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "Publico pode ver store-assets" on storage.objects;
+create policy "Publico pode ver store-assets"
+  on storage.objects
+  for select
+  to public
+  using (bucket_id = 'store-assets');
+
+drop policy if exists "Autenticado pode enviar store-assets" on storage.objects;
+create policy "Autenticado pode enviar store-assets"
+  on storage.objects
+  for insert
+  to authenticated
+  with check (
+    bucket_id = 'store-assets'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+drop policy if exists "Autenticado pode atualizar store-assets proprios" on storage.objects;
+create policy "Autenticado pode atualizar store-assets proprios"
+  on storage.objects
+  for update
+  to authenticated
+  using (
+    bucket_id = 'store-assets'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  )
+  with check (
+    bucket_id = 'store-assets'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+drop policy if exists "Autenticado pode excluir store-assets proprios" on storage.objects;
+create policy "Autenticado pode excluir store-assets proprios"
+  on storage.objects
+  for delete
+  to authenticated
+  using (
+    bucket_id = 'store-assets'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
 
 insert into public.user_profiles (user_id, role)
 select id, 'admin'

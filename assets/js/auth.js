@@ -61,7 +61,7 @@
 
     const { data, error } = await window.db
       .from('user_profiles')
-      .select('user_id, user_email, role, first_name, last_name, phone, photo_url, store_name, slug, bio, banner_url, created_at, updated_at')
+      .select('user_id, user_email, role, first_name, last_name, phone, photo_url, store_name, slug, headline, accent_color, cta_label, bio, banner_url, created_at, updated_at')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -75,7 +75,7 @@
         user_email: session.user.email || null,
         role: 'produtor'
       })
-      .select('user_id, user_email, role, first_name, last_name, phone, photo_url, store_name, slug, bio, banner_url, created_at, updated_at')
+      .select('user_id, user_email, role, first_name, last_name, phone, photo_url, store_name, slug, headline, accent_color, cta_label, bio, banner_url, created_at, updated_at')
       .single();
 
     if (insertError) throw insertError;

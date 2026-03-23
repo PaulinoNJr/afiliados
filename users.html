@@ -25,7 +25,7 @@
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
         <div>
           <h1 class="h3 mb-1">Gestao de usuarios</h1>
-          <p class="text-secondary mb-0">Defina perfil de acesso e cadastre novos usuarios.</p>
+          <p class="text-secondary mb-0">Cadastre novos usuarios e edite os dados dos perfis existentes.</p>
         </div>
         <a href="admin.html" class="btn btn-outline-primary">Voltar ao painel</a>
       </div>
@@ -73,7 +73,7 @@
         </div>
 
         <div class="col-12 col-xl-8">
-          <div class="card border-0 shadow-sm">
+          <div class="card border-0 shadow-sm mb-4">
             <div class="card-body p-4">
               <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                 <h2 class="h5 mb-0">Usuarios e perfis</h2>
@@ -86,12 +86,13 @@
               </div>
 
               <div class="table-responsive">
-                <table class="table align-middle">
+                <table class="table admin-table align-middle">
                   <thead>
                     <tr>
                       <th>Email</th>
+                      <th>Loja</th>
                       <th>Perfil</th>
-                      <th>Criado em</th>
+                      <th>Atualizado em</th>
                       <th class="text-end">Acoes</th>
                     </tr>
                   </thead>
@@ -102,6 +103,90 @@
               <div id="emptyUsersState" class="text-center py-4 text-secondary d-none">
                 Nenhum usuario encontrado.
               </div>
+            </div>
+          </div>
+
+          <div id="userEditorCard" class="card border-0 shadow-sm d-none">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                <div>
+                  <h2 class="h5 mb-1">Editar usuario</h2>
+                  <p id="editorIntro" class="text-secondary small mb-0">Selecione um usuario na tabela para editar suas informacoes.</p>
+                </div>
+                <div class="d-flex gap-2">
+                  <a id="selectedUserStoreLink" href="index.html" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm d-none">Pagina publica</a>
+                  <button id="clearEditorBtn" type="button" class="btn btn-outline-secondary btn-sm">Fechar editor</button>
+                </div>
+              </div>
+
+              <form id="editUserForm" novalidate>
+                <div class="row g-3">
+                  <div class="col-12 col-md-6">
+                    <label for="selectedUserEmail" class="form-label">Email</label>
+                    <input id="selectedUserEmail" type="email" class="form-control" readonly />
+                    <small class="text-secondary d-block mt-2">O email vem do Supabase Auth e aqui fica apenas para consulta.</small>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="editRole" class="form-label">Perfil</label>
+                    <select id="editRole" class="form-select">
+                      <option value="produtor">produtor</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="editFirstName" class="form-label">Nome</label>
+                    <input id="editFirstName" type="text" class="form-control" maxlength="80" required />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="editLastName" class="form-label">Sobrenome</label>
+                    <input id="editLastName" type="text" class="form-control" maxlength="80" />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="editPhone" class="form-label">Telefone</label>
+                    <input id="editPhone" type="tel" class="form-control" maxlength="30" />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="editStoreName" class="form-label">Nome da loja</label>
+                    <input id="editStoreName" type="text" class="form-control" maxlength="120" required />
+                  </div>
+                  <div class="col-12">
+                    <label for="editStoreSlug" class="form-label">Slug publico</label>
+                    <div class="input-group">
+                      <span class="input-group-text">/</span>
+                      <input id="editStoreSlug" type="text" class="form-control" maxlength="80" required />
+                    </div>
+                    <small id="editStoreSlugFeedback" class="d-block mt-2 text-secondary">Use letras minusculas, numeros e hifens.</small>
+                  </div>
+                  <div class="col-12">
+                    <label for="editHeadline" class="form-label">Headline</label>
+                    <input id="editHeadline" type="text" class="form-control" maxlength="120" />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="editAccentColor" class="form-label">Cor de destaque</label>
+                    <input id="editAccentColor" type="color" class="form-control form-control-color" value="#0d6efd" />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="editCtaLabel" class="form-label">Texto do botao</label>
+                    <input id="editCtaLabel" type="text" class="form-control" maxlength="40" />
+                  </div>
+                  <div class="col-12">
+                    <label for="editBio" class="form-label">Bio</label>
+                    <textarea id="editBio" class="form-control" rows="3" maxlength="300"></textarea>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="editPhotoUrl" class="form-label">Foto por URL</label>
+                    <input id="editPhotoUrl" type="url" class="form-control" placeholder="https://foto..." />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="editBannerUrl" class="form-label">Banner por URL</label>
+                    <input id="editBannerUrl" type="url" class="form-control" placeholder="https://banner..." />
+                  </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                  <button id="saveUserBtn" type="submit" class="btn btn-primary">Salvar alteracoes</button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
