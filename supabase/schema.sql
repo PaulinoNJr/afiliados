@@ -340,7 +340,8 @@ before update on public.user_profiles
 for each row
 execute function public.prevent_unauthorized_role_change();
 
-create or replace view public.public_store_profiles as
+drop view if exists public.public_store_profiles;
+create view public.public_store_profiles as
 select
   profile.user_id as id,
   profile.first_name,
@@ -437,7 +438,8 @@ create index if not exists idx_produtos_created_at on public.produtos (created_a
 create index if not exists idx_produtos_created_by on public.produtos (created_by);
 create index if not exists idx_produtos_profile_id on public.produtos (profile_id);
 
-create or replace view public.public_store_products as
+drop view if exists public.public_store_products;
+create view public.public_store_products as
 select
   product.id,
   product.profile_id,

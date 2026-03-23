@@ -68,6 +68,22 @@
     return normalized ? `${window.location.origin}/${normalized}` : `${window.location.origin}/`;
   }
 
+  function validatePasswordRules(password) {
+    const value = String(password || '');
+    const rules = {
+      minLength: value.length >= 8,
+      lowercase: /[a-z]/.test(value),
+      uppercase: /[A-Z]/.test(value),
+      number: /\d/.test(value),
+      special: /[!@#$%^&*()_\+\-=\[\]{};':"\\|<>?,./`~]/.test(value)
+    };
+
+    return {
+      rules,
+      ok: Object.values(rules).every(Boolean)
+    };
+  }
+
   async function checkSlugAvailability(slug, currentProfileId = null) {
     if (!window.db) {
       throw new Error('Supabase não configurado.');
@@ -144,6 +160,7 @@
     isReservedSlug,
     getStoreSlugFromPath,
     getStoreUrl,
+    validatePasswordRules,
     checkSlugAvailability,
     extractProductFromUrl
   };

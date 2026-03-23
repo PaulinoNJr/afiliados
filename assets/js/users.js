@@ -16,6 +16,8 @@
     newUserEmail: document.getElementById('newUserEmail'),
     newUserPassword: document.getElementById('newUserPassword'),
     newUserPasswordConfirm: document.getElementById('newUserPasswordConfirm'),
+    newUserPasswordRules: document.getElementById('newUserPasswordRules'),
+    newUserPasswordMatchFeedback: document.getElementById('newUserPasswordMatchFeedback'),
 
     usersLoading: document.getElementById('usersLoading'),
     reloadUsersBtn: document.getElementById('reloadUsersBtn'),
@@ -35,7 +37,7 @@
 
   function setCreateUserLoading(isLoading) {
     refs.createUserBtn.disabled = isLoading;
-    refs.createUserBtn.textContent = isLoading ? 'Criando...' : 'Criar usuário';
+    refs.createUserBtn.textContent = isLoading ? 'Criando...' : 'Criar usuario';
   }
 
   function setUsersLoading(isLoading) {
@@ -47,8 +49,40 @@
     return new Date(value).toLocaleString('pt-BR');
   }
 
+  function updatePasswordValidation() {
+    const result = window.StoreUtils.validatePasswordRules(refs.newUserPassword.value);
+    const rulesList = refs.newUserPasswordRules?.querySelectorAll('[data-rule]') || [];
+
+    rulesList.forEach((item) => {
+      const ruleName = item.getAttribute('data-rule');
+      const valid = Boolean(result.rules[ruleName]);
+      item.classList.toggle('is-valid', valid);
+      item.classList.toggle('is-invalid', !valid && refs.newUserPassword.value.length > 0);
+    });
+
+    const matches =
+      refs.newUserPasswordConfirm.value.length > 0 &&
+      refs.newUserPassword.value === refs.newUserPasswordConfirm.value;
+
+    if (!refs.newUserPasswordConfirm.value.length) {
+      refs.newUserPasswordMatchFeedback.className = 'd-block mt-2 text-secondary';
+      refs.newUserPasswordMatchFeedback.textContent = 'Use a confirmacao para repetir exatamente a senha digitada.';
+    } else if (matches) {
+      refs.newUserPasswordMatchFeedback.className = 'd-block mt-2 text-success';
+      refs.newUserPasswordMatchFeedback.textContent = 'As senhas coincidem.';
+    } else {
+      refs.newUserPasswordMatchFeedback.className = 'd-block mt-2 text-danger';
+      refs.newUserPasswordMatchFeedback.textContent = 'As senhas nao coincidem.';
+    }
+
+    return {
+      ...result,
+      matches
+    };
+  }
+
   function applyHeader() {
-    refs.userEmail.textContent = state.session.user.email || 'Usuário autenticado';
+    refs.userEmail.textContent = state.session.user.email || 'Usuario autenticado';
     refs.userRoleBadge.textContent = state.profile.role;
     refs.userRoleBadge.className = state.profile.role === 'admin' ? 'badge text-bg-primary' : 'badge text-bg-secondary';
   }
@@ -99,7 +133,7 @@
 
       if (isCurrentUser) {
         saveBtn.disabled = true;
-        saveBtn.title = 'Você não pode alterar o próprio perfil aqui.';
+        saveBtn.title = 'Voce nao pode alterar o proprio perfil aqui.';
       } else {
         saveBtn.addEventListener('click', async () => {
           await updateUserRole(user.user_id, roleSelect.value);
@@ -126,7 +160,7 @@
       state.users = data || [];
       renderUsers();
     } catch (err) {
-      showStatus(`Erro ao carregar usuários: ${err.message}`, 'danger');
+      showStatus(`Erro ao carregar usuarios: ${err.message}`, 'danger');
     } finally {
       setUsersLoading(false);
     }
@@ -136,7 +170,7 @@
     hideStatus();
 
     if (!['admin', 'produtor'].includes(role)) {
-      showStatus('Perfil inválido.', 'warning');
+      showStatus('Perfil invalido.', 'warning');
       return;
     }
 
@@ -164,17 +198,18 @@
     const confirmPassword = refs.newUserPasswordConfirm.value;
 
     if (!email || !password || !confirmPassword) {
-      showStatus('Preencha email, senha e confirmação de senha.', 'warning');
+      showStatus('Preencha email, senha e confirmacao de senha.', 'warning');
       return;
     }
 
-    if (password.length < 6) {
-      showStatus('A senha deve ter pelo menos 6 caracteres.', 'warning');
+    const passwordValidation = updatePasswordValidation();
+    if (!passwordValidation.ok) {
+      showStatus('A senha precisa ter pelo menos 8 caracteres, com maiusculas, minusculas, numeros e caractere especial.', 'warning');
       return;
     }
 
-    if (password !== confirmPassword) {
-      showStatus('As senhas não coincidem.', 'warning');
+    if (!passwordValidation.matches) {
+      showStatus('As senhas nao coincidem.', 'warning');
       return;
     }
 
@@ -185,16 +220,17 @@
       if (error) throw error;
 
       refs.createUserForm.reset();
+      updatePasswordValidation();
 
       if (data?.user && !data?.session) {
-        showStatus('Usuário criado. Ele precisa confirmar o email antes de entrar.', 'success');
+        showStatus('Usuario criado. Ele precisa confirmar o email antes de entrar.', 'success');
       } else {
-        showStatus('Usuário criado com sucesso.', 'success');
+        showStatus('Usuario criado com sucesso.', 'success');
       }
 
       await loadUsers();
     } catch (err) {
-      showStatus(`Erro ao criar usuário: ${err.message}`, 'danger');
+      showStatus(`Erro ao criar usuario: ${err.message}`, 'danger');
     } finally {
       setCreateUserLoading(false);
     }
@@ -214,7 +250,7 @@
       const isAdmin = state.profile?.role === 'admin';
 
       if (!isAdmin) {
-        showStatus('Acesso restrito: somente admin pode gerenciar usuários.', 'danger');
+        showStatus('Acesso restrito: somente admin pode gerenciar usuarios.', 'danger');
         setTimeout(() => {
           window.location.href = 'admin.html';
         }, 1200);
@@ -227,12 +263,15 @@
         await window.Auth.logout();
         window.location.href = 'login.html';
       });
+      refs.newUserPassword.addEventListener('input', updatePasswordValidation);
+      refs.newUserPasswordConfirm.addEventListener('input', updatePasswordValidation);
       refs.createUserForm.addEventListener('submit', createUser);
       refs.reloadUsersBtn.addEventListener('click', loadUsers);
 
+      updatePasswordValidation();
       await loadUsers();
     } catch (err) {
-      showStatus(`Erro ao iniciar a gestão de usuários: ${err.message}`, 'danger');
+      showStatus(`Erro ao iniciar a gestao de usuarios: ${err.message}`, 'danger');
     }
   }
 

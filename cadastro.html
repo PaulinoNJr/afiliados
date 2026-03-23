@@ -77,11 +77,24 @@
                   </div>
                   <div class="col-12 col-md-6">
                     <label for="password" class="form-label">Senha</label>
-                    <input id="password" type="password" class="form-control" minlength="6" required autocomplete="new-password" />
+                    <input id="password" type="password" class="form-control" minlength="8" required autocomplete="new-password" />
                   </div>
                   <div class="col-12 col-md-6">
                     <label for="passwordConfirm" class="form-label">Confirmar senha</label>
-                    <input id="passwordConfirm" type="password" class="form-control" minlength="6" required autocomplete="new-password" />
+                    <input id="passwordConfirm" type="password" class="form-control" minlength="8" required autocomplete="new-password" />
+                  </div>
+                  <div class="col-12">
+                    <div class="password-helper">
+                      <p class="small text-secondary mb-2">Escolha uma senha forte com:</p>
+                      <ul id="passwordRules" class="password-rules-list">
+                        <li data-rule="minLength">Pelo menos 8 caracteres</li>
+                        <li data-rule="lowercase">Uma letra minúscula</li>
+                        <li data-rule="uppercase">Uma letra maiúscula</li>
+                        <li data-rule="number">Um número</li>
+                        <li data-rule="special">Um caractere especial</li>
+                      </ul>
+                      <small id="passwordMatchFeedback" class="d-block mt-2 text-secondary">Repita a mesma senha no campo de confirmação.</small>
+                    </div>
                   </div>
                 </div>
 

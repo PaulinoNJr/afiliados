@@ -10,6 +10,8 @@
     slugFeedback: document.getElementById('slugFeedback'),
     password: document.getElementById('password'),
     passwordConfirm: document.getElementById('passwordConfirm'),
+    passwordRules: document.getElementById('passwordRules'),
+    passwordMatchFeedback: document.getElementById('passwordMatchFeedback'),
     registerBtn: document.getElementById('registerBtn'),
     signupPublicUrl: document.getElementById('signupPublicUrl'),
     status: document.getElementById('statusMessage')
@@ -40,6 +42,48 @@
   function setSlugFeedback(message, tone = 'secondary') {
     refs.slugFeedback.className = `d-block mt-2 text-${tone}`;
     refs.slugFeedback.textContent = message;
+  }
+
+  function updatePasswordValidation() {
+    const result = window.StoreUtils.validatePasswordRules(refs.password.value);
+    const rulesList = refs.passwordRules?.querySelectorAll('[data-rule]') || [];
+
+    rulesList.forEach((item) => {
+      const ruleName = item.getAttribute('data-rule');
+      const valid = Boolean(result.rules[ruleName]);
+      item.classList.toggle('is-valid', valid);
+      item.classList.toggle('is-invalid', !valid && refs.password.value.length > 0);
+    });
+
+    const matches = refs.passwordConfirm.value.length > 0 && refs.password.value === refs.passwordConfirm.value;
+    const hasConfirm = refs.passwordConfirm.value.length > 0;
+
+    if (!hasConfirm) {
+      refs.passwordMatchFeedback.className = 'd-block mt-2 text-secondary';
+      refs.passwordMatchFeedback.textContent = 'Repita a mesma senha no campo de confirmação.';
+    } else if (matches) {
+      refs.passwordMatchFeedback.className = 'd-block mt-2 text-success';
+      refs.passwordMatchFeedback.textContent = 'As senhas coincidem.';
+    } else {
+      refs.passwordMatchFeedback.className = 'd-block mt-2 text-danger';
+      refs.passwordMatchFeedback.textContent = 'As senhas não coincidem.';
+    }
+
+    return {
+      ...result,
+      matches
+    };
+  }
+
+  function formatPhone(value) {
+    const digits = String(value || '').replace(/\D/g, '').slice(0, 11);
+
+    if (!digits) return '';
+    if (digits.length <= 2) return `(${digits}`;
+    if (digits.length <= 3) return `(${digits.slice(0, 2)})${digits.slice(2)}`;
+    if (digits.length <= 7) return `(${digits.slice(0, 2)})${digits.slice(2, 3)}.${digits.slice(3)}`;
+
+    return `(${digits.slice(0, 2)})${digits.slice(2, 3)}.${digits.slice(3, 7)}-${digits.slice(7)}`;
   }
 
   function updatePublicUrlPreview() {
@@ -98,12 +142,14 @@
       return;
     }
 
-    if (password.length < 6) {
-      showStatus('A senha deve ter pelo menos 6 caracteres.', 'warning');
+    const passwordValidation = updatePasswordValidation();
+
+    if (!passwordValidation.ok) {
+      showStatus('Escolha uma senha com pelo menos 8 caracteres, letras maiúsculas, minúsculas, números e caractere especial.', 'warning');
       return;
     }
 
-    if (password !== passwordConfirm) {
+    if (!passwordValidation.matches) {
       showStatus('As senhas não coincidem.', 'warning');
       return;
     }
@@ -159,6 +205,13 @@
       return;
     }
 
+    refs.phone.addEventListener('input', () => {
+      refs.phone.value = formatPhone(refs.phone.value);
+    });
+
+    refs.password.addEventListener('input', updatePasswordValidation);
+    refs.passwordConfirm.addEventListener('input', updatePasswordValidation);
+
     refs.slug.addEventListener('input', () => {
       refs.slug.value = window.StoreUtils.normalizeStoreSlug(refs.slug.value);
       updatePublicUrlPreview();
@@ -180,6 +233,7 @@
 
     refs.form.addEventListener('submit', onSubmit);
     updatePublicUrlPreview();
+    updatePasswordValidation();
   }
 
   document.addEventListener('DOMContentLoaded', init);

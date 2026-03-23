@@ -304,6 +304,32 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   margin-bottom: 0.65rem;
 }
 
+.password-helper {
+  padding: 0.9rem 1rem;
+  border: 1px solid #dfe8f4;
+  border-radius: 0.9rem;
+  background: #f8fbff;
+}
+
+.password-rules-list {
+  margin: 0;
+  padding-left: 1.15rem;
+  color: #7a889d;
+  font-size: 0.9rem;
+}
+
+.password-rules-list li + li {
+  margin-top: 0.28rem;
+}
+
+.password-rules-list li.is-valid {
+  color: #116530;
+}
+
+.password-rules-list li.is-invalid {
+  color: #b54747;
+}
+
 .admin-table thead th {
   font-size: 0.8rem;
   text-transform: uppercase;
