@@ -1,4 +1,10 @@
 (() => {
+  const state = {
+    slugCheckNonce: 0,
+    recaptchaWidgetId: null,
+    recaptchaLoaded: false
+  };
+
   const refs = {
     form: document.getElementById('registerForm'),
     firstName: document.getElementById('firstName'),
@@ -12,12 +18,12 @@
     passwordConfirm: document.getElementById('passwordConfirm'),
     passwordRules: document.getElementById('passwordRules'),
     passwordMatchFeedback: document.getElementById('passwordMatchFeedback'),
+    recaptchaMount: document.getElementById('recaptchaMount'),
+    recaptchaStatus: document.getElementById('recaptchaStatus'),
     registerBtn: document.getElementById('registerBtn'),
     signupPublicUrl: document.getElementById('signupPublicUrl'),
     status: document.getElementById('statusMessage')
   };
-
-  let slugCheckNonce = 0;
 
   function showStatus(message, type = 'danger') {
     refs.status.className = `alert alert-${type}`;
@@ -44,6 +50,11 @@
     refs.slugFeedback.textContent = message;
   }
 
+  function setRecaptchaStatus(message, tone = 'secondary') {
+    refs.recaptchaStatus.className = `d-block mt-3 text-${tone}`;
+    refs.recaptchaStatus.textContent = message;
+  }
+
   function updatePasswordValidation() {
     const result = window.StoreUtils.validatePasswordRules(refs.password.value);
     const rulesList = refs.passwordRules?.querySelectorAll('[data-rule]') || [];
@@ -60,13 +71,13 @@
 
     if (!hasConfirm) {
       refs.passwordMatchFeedback.className = 'd-block mt-2 text-secondary';
-      refs.passwordMatchFeedback.textContent = 'Repita a mesma senha no campo de confirmação.';
+      refs.passwordMatchFeedback.textContent = 'Repita a mesma senha no campo de confirmacao.';
     } else if (matches) {
       refs.passwordMatchFeedback.className = 'd-block mt-2 text-success';
       refs.passwordMatchFeedback.textContent = 'As senhas coincidem.';
     } else {
       refs.passwordMatchFeedback.className = 'd-block mt-2 text-danger';
-      refs.passwordMatchFeedback.textContent = 'As senhas não coincidem.';
+      refs.passwordMatchFeedback.textContent = 'As senhas nao coincidem.';
     }
 
     return {
@@ -83,6 +94,63 @@
       : `${window.location.origin}/sua-loja`;
   }
 
+  function getRecaptchaToken() {
+    if (!window.grecaptcha || state.recaptchaWidgetId === null) return '';
+    return window.grecaptcha.getResponse(state.recaptchaWidgetId) || '';
+  }
+
+  function resetRecaptcha() {
+    if (window.grecaptcha && state.recaptchaWidgetId !== null) {
+      window.grecaptcha.reset(state.recaptchaWidgetId);
+    }
+  }
+
+  async function verifyRecaptchaToken(token) {
+    const response = await fetch('/api/verify-recaptcha', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ token })
+    });
+
+    const payload = await response.json().catch(() => ({}));
+
+    if (!response.ok || !payload.ok) {
+      throw new Error(payload.error || 'Nao foi possivel validar o reCAPTCHA.');
+    }
+
+    return payload;
+  }
+
+  function renderRecaptcha() {
+    if (!window.AppConfig?.recaptchaConfigured) {
+      refs.registerBtn.disabled = true;
+      setRecaptchaStatus('Configure RECAPTCHA_SITE_KEY no frontend para liberar o cadastro seguro.', 'warning');
+      return;
+    }
+
+    if (!state.recaptchaLoaded || !window.grecaptcha || state.recaptchaWidgetId !== null) {
+      return;
+    }
+
+    state.recaptchaWidgetId = window.grecaptcha.render(refs.recaptchaMount, {
+      sitekey: window.AppConfig.RECAPTCHA_SITE_KEY,
+      theme: 'light',
+      callback: () => {
+        setRecaptchaStatus('Verificacao concluida. Voce ja pode criar a conta.', 'success');
+      },
+      'expired-callback': () => {
+        setRecaptchaStatus('O reCAPTCHA expirou. Confirme novamente antes de enviar.', 'warning');
+      },
+      'error-callback': () => {
+        setRecaptchaStatus('Falha ao carregar o reCAPTCHA. Atualize a pagina e tente outra vez.', 'danger');
+      }
+    });
+
+    setRecaptchaStatus('Confirme o reCAPTCHA para liberar o cadastro.', 'secondary');
+  }
+
   async function validateSlugAvailability({ silent = false } = {}) {
     const validation = window.StoreUtils.validateStoreSlug(refs.slug.value);
     refs.slug.value = validation.slug;
@@ -93,12 +161,12 @@
       return { ok: false, slug: validation.slug };
     }
 
-    const nonce = ++slugCheckNonce;
+    const nonce = ++state.slugCheckNonce;
     setSlugFeedback('Verificando disponibilidade...', 'secondary');
 
     try {
       const availability = await window.StoreUtils.checkSlugAvailability(validation.slug);
-      if (nonce !== slugCheckNonce) return { ok: false, stale: true };
+      if (nonce !== state.slugCheckNonce) return { ok: false, stale: true };
 
       if (!availability.available) {
         setSlugFeedback(availability.reason, 'danger');
@@ -106,7 +174,7 @@
         return { ok: false, slug: availability.slug };
       }
 
-      setSlugFeedback('Slug disponível para cadastro.', 'success');
+      setSlugFeedback('Slug disponivel para cadastro.', 'success');
       return { ok: true, slug: availability.slug };
     } catch (err) {
       setSlugFeedback(`Erro ao verificar slug: ${err.message}`, 'danger');
@@ -134,17 +202,24 @@
     const passwordValidation = updatePasswordValidation();
 
     if (!passwordValidation.ok) {
-      showStatus('Escolha uma senha com pelo menos 8 caracteres, letras maiúsculas, minúsculas, números e caractere especial.', 'warning');
+      showStatus('Escolha uma senha com pelo menos 8 caracteres, letras maiusculas, minusculas, numeros e caractere especial.', 'warning');
       return;
     }
 
     if (!passwordValidation.matches) {
-      showStatus('As senhas não coincidem.', 'warning');
+      showStatus('As senhas nao coincidem.', 'warning');
       return;
     }
 
     if (photoUrl && !isValidHttpUrl(photoUrl)) {
-      showStatus('Informe uma URL válida para a foto ou deixe o campo vazio.', 'warning');
+      showStatus('Informe uma URL valida para a foto ou deixe o campo vazio.', 'warning');
+      return;
+    }
+
+    const recaptchaToken = getRecaptchaToken();
+    if (!recaptchaToken) {
+      setRecaptchaStatus('Confirme o reCAPTCHA antes de enviar o cadastro.', 'warning');
+      showStatus('Confirme o reCAPTCHA antes de criar a conta.', 'warning');
       return;
     }
 
@@ -155,6 +230,8 @@
     refs.status.classList.add('d-none');
 
     try {
+      await verifyRecaptchaToken(recaptchaToken);
+
       const { data, error } = await window.Auth.register(email, password, {
         first_name: firstName,
         last_name: lastName || null,
@@ -167,7 +244,10 @@
 
       refs.form.reset();
       updatePublicUrlPreview();
-      setSlugFeedback('Esse endereço será usado na sua página pública.', 'secondary');
+      updatePasswordValidation();
+      resetRecaptcha();
+      setSlugFeedback('Esse endereco sera usado na sua pagina publica.', 'secondary');
+      setRecaptchaStatus('Confirme novamente o reCAPTCHA caso queira cadastrar outra conta.', 'secondary');
 
       if (data?.session) {
         const loginResult = await window.Auth.login(email, password);
@@ -182,6 +262,8 @@
 
       showStatus('Cadastro realizado. Agora entre com seu email e senha para acessar o painel.', 'success');
     } catch (err) {
+      resetRecaptcha();
+      setRecaptchaStatus('A verificacao expirou ou falhou. Confirme novamente antes de enviar.', 'warning');
       showStatus(`Erro ao criar conta: ${err.message}`, 'danger');
     } finally {
       setLoading(false);
@@ -223,7 +305,13 @@
     refs.form.addEventListener('submit', onSubmit);
     updatePublicUrlPreview();
     updatePasswordValidation();
+    renderRecaptcha();
   }
+
+  window.onRecaptchaLoaded = () => {
+    state.recaptchaLoaded = true;
+    renderRecaptcha();
+  };
 
   document.addEventListener('DOMContentLoaded', init);
 })();

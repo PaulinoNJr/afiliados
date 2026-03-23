@@ -18,6 +18,12 @@
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJueGhlamRybWhxcXNlcnVoYnZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwNjMyNjEsImV4cCI6MjA4ODYzOTI2MX0.3RhDHgDvQ8J2vwyp3vQWh5pu4eioWLNAoijeE9m_G14'
   ).trim();
 
+  const RECAPTCHA_SITE_KEY = String(
+    window.RECAPTCHA_SITE_KEY ||
+    inlineConfig.recaptchaSiteKey ||
+    ''
+  ).trim();
+
   const isValidSupabaseUrl = /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(SUPABASE_URL);
   const isJwt = SUPABASE_ANON_KEY.split('.').length === 3;
   const hasPlaceholder = /(SEU|SUA|YOUR|PROJECT|ANON_KEY|CHAVE)/i.test(
@@ -40,6 +46,10 @@
     console.warn(`Config Supabase invalida: ${configIssues.join(', ')}.`);
   }
 
+  if (!RECAPTCHA_SITE_KEY) {
+    console.warn('RECAPTCHA_SITE_KEY nao configurada. O cadastro anti-bot ficara indisponivel ate a chave ser informada.');
+  }
+
   const client = !missingConfig && hasSdk
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         auth: {
@@ -53,7 +63,9 @@
   window.AppConfig = {
     SUPABASE_URL,
     SUPABASE_ANON_KEY,
+    RECAPTCHA_SITE_KEY,
     missingConfig,
+    recaptchaConfigured: Boolean(RECAPTCHA_SITE_KEY),
     hasSdk,
     configIssues
   };
