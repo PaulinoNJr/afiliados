@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loja | Afiliados ML</title>
+  <meta name="description" content="Configure sua loja personalizada." />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm sticky-top">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="index.html">Afiliados ML</a>
+      <div class="ms-auto d-flex align-items-center gap-3">
+        <span id="userRoleBadge" class="badge text-bg-secondary">perfil</span>
+        <small id="userEmail" class="text-secondary d-none d-md-inline"></small>
+        <button id="logoutBtn" class="btn btn-outline-danger btn-sm" type="button">Sair</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="py-4 py-lg-5 admin-main">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+          <h1 class="h3 mb-1">Configurações da loja</h1>
+          <p class="text-secondary mb-0">Edite sua identidade pública e o endereço da vitrine.</p>
+        </div>
+        <a href="admin.html" class="btn btn-outline-primary">Voltar ao painel</a>
+      </div>
+
+      <div id="statusMessage" class="alert d-none" role="alert"></div>
+
+      <div class="row g-4">
+        <div class="col-12 col-xl-7">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                  <h2 class="h5 mb-1">Perfil público do afiliado</h2>
+                  <p class="text-secondary small mb-0">Esses dados aparecem no painel e ajudam a identificar sua operação.</p>
+                </div>
+                <button id="saveStoreBtn" type="submit" form="storeProfileForm" class="btn btn-primary">Salvar alterações</button>
+              </div>
+
+              <form id="storeProfileForm" novalidate>
+                <div class="row g-3">
+                  <div class="col-12 col-md-6">
+                    <label for="firstName" class="form-label">Nome</label>
+                    <input id="firstName" type="text" class="form-control" maxlength="80" required />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="lastName" class="form-label">Sobrenome</label>
+                    <input id="lastName" type="text" class="form-control" maxlength="80" />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="phone" class="form-label">Telefone</label>
+                    <input id="phone" type="tel" class="form-control" maxlength="30" />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="photoUrl" class="form-label">Foto (URL)</label>
+                    <input id="photoUrl" type="url" class="form-control" placeholder="https://foto..." />
+                  </div>
+                </div>
+
+                <hr class="my-4" />
+
+                <div class="mb-3">
+                  <label for="storeName" class="form-label">Nome da loja</label>
+                  <input id="storeName" type="text" class="form-control" maxlength="120" required />
+                </div>
+
+                <div class="mb-2">
+                  <label for="storeSlug" class="form-label">Slug público</label>
+                  <div class="input-group">
+                    <span class="input-group-text">/</span>
+                    <input id="storeSlug" type="text" class="form-control" maxlength="80" placeholder="minha-loja" required />
+                  </div>
+                  <small id="storeSlugFeedback" class="d-block mt-2 text-secondary">Use letras minúsculas, números e hífens.</small>
+                </div>
+
+                <div class="mb-3">
+                  <label for="storeBio" class="form-label">Bio</label>
+                  <textarea id="storeBio" class="form-control" rows="4" maxlength="300" placeholder="Explique o foco da sua loja."></textarea>
+                </div>
+
+                <div class="mb-3">
+                  <label for="storeBannerUrl" class="form-label">Banner (URL)</label>
+                  <input id="storeBannerUrl" type="url" class="form-control" placeholder="https://imagem..." />
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-xl-5">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <p class="text-uppercase small fw-semibold text-secondary mb-3">Prévia</p>
+              <div class="dashboard-profile-card mb-3">
+                <img id="photoPreview" class="dashboard-avatar d-none" alt="Foto do perfil" />
+                <div>
+                  <p id="profileNamePreview" class="fw-semibold mb-1">Seu nome</p>
+                  <p id="profilePhonePreview" class="small text-secondary mb-0">Telefone não informado</p>
+                </div>
+              </div>
+              <img id="storeBannerPreview" class="store-banner-preview d-none mb-3" alt="Prévia do banner da loja" />
+              <div class="public-store-card">
+                <p id="storeNamePreview" class="fw-semibold mb-1">Sua loja</p>
+                <p id="storeBioPreview" class="small text-secondary mb-3">Adicione uma bio para apresentar sua loja.</p>
+                <p id="storePublicUrl" class="small mb-1 text-break">Página pública indisponível.</p>
+                <div class="d-grid gap-2">
+                  <a id="storePublicUrlLink" href="index.html" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener noreferrer">Abrir página pública</a>
+                  <a href="produtos.html" class="btn btn-outline-dark btn-sm">Abrir página administrativa</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/store-utils.js"></script>
+  <script src="assets/js/store.js"></script>
+</body>
+</html>

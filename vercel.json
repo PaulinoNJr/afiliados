@@ -18,11 +18,23 @@
       "destination": "/users.html"
     },
     {
+      "source": "/cadastro",
+      "destination": "/cadastro.html"
+    },
+    {
+      "source": "/loja",
+      "destination": "/loja.html"
+    },
+    {
+      "source": "/produtos",
+      "destination": "/produtos.html"
+    },
+    {
       "source": "/dashboard",
       "destination": "/admin.html"
     },
     {
-      "source": "/:slug((?!api|assets|login|admin|users|dashboard|.*\\..*)[^/]+)",
+      "source": "/:slug((?!api|assets|login|admin|users|dashboard|cadastro|loja|produtos|.*\\..*)[^/]+)",
       "destination": "/index.html"
     }
   ]

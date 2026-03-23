@@ -18,7 +18,7 @@
     return { data, error };
   }
 
-  async function register(email, password) {
+  async function register(email, password, profileData = {}) {
     ensureClient();
 
     const isolatedClient = window.supabase.createClient(
@@ -33,7 +33,21 @@
       }
     );
 
-    const { data, error } = await isolatedClient.auth.signUp({ email, password });
+    const metadata = {
+      first_name: profileData.first_name || null,
+      last_name: profileData.last_name || null,
+      phone: profileData.phone || null,
+      photo_url: profileData.photo_url || null,
+      slug: profileData.slug || null
+    };
+
+    const { data, error } = await isolatedClient.auth.signUp({
+      email,
+      password,
+      options: {
+        data: metadata
+      }
+    });
     return { data, error };
   }
 
@@ -47,7 +61,7 @@
 
     const { data, error } = await window.db
       .from('user_profiles')
-      .select('user_id, user_email, role, store_name, slug, bio, banner_url, created_at, updated_at')
+      .select('user_id, user_email, role, first_name, last_name, phone, photo_url, store_name, slug, bio, banner_url, created_at, updated_at')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -61,7 +75,7 @@
         user_email: session.user.email || null,
         role: 'produtor'
       })
-      .select('user_id, user_email, role, store_name, slug, bio, banner_url, created_at, updated_at')
+      .select('user_id, user_email, role, first_name, last_name, phone, photo_url, store_name, slug, bio, banner_url, created_at, updated_at')
       .single();
 
     if (insertError) throw insertError;

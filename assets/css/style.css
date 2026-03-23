@@ -269,6 +269,41 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   min-height: 100%;
 }
 
+.dashboard-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #dfe8f4;
+  border-radius: 1rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+}
+
+.dashboard-avatar {
+  width: 68px;
+  height: 68px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid rgba(13, 110, 253, 0.15);
+  background: #ffffff;
+}
+
+.dashboard-link-card {
+  border: 1px solid #dfe8f4;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(13, 110, 253, 0.08), transparent 30%),
+    linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+}
+
+.dashboard-link-label {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #295eb6;
+  margin-bottom: 0.65rem;
+}
+
 .admin-table thead th {
   font-size: 0.8rem;
   text-transform: uppercase;

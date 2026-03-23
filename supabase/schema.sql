@@ -42,7 +42,10 @@ as $$
     'dashboard',
     'admin',
     'api',
-    'users'
+    'users',
+    'cadastro',
+    'loja',
+    'produtos'
   ]);
 $$;
 
@@ -50,9 +53,13 @@ create table if not exists public.user_profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
   user_email text,
   role text not null default 'produtor' check (role in ('admin', 'produtor')),
+  first_name text,
+  last_name text,
+  phone text,
   store_name text,
   slug text,
   bio text,
+  photo_url text,
   banner_url text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -61,9 +68,13 @@ create table if not exists public.user_profiles (
 alter table public.user_profiles
   add column if not exists user_email text,
   add column if not exists role text,
+  add column if not exists first_name text,
+  add column if not exists last_name text,
+  add column if not exists phone text,
   add column if not exists store_name text,
   add column if not exists slug text,
   add column if not exists bio text,
+  add column if not exists photo_url text,
   add column if not exists banner_url text,
   add column if not exists created_at timestamptz not null default now(),
   add column if not exists updated_at timestamptz not null default now();
@@ -119,8 +130,16 @@ as $$
 declare
   fallback_store_name text;
 begin
+  new.first_name := nullif(trim(coalesce(new.first_name, '')), '');
+  new.last_name := nullif(trim(coalesce(new.last_name, '')), '');
+  new.phone := nullif(trim(coalesce(new.phone, '')), '');
+  new.photo_url := nullif(trim(coalesce(new.photo_url, '')), '');
+  new.bio := nullif(trim(coalesce(new.bio, '')), '');
+  new.banner_url := nullif(trim(coalesce(new.banner_url, '')), '');
+
   fallback_store_name := coalesce(
     nullif(trim(new.store_name), ''),
+    nullif(trim(concat_ws(' ', new.first_name, new.last_name)), ''),
     nullif(initcap(replace(split_part(coalesce(new.user_email, ''), '@', 1), '.', ' ')), ''),
     'Minha loja'
   );
@@ -156,23 +175,44 @@ security definer
 set search_path = public
 as $$
 declare
+  meta jsonb := coalesce(new.raw_user_meta_data, '{}'::jsonb);
+  first_name_value text;
+  last_name_value text;
+  phone_value text;
+  photo_url_value text;
+  slug_value text;
   generated_store_name text;
 begin
+  first_name_value := nullif(trim(meta ->> 'first_name'), '');
+  last_name_value := nullif(trim(meta ->> 'last_name'), '');
+  phone_value := nullif(trim(meta ->> 'phone'), '');
+  photo_url_value := nullif(trim(meta ->> 'photo_url'), '');
+  slug_value := nullif(trim(meta ->> 'slug'), '');
+
   generated_store_name := coalesce(
+    nullif(trim(concat_ws(' ', first_name_value, last_name_value)), ''),
     nullif(initcap(replace(split_part(coalesce(new.email, ''), '@', 1), '.', ' ')), ''),
     'Minha loja'
   );
 
-  insert into public.user_profiles (user_id, user_email, role, store_name, slug)
+  insert into public.user_profiles (user_id, user_email, role, first_name, last_name, phone, photo_url, store_name, slug)
   values (
     new.id,
     new.email,
     'produtor',
+    first_name_value,
+    last_name_value,
+    phone_value,
+    photo_url_value,
     generated_store_name,
-    public.generate_unique_store_slug(generated_store_name, new.id)
+    public.generate_unique_store_slug(coalesce(slug_value, generated_store_name), new.id)
   )
   on conflict (user_id) do update
-    set user_email = excluded.user_email;
+    set user_email = excluded.user_email,
+        first_name = coalesce(user_profiles.first_name, excluded.first_name),
+        last_name = coalesce(user_profiles.last_name, excluded.last_name),
+        phone = coalesce(user_profiles.phone, excluded.phone),
+        photo_url = coalesce(user_profiles.photo_url, excluded.photo_url);
 
   return new;
 end;
@@ -202,6 +242,7 @@ where auth_user.id = profile.user_id
 update public.user_profiles
 set store_name = coalesce(
   nullif(trim(store_name), ''),
+  nullif(trim(concat_ws(' ', first_name, last_name)), ''),
   nullif(initcap(replace(split_part(coalesce(user_email, ''), '@', 1), '.', ' ')), ''),
   'Minha loja'
 );
@@ -302,6 +343,10 @@ execute function public.prevent_unauthorized_role_change();
 create or replace view public.public_store_profiles as
 select
   profile.user_id as id,
+  profile.first_name,
+  profile.last_name,
+  profile.phone,
+  profile.photo_url,
   profile.store_name,
   profile.slug,
   profile.bio,
