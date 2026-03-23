@@ -1,23 +1,20 @@
-﻿(() => {
-  const DRAFT_KEY = 'afiliados_admin_form_draft_v2';
+(() => {
+  const DRAFT_KEY = 'afiliados_admin_form_draft_v3';
 
   const state = {
     session: null,
+    profile: null,
     products: [],
     visibleProducts: [],
     editingId: null,
     role: 'produtor',
     isAdmin: false,
+    lastGeneratedSlug: '',
+    slugCheckNonce: 0,
     lastAutoFillUrl: '',
     autoFillSourceLabel: null,
     autoFillDiagnostics: null,
-    productMeta: {
-      ml_item_id: null,
-      ml_currency: null,
-      ml_permalink: null,
-      ml_thumbnail: null,
-      ml_pictures: []
-    }
+    productMeta: createEmptyProductMeta()
   };
 
   const refs = {
@@ -26,6 +23,18 @@
     logoutBtn: document.getElementById('logoutBtn'),
     manageUsersLink: document.getElementById('manageUsersLink'),
     status: document.getElementById('statusMessage'),
+    viewPublicStoreLink: document.getElementById('viewPublicStoreLink'),
+
+    storeProfileForm: document.getElementById('storeProfileForm'),
+    saveStoreBtn: document.getElementById('saveStoreBtn'),
+    storeName: document.getElementById('storeName'),
+    storeSlug: document.getElementById('storeSlug'),
+    storeSlugFeedback: document.getElementById('storeSlugFeedback'),
+    storeBio: document.getElementById('storeBio'),
+    storeBannerUrl: document.getElementById('storeBannerUrl'),
+    storeBannerPreview: document.getElementById('storeBannerPreview'),
+    storePublicUrl: document.getElementById('storePublicUrl'),
+    storePublicUrlLink: document.getElementById('storePublicUrlLink'),
 
     statTotalProducts: document.getElementById('statTotalProducts'),
     statAveragePrice: document.getElementById('statAveragePrice'),
@@ -66,6 +75,7 @@
 
   function createEmptyProductMeta() {
     return {
+      source_url: null,
       ml_item_id: null,
       ml_currency: null,
       ml_permalink: null,
@@ -84,6 +94,7 @@
 
   function extractProductMeta(data = {}) {
     return {
+      source_url: isFilled(data.source_url) ? String(data.source_url).trim() : null,
       ml_item_id: isFilled(data.ml_item_id) ? String(data.ml_item_id).trim() : null,
       ml_currency: isFilled(data.ml_currency) ? String(data.ml_currency).trim() : null,
       ml_permalink: isFilled(data.ml_permalink) ? String(data.ml_permalink).trim() : null,
@@ -94,7 +105,7 @@
 
   function mergeProductMeta(data = {}, { overwrite = true } = {}) {
     const incoming = extractProductMeta(data);
-    const keys = ['ml_item_id', 'ml_currency', 'ml_permalink', 'ml_thumbnail'];
+    const keys = ['source_url', 'ml_item_id', 'ml_currency', 'ml_permalink', 'ml_thumbnail'];
 
     keys.forEach((key) => {
       const value = incoming[key];
@@ -166,6 +177,11 @@
       : (state.editingId ? 'Atualizar produto' : 'Salvar produto');
   }
 
+  function setStoreSaveLoading(isLoading) {
+    refs.saveStoreBtn.disabled = isLoading;
+    refs.saveStoreBtn.textContent = isLoading ? 'Salvando...' : 'Salvar loja';
+  }
+
   function setAutoFillLoading(isLoading) {
     refs.autoFillBtn.disabled = isLoading;
     refs.autoFillBtn.textContent = isLoading ? 'Buscando...' : 'Preencher';
@@ -173,6 +189,11 @@
 
   function setListLoading(isLoading) {
     refs.listLoading.classList.toggle('d-none', !isLoading);
+  }
+
+  function setSlugFeedback(message, tone = 'secondary') {
+    refs.storeSlugFeedback.className = `d-block mt-2 text-${tone}`;
+    refs.storeSlugFeedback.textContent = message;
   }
 
   function parsePrice(value) {
@@ -216,12 +237,7 @@
   function applyRoleUI() {
     refs.userRoleBadge.textContent = state.isAdmin ? 'admin' : 'produtor';
     refs.userRoleBadge.className = state.isAdmin ? 'badge text-bg-primary' : 'badge text-bg-secondary';
-
-    if (!state.isAdmin) {
-      refs.manageUsersLink.classList.add('d-none');
-    } else {
-      refs.manageUsersLink.classList.remove('d-none');
-    }
+    refs.manageUsersLink.classList.toggle('d-none', !state.isAdmin);
   }
 
   function updateFormHeader() {
@@ -275,6 +291,7 @@
     } else {
       refs.previewSourceTag.removeAttribute('title');
     }
+
     refs.previewSourceTag.classList.remove('d-none');
   }
 
@@ -305,6 +322,37 @@
     }
 
     updatePreviewSourceTag();
+  }
+
+  function updateStorePreview() {
+    const slug = window.StoreUtils.normalizeStoreSlug(refs.storeSlug.value);
+    const bannerUrl = refs.storeBannerUrl.value.trim();
+    const publicUrl = slug ? window.StoreUtils.getStoreUrl(slug) : null;
+
+    if (publicUrl) {
+      refs.storePublicUrl.textContent = publicUrl;
+      refs.storePublicUrlLink.href = publicUrl;
+      refs.storePublicUrlLink.classList.remove('disabled', 'text-secondary');
+      refs.storePublicUrlLink.setAttribute('aria-disabled', 'false');
+      refs.viewPublicStoreLink.href = publicUrl;
+    } else {
+      refs.storePublicUrl.textContent = 'Página pública indisponível.';
+      refs.storePublicUrlLink.href = 'index.html';
+      refs.storePublicUrlLink.classList.add('text-secondary');
+      refs.storePublicUrlLink.setAttribute('aria-disabled', 'true');
+      refs.viewPublicStoreLink.href = 'index.html';
+    }
+
+    if (isValidHttpUrl(bannerUrl)) {
+      refs.storeBannerPreview.src = bannerUrl;
+      refs.storeBannerPreview.classList.remove('d-none');
+      refs.storeBannerPreview.onerror = () => {
+        refs.storeBannerPreview.classList.add('d-none');
+      };
+    } else {
+      refs.storeBannerPreview.removeAttribute('src');
+      refs.storeBannerPreview.classList.add('d-none');
+    }
   }
 
   function resetPreview() {
@@ -374,6 +422,15 @@
     }
   }
 
+  function populateProfileForm(profile) {
+    refs.storeName.value = profile?.store_name || '';
+    refs.storeSlug.value = profile?.slug || '';
+    refs.storeBio.value = profile?.bio || '';
+    refs.storeBannerUrl.value = profile?.banner_url || '';
+    state.lastGeneratedSlug = refs.storeSlug.value.trim();
+    updateStorePreview();
+  }
+
   function resetForm({ clearStoredDraft = true } = {}) {
     refs.form.reset();
     state.editingId = null;
@@ -418,13 +475,13 @@
       : 0;
 
     const lastItem = [...state.products].sort((a, b) => {
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      return new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime();
     })[0];
 
     refs.statTotalProducts.textContent = String(total);
     refs.statAveragePrice.textContent = formatPrice(avgPrice);
     refs.statWithDescription.textContent = total ? `${Math.round((withDescription / total) * 100)}%` : '0%';
-    refs.statLastUpdate.textContent = lastItem?.created_at ? formatDate(lastItem.created_at) : 'Sem registros';
+    refs.statLastUpdate.textContent = lastItem ? formatDate(lastItem.updated_at || lastItem.created_at) : 'Sem registros';
   }
 
   function renderTable() {
@@ -481,7 +538,7 @@
 
       const tdCreatedAt = document.createElement('td');
       tdCreatedAt.className = 'small text-secondary';
-      tdCreatedAt.textContent = formatDate(item.created_at);
+      tdCreatedAt.textContent = formatDate(item.updated_at || item.created_at);
 
       const tdActions = document.createElement('td');
       tdActions.className = 'text-end';
@@ -513,11 +570,9 @@
 
     if (term) {
       products = products.filter((item) => {
-        const content = [
-          item.titulo,
-          item.descricao,
-          item.link_afiliado
-        ].map(normalizeForSearch).join(' ');
+        const content = [item.titulo, item.descricao, item.link_afiliado]
+          .map(normalizeForSearch)
+          .join(' ');
 
         return content.includes(term);
       });
@@ -538,7 +593,7 @@
       if (sort === 'price_desc') return Number(b.preco || 0) - Number(a.preco || 0);
       if (sort === 'price_asc') return Number(a.preco || 0) - Number(b.preco || 0);
       if (sort === 'title_asc') return String(a.titulo || '').localeCompare(String(b.titulo || ''), 'pt-BR');
-      return new Date(b.created_at) - new Date(a.created_at);
+      return new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at);
     });
 
     state.visibleProducts = products;
@@ -552,11 +607,11 @@
     try {
       let query = window.db
         .from('produtos')
-        .select('id, titulo, preco, imagem_url, link_afiliado, descricao, created_at, created_by, ml_item_id, ml_currency, ml_permalink, ml_thumbnail, ml_pictures')
-        .order('created_at', { ascending: false });
+        .select('id, titulo, preco, imagem_url, link_afiliado, descricao, source_url, created_at, updated_at, profile_id, ml_item_id, ml_currency, ml_permalink, ml_thumbnail, ml_pictures')
+        .order('updated_at', { ascending: false });
 
       if (!state.isAdmin) {
-        query = query.eq('created_by', state.session.user.id);
+        query = query.eq('profile_id', state.session.user.id);
       }
 
       const { data, error } = await query;
@@ -577,27 +632,12 @@
     state.autoFillDiagnostics = data.capture_diagnostics || null;
     mergeProductMeta(data, { overwrite });
 
-    if (data.title && (overwrite || !isFilled(refs.titulo.value))) {
-      refs.titulo.value = data.title;
-    }
+    if (data.title && (overwrite || !isFilled(refs.titulo.value))) refs.titulo.value = data.title;
+    if (data.image && (overwrite || !isFilled(refs.imagemUrl.value))) refs.imagemUrl.value = data.image;
+    if (typeof data.price === 'number' && (overwrite || !isFilled(refs.preco.value))) refs.preco.value = formatPriceInput(data.price);
+    if (data.description && (overwrite || !isFilled(refs.descricao.value))) refs.descricao.value = data.description;
 
-    if (data.image && (overwrite || !isFilled(refs.imagemUrl.value))) {
-      refs.imagemUrl.value = data.image;
-    }
-
-    if (typeof data.price === 'number' && (overwrite || !isFilled(refs.preco.value))) {
-      refs.preco.value = formatPriceInput(data.price);
-    }
-
-    if (data.description && (overwrite || !isFilled(refs.descricao.value))) {
-      refs.descricao.value = data.description;
-    }
-
-    if (
-      !isFilled(refs.imagemUrl.value) &&
-      state.productMeta.ml_thumbnail &&
-      (overwrite || !isFilled(refs.imagemUrl.value))
-    ) {
+    if (!isFilled(refs.imagemUrl.value) && state.productMeta.ml_thumbnail) {
       refs.imagemUrl.value = state.productMeta.ml_thumbnail;
     }
   }
@@ -622,14 +662,9 @@
     setAutoFillLoading(true);
 
     try {
-      const response = await fetch(`/api/preview?url=${encodeURIComponent(url)}`);
-      const payload = await response.json();
+      const extracted = await window.StoreUtils.extractProductFromUrl(url);
+      const data = extracted.metadata || extracted;
 
-      if (!response.ok || !payload.ok) {
-        throw new Error(payload.error || 'Não foi possível extrair dados do link.');
-      }
-
-      const data = payload.data || {};
       applyAutoFillData(data, { overwrite });
       updatePreview();
       saveDraft();
@@ -708,27 +743,115 @@
     showStatus('Exportação CSV concluída.', 'success');
   }
 
+  async function validateSlugAvailability({ silent = false } = {}) {
+    const validation = window.StoreUtils.validateStoreSlug(refs.storeSlug.value);
+    refs.storeSlug.value = validation.slug;
+    updateStorePreview();
+
+    if (!validation.ok) {
+      setSlugFeedback(validation.message, 'danger');
+      return { ok: false, slug: validation.slug };
+    }
+
+    const nonce = ++state.slugCheckNonce;
+    setSlugFeedback('Verificando disponibilidade...', 'secondary');
+
+    try {
+      const availability = await window.StoreUtils.checkSlugAvailability(validation.slug, state.session.user.id);
+      if (nonce !== state.slugCheckNonce) {
+        return { ok: false, stale: true, slug: validation.slug };
+      }
+
+      if (!availability.available) {
+        setSlugFeedback(availability.reason, 'danger');
+        if (!silent) showStatus(availability.reason, 'warning');
+        return { ok: false, slug: availability.slug };
+      }
+
+      setSlugFeedback(availability.reason, 'success');
+      return { ok: true, slug: availability.slug };
+    } catch (err) {
+      setSlugFeedback(`Não foi possível validar o slug: ${err.message}`, 'danger');
+      if (!silent) showStatus(`Erro ao validar slug: ${err.message}`, 'danger');
+      return { ok: false, slug: validation.slug };
+    }
+  }
+
+  async function saveStoreProfile(event) {
+    event.preventDefault();
+    hideStatus();
+
+    const storeName = refs.storeName.value.trim();
+    const bio = refs.storeBio.value.trim();
+    const bannerUrl = refs.storeBannerUrl.value.trim();
+
+    if (!storeName) {
+      showStatus('Informe o nome da loja.', 'warning');
+      refs.storeName.focus();
+      return;
+    }
+
+    if (bannerUrl && !isValidHttpUrl(bannerUrl)) {
+      showStatus('Informe uma URL válida para o banner ou deixe o campo vazio.', 'warning');
+      refs.storeBannerUrl.focus();
+      return;
+    }
+
+    const slugResult = await validateSlugAvailability();
+    if (!slugResult.ok) {
+      refs.storeSlug.focus();
+      return;
+    }
+
+    setStoreSaveLoading(true);
+
+    try {
+      const { data, error } = await window.db
+        .from('user_profiles')
+        .update({
+          store_name: storeName,
+          slug: slugResult.slug,
+          bio: bio || null,
+          banner_url: bannerUrl || null
+        })
+        .eq('user_id', state.session.user.id)
+        .select('user_id, user_email, role, store_name, slug, bio, banner_url, created_at, updated_at')
+        .single();
+
+      if (error) throw error;
+
+      state.profile = data;
+      populateProfileForm(state.profile);
+      showStatus('Dados da loja atualizados com sucesso.', 'success');
+    } catch (err) {
+      showStatus(`Erro ao salvar loja: ${err.message}`, 'danger');
+    } finally {
+      setStoreSaveLoading(false);
+    }
+  }
+
   async function saveProduct(event) {
     event.preventDefault();
     hideStatus();
 
-    const link_afiliado = refs.linkAfiliado.value.trim();
+    const linkAfiliado = refs.linkAfiliado.value.trim();
     const titulo = refs.titulo.value.trim();
-    const imagem_url = refs.imagemUrl.value.trim();
+    const imagemUrl = refs.imagemUrl.value.trim();
     const preco = parsePrice(refs.preco.value);
     const descricao = refs.descricao.value.trim();
 
-    if (!isValidHttpUrl(link_afiliado) || !titulo || Number.isNaN(preco) || preco <= 0) {
+    if (!isValidHttpUrl(linkAfiliado) || !titulo || Number.isNaN(preco) || preco <= 0) {
       showStatus('Preencha link válido, nome e preço maior que zero.', 'warning');
       return;
     }
 
     const payload = {
-      link_afiliado,
+      link_afiliado: linkAfiliado,
       titulo,
-      imagem_url: imagem_url || null,
+      imagem_url: imagemUrl || null,
       preco,
       descricao: descricao || null,
+      source_url: state.productMeta.source_url || linkAfiliado,
       ml_item_id: state.productMeta.ml_item_id || null,
       ml_currency: state.productMeta.ml_currency || null,
       ml_permalink: state.productMeta.ml_permalink || null,
@@ -740,13 +863,10 @@
 
     try {
       if (state.editingId) {
-        let query = window.db
-          .from('produtos')
-          .update(payload)
-          .eq('id', state.editingId);
+        let query = window.db.from('produtos').update(payload).eq('id', state.editingId);
 
         if (!state.isAdmin) {
-          query = query.eq('created_by', state.session.user.id);
+          query = query.eq('profile_id', state.session.user.id);
         }
 
         const { error } = await query;
@@ -754,12 +874,11 @@
 
         showStatus('Produto atualizado com sucesso.', 'success');
       } else {
-        const { error } = await window.db
-          .from('produtos')
-          .insert({
-            ...payload,
-            created_by: state.session.user.id
-          });
+        const { error } = await window.db.from('produtos').insert({
+          ...payload,
+          profile_id: state.session.user.id,
+          created_by: state.session.user.id
+        });
 
         if (error) throw error;
         showStatus('Produto cadastrado com sucesso.', 'success');
@@ -778,17 +897,13 @@
   async function deleteProduct(id) {
     const item = state.products.find((product) => product.id === id);
     const name = item?.titulo ? `"${item.titulo}"` : 'este produto';
-    const confirmed = window.confirm(`Deseja realmente excluir ${name}?`);
-    if (!confirmed) return;
+    if (!window.confirm(`Deseja realmente excluir ${name}?`)) return;
 
     try {
-      let query = window.db
-        .from('produtos')
-        .delete()
-        .eq('id', id);
+      let query = window.db.from('produtos').delete().eq('id', id);
 
       if (!state.isAdmin) {
-        query = query.eq('created_by', state.session.user.id);
+        query = query.eq('profile_id', state.session.user.id);
       }
 
       const { error } = await query;
@@ -801,16 +916,40 @@
     }
   }
 
-  function bindFormEvents() {
-    const formFields = [
-      refs.linkAfiliado,
-      refs.titulo,
-      refs.imagemUrl,
-      refs.preco,
-      refs.descricao
-    ];
+  function bindProfileEvents() {
+    refs.storeName.addEventListener('input', () => {
+      const currentSlug = refs.storeSlug.value.trim();
+      const generated = window.StoreUtils.normalizeStoreSlug(refs.storeName.value);
 
-    formFields.forEach((field) => {
+      if (!currentSlug) {
+        refs.storeSlug.value = generated;
+        state.lastGeneratedSlug = generated;
+        setSlugFeedback('Slug sugerido automaticamente. Você pode editar se quiser.', 'secondary');
+      }
+
+      updateStorePreview();
+    });
+
+    refs.storeSlug.addEventListener('input', () => {
+      const normalized = window.StoreUtils.normalizeStoreSlug(refs.storeSlug.value);
+      refs.storeSlug.value = normalized;
+      updateStorePreview();
+
+      const validation = window.StoreUtils.validateStoreSlug(normalized);
+      setSlugFeedback(validation.message, validation.ok ? 'secondary' : 'danger');
+    });
+
+    refs.storeSlug.addEventListener('blur', async () => {
+      if (!isFilled(refs.storeSlug.value)) return;
+      await validateSlugAvailability({ silent: true });
+    });
+
+    refs.storeBannerUrl.addEventListener('input', updateStorePreview);
+    refs.storeProfileForm.addEventListener('submit', saveStoreProfile);
+  }
+
+  function bindFormEvents() {
+    [refs.linkAfiliado, refs.titulo, refs.imagemUrl, refs.preco, refs.descricao].forEach((field) => {
       field.addEventListener('input', () => {
         updatePreview();
         saveDraft();
@@ -860,10 +999,11 @@
       state.session = await window.Auth.requireAuth('login.html');
       if (!state.session) return;
 
-      const profile = await window.Auth.getProfile();
-      state.role = profile?.role || 'produtor';
+      state.profile = await window.Auth.getProfile();
+      state.role = state.profile?.role || 'produtor';
       state.isAdmin = state.role === 'admin';
       applyRoleUI();
+      populateProfileForm(state.profile);
 
       refs.userEmail.textContent = state.session.user.email || 'Usuário autenticado';
 
@@ -877,6 +1017,7 @@
       refs.cancelEditBtn.addEventListener('click', () => resetForm({ clearStoredDraft: false }));
       refs.clearFormBtn.addEventListener('click', () => resetForm({ clearStoredDraft: true }));
 
+      bindProfileEvents();
       bindFormEvents();
       bindListEvents();
       restoreDraft();

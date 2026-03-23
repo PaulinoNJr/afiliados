@@ -47,7 +47,7 @@
 
     const { data, error } = await window.db
       .from('user_profiles')
-      .select('user_id, role')
+      .select('user_id, user_email, role, store_name, slug, bio, banner_url, created_at, updated_at')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -56,8 +56,12 @@
 
     const { data: createdProfile, error: insertError } = await window.db
       .from('user_profiles')
-      .insert({ user_id: userId, role: 'produtor' })
-      .select('user_id, role')
+      .insert({
+        user_id: userId,
+        user_email: session.user.email || null,
+        role: 'produtor'
+      })
+      .select('user_id, user_email, role, store_name, slug, bio, banner_url, created_at, updated_at')
       .single();
 
     if (insertError) throw insertError;

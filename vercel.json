@@ -3,5 +3,27 @@
     "api/*.js": {
       "maxDuration": 10
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/login",
+      "destination": "/login.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/users",
+      "destination": "/users.html"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/:slug((?!api|assets|login|admin|users|dashboard|.*\\..*)[^/]+)",
+      "destination": "/index.html"
+    }
+  ]
 }

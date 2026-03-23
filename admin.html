@@ -34,7 +34,7 @@
           <div class="col-12 col-xl-4">
             <div class="d-grid gap-2 d-sm-flex justify-content-xl-end">
               <a id="manageUsersLink" href="users.html" class="btn btn-outline-dark d-none">Gerenciar usuários</a>
-              <a href="index.html" class="btn btn-outline-primary">Ver página pública</a>
+              <a id="viewPublicStoreLink" href="index.html" class="btn btn-outline-primary">Ver página pública</a>
             </div>
           </div>
         </div>
@@ -79,66 +79,113 @@
 
       <div class="row g-4">
         <div class="col-12 col-xxl-4">
-          <div class="card border-0 shadow-sm admin-form-card">
-            <div class="card-body p-4">
-              <div class="d-flex justify-content-between align-items-start mb-3">
-                <div>
-                  <h2 id="formTitle" class="h5 mb-1">Novo produto</h2>
-                  <p class="text-secondary small mb-0">Preencha manualmente ou use captura automática.</p>
-                </div>
-                <button id="clearFormBtn" type="button" class="btn btn-sm btn-outline-secondary">Limpar</button>
-              </div>
-
-              <form id="productForm" novalidate>
-                <div class="mb-3">
-                  <label for="linkAfiliado" class="form-label">Link de afiliado</label>
-                  <div class="input-group">
-                    <input id="linkAfiliado" type="url" class="form-control" placeholder="https://..." required />
-                    <button id="autoFillBtn" class="btn btn-outline-primary" type="button">Preencher</button>
+          <div class="d-flex flex-column gap-4 admin-sidebar">
+            <div class="card border-0 shadow-sm">
+              <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <div>
+                    <h2 class="h5 mb-1">Configurações da loja</h2>
+                    <p class="text-secondary small mb-0">Defina o endereço público e os dados exibidos em <code>/slug</code>.</p>
                   </div>
-                  <small class="text-muted">Captura automática pode falhar em páginas bloqueadas por anti-bot.</small>
+                  <button id="saveStoreBtn" type="submit" form="storeProfileForm" class="btn btn-sm btn-primary">Salvar loja</button>
                 </div>
 
-                <div class="mb-3">
-                  <label for="titulo" class="form-label">Nome do produto</label>
-                  <input id="titulo" type="text" class="form-control" required />
+                <form id="storeProfileForm" novalidate>
+                  <div class="mb-3">
+                    <label for="storeName" class="form-label">Nome da loja</label>
+                    <input id="storeName" type="text" class="form-control" maxlength="120" required />
+                  </div>
+
+                  <div class="mb-2">
+                    <label for="storeSlug" class="form-label">Slug público</label>
+                    <div class="input-group">
+                      <span class="input-group-text">/</span>
+                      <input id="storeSlug" type="text" class="form-control" maxlength="80" placeholder="minha-loja" required />
+                    </div>
+                    <small id="storeSlugFeedback" class="d-block mt-2 text-secondary">Use letras minúsculas, números e hífens.</small>
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="storeBio" class="form-label">Bio</label>
+                    <textarea id="storeBio" class="form-control" rows="4" maxlength="300" placeholder="Explique o foco da sua loja."></textarea>
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="storeBannerUrl" class="form-label">Banner (URL)</label>
+                    <input id="storeBannerUrl" type="url" class="form-control" placeholder="https://imagem..." />
+                  </div>
+
+                  <div class="public-store-card">
+                    <p class="text-uppercase small fw-semibold text-secondary mb-2">Prévia pública</p>
+                    <img id="storeBannerPreview" class="store-banner-preview d-none mb-3" alt="Prévia do banner da loja" />
+                    <p id="storePublicUrl" class="small mb-1 text-break">Página pública indisponível.</p>
+                    <a id="storePublicUrlLink" href="index.html" class="small text-decoration-none" target="_blank" rel="noopener noreferrer">Abrir página da loja</a>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+              <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <div>
+                    <h2 id="formTitle" class="h5 mb-1">Novo produto</h2>
+                    <p class="text-secondary small mb-0">Preencha manualmente ou use captura automática.</p>
+                  </div>
+                  <button id="clearFormBtn" type="button" class="btn btn-sm btn-outline-secondary">Limpar</button>
                 </div>
 
-                <div class="mb-3">
-                  <label for="imagemUrl" class="form-label">Imagem (URL)</label>
-                  <input id="imagemUrl" type="url" class="form-control" placeholder="https://imagem..." />
-                </div>
+                <form id="productForm" novalidate>
+                  <div class="mb-3">
+                    <label for="linkAfiliado" class="form-label">Link de afiliado</label>
+                    <div class="input-group">
+                      <input id="linkAfiliado" type="url" class="form-control" placeholder="https://..." required />
+                      <button id="autoFillBtn" class="btn btn-outline-primary" type="button">Preencher</button>
+                    </div>
+                    <small class="text-muted">Captura automática pode falhar em páginas bloqueadas por anti-bot.</small>
+                  </div>
 
-                <div class="mb-3">
-                  <label for="preco" class="form-label">Preço (R$)</label>
-                  <input id="preco" type="text" class="form-control" inputmode="decimal" placeholder="0,00" required />
-                </div>
+                  <div class="mb-3">
+                    <label for="titulo" class="form-label">Nome do produto</label>
+                    <input id="titulo" type="text" class="form-control" required />
+                  </div>
 
-                <div class="mb-3">
-                  <label for="descricao" class="form-label">Descrição</label>
-                  <textarea id="descricao" class="form-control" rows="4" placeholder="Resumo do produto"></textarea>
-                </div>
+                  <div class="mb-3">
+                    <label for="imagemUrl" class="form-label">Imagem (URL)</label>
+                    <input id="imagemUrl" type="url" class="form-control" placeholder="https://imagem..." />
+                  </div>
 
-                <div class="d-flex gap-2">
-                  <button id="saveBtn" type="submit" class="btn btn-primary flex-grow-1">Salvar produto</button>
-                  <button id="cancelEditBtn" type="button" class="btn btn-outline-secondary d-none">Cancelar edição</button>
-                </div>
-              </form>
+                  <div class="mb-3">
+                    <label for="preco" class="form-label">Preço (R$)</label>
+                    <input id="preco" type="text" class="form-control" inputmode="decimal" placeholder="0,00" required />
+                  </div>
 
-              <hr class="my-4" />
+                  <div class="mb-3">
+                    <label for="descricao" class="form-label">Descrição</label>
+                    <textarea id="descricao" class="form-control" rows="4" placeholder="Resumo do produto"></textarea>
+                  </div>
 
-              <div class="product-preview">
-                <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
-                  <p class="text-uppercase small fw-semibold text-secondary mb-0">Prévia do anúncio</p>
-                  <span id="previewSourceTag" class="preview-source-tag d-none" aria-live="polite"></span>
-                </div>
-                <div class="card border-0 bg-light-subtle">
-                  <div class="card-body">
-                    <img id="previewImage" class="preview-image mb-3" alt="Prévia do produto" />
-                    <h3 id="previewTitle" class="h6 mb-2">Produto sem título</h3>
-                    <p id="previewDescription" class="small text-secondary mb-2">Adicione uma descrição para melhorar a conversão.</p>
-                    <p id="previewPrice" class="fw-bold mb-2">R$ 0,00</p>
-                    <a id="previewLink" class="small text-decoration-none" href="#" target="_blank" rel="noopener noreferrer nofollow">Abrir link</a>
+                  <div class="d-flex gap-2">
+                    <button id="saveBtn" type="submit" class="btn btn-primary flex-grow-1">Salvar produto</button>
+                    <button id="cancelEditBtn" type="button" class="btn btn-outline-secondary d-none">Cancelar edição</button>
+                  </div>
+                </form>
+
+                <hr class="my-4" />
+
+                <div class="product-preview">
+                  <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                    <p class="text-uppercase small fw-semibold text-secondary mb-0">Prévia do anúncio</p>
+                    <span id="previewSourceTag" class="preview-source-tag d-none" aria-live="polite"></span>
+                  </div>
+                  <div class="card border-0 bg-light-subtle">
+                    <div class="card-body">
+                      <img id="previewImage" class="preview-image mb-3" alt="Prévia do produto" />
+                      <h3 id="previewTitle" class="h6 mb-2">Produto sem título</h3>
+                      <p id="previewDescription" class="small text-secondary mb-2">Adicione uma descrição para melhorar a conversão.</p>
+                      <p id="previewPrice" class="fw-bold mb-2">R$ 0,00</p>
+                      <a id="previewLink" class="small text-decoration-none" href="#" target="_blank" rel="noopener noreferrer nofollow">Abrir link</a>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -217,6 +264,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   <script src="assets/js/config.js"></script>
   <script src="assets/js/auth.js"></script>
+  <script src="assets/js/store-utils.js"></script>
   <script src="assets/js/admin.js"></script>
 </body>
 </html>

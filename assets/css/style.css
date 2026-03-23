@@ -194,6 +194,11 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   top: 88px;
 }
 
+.admin-sidebar {
+  position: sticky;
+  top: 88px;
+}
+
 .form-control,
 .form-select {
   border-color: #d3deed;
@@ -234,6 +239,36 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   background: #ffffff;
 }
 
+.public-store-card {
+  padding: 1rem;
+  border: 1px solid #dfe8f4;
+  border-radius: 1rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+}
+
+.store-banner-preview,
+.store-hero-banner {
+  display: block;
+  width: 100%;
+  border-radius: 0.9rem;
+  object-fit: cover;
+  background: linear-gradient(135deg, rgba(13, 110, 253, 0.08), rgba(32, 197, 142, 0.08));
+  border: 1px solid #dfe8f4;
+}
+
+.store-banner-preview {
+  min-height: 120px;
+  max-height: 180px;
+}
+
+.store-hero-banner {
+  max-height: 210px;
+}
+
+.hero-side-card {
+  min-height: 100%;
+}
+
 .admin-table thead th {
   font-size: 0.8rem;
   text-transform: uppercase;
@@ -256,6 +291,10 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   }
 
   .admin-form-card {
+    position: static;
+  }
+
+  .admin-sidebar {
     position: static;
   }
 
