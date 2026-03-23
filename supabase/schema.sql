@@ -1,7 +1,22 @@
 -- Execute este script no SQL Editor do Supabase.
 
+create schema if not exists extensions;
+
 create extension if not exists pgcrypto;
-create extension if not exists unaccent;
+create extension if not exists unaccent with schema extensions;
+
+do $$
+begin
+  if exists (
+    select 1
+    from pg_extension
+    where extname = 'unaccent'
+      and extnamespace = 'public'::regnamespace
+  ) then
+    execute 'alter extension unaccent set schema extensions';
+  end if;
+end;
+$$;
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -18,11 +33,11 @@ create or replace function public.normalize_slug(value text)
 returns text
 language sql
 immutable
-set search_path = pg_catalog, public
+set search_path = pg_catalog, public, extensions
 as $$
   select nullif(
     trim(both '-' from regexp_replace(
-      regexp_replace(lower(unaccent(coalesce(value, ''))), '[^a-z0-9]+', '-', 'g'),
+      regexp_replace(lower(extensions.unaccent(coalesce(value, ''))), '[^a-z0-9]+', '-', 'g'),
       '-{2,}',
       '-',
       'g'
@@ -372,7 +387,8 @@ for each row
 execute function public.prevent_unauthorized_role_change();
 
 drop view if exists public.public_store_profiles;
-create view public.public_store_profiles as
+create view public.public_store_profiles
+with (security_invoker = true) as
 select
   profile.user_id as id,
   profile.first_name,
@@ -473,7 +489,8 @@ create index if not exists idx_produtos_created_by on public.produtos (created_b
 create index if not exists idx_produtos_profile_id on public.produtos (profile_id);
 
 drop view if exists public.public_store_products;
-create view public.public_store_products as
+create view public.public_store_products
+with (security_invoker = true) as
 select
   product.id,
   product.profile_id,
