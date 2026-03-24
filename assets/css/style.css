@@ -20,6 +20,10 @@ body {
     linear-gradient(180deg, #ffffff 0%, var(--bg-soft) 100%);
 }
 
+body.storefront-mode #homeHeroSection {
+  display: none;
+}
+
 h1, h2, h3, h4, h5, h6, .navbar-brand {
   font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
 }
@@ -106,6 +110,7 @@ body.storefront-mode .hero-section {
 .product-card {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   overflow: hidden;
+  padding: 0.85rem !important;
   border: 1px solid rgba(220, 230, 246, 0.9);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 251, 255, 0.98) 100%);
@@ -285,7 +290,7 @@ body.storefront-mode .hero-section {
   --store-banner-accent: #0d6efd;
   position: relative;
   width: 100%;
-  min-height: clamp(240px, 36vw, 440px);
+  min-height: clamp(140px, 18vw, 220px);
   overflow: hidden;
   background:
     radial-gradient(circle at 15% 20%, color-mix(in srgb, var(--store-banner-accent) 26%, transparent), transparent 30%),
@@ -293,13 +298,13 @@ body.storefront-mode .hero-section {
 }
 
 .store-banner-section.is-placeholder {
-  min-height: clamp(220px, 32vw, 360px);
+  min-height: clamp(120px, 15vw, 180px);
 }
 
 .store-banner-full {
   display: block;
   width: 100%;
-  height: clamp(240px, 36vw, 440px);
+  height: clamp(140px, 18vw, 220px);
   object-fit: cover;
 }
 
@@ -307,15 +312,25 @@ body.storefront-mode .hero-section {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(9, 18, 34, 0.18) 0%, rgba(9, 18, 34, 0.58) 100%);
+    linear-gradient(180deg, rgba(9, 18, 34, 0.14) 0%, rgba(9, 18, 34, 0.42) 100%);
   pointer-events: none;
 }
 
-.store-hero-card {
+.store-topbar-section {
+  margin-top: -1.5rem;
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 2;
+}
+
+.store-topbar-panel {
+  padding: 1rem 1.15rem;
   border: 1px solid rgba(220, 230, 246, 0.92);
+  border-radius: 1.1rem;
   background:
-    radial-gradient(circle at 100% 0%, rgba(13, 110, 253, 0.11), transparent 34%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 251, 255, 0.98) 100%);
+    radial-gradient(circle at 100% 0%, rgba(13, 110, 253, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 251, 255, 0.98) 100%);
+  box-shadow: 0 0.85rem 1.8rem rgba(21, 34, 56, 0.08);
 }
 
 .store-identity-card {
@@ -323,7 +338,7 @@ body.storefront-mode .hero-section {
   display: flex;
   align-items: center;
   gap: 0.9rem;
-  padding: 0.95rem;
+  padding: 0.8rem 0.9rem;
   border: 1px solid color-mix(in srgb, var(--store-accent-preview) 18%, #dfe8f4);
   border-radius: 1rem;
   background:
@@ -332,27 +347,29 @@ body.storefront-mode .hero-section {
 }
 
 .store-identity-avatar {
-  width: 58px;
-  height: 58px;
+  width: 52px;
+  height: 52px;
   object-fit: cover;
   border-radius: 50%;
   border: 3px solid rgba(13, 110, 253, 0.15);
   background: #ffffff;
 }
 
-.store-products-toolbar {
-  padding: 1.25rem;
-  border: 1px solid rgba(220, 230, 246, 0.92);
-  border-radius: 1.15rem;
-  background:
-    radial-gradient(circle at 100% 0%, rgba(13, 110, 253, 0.1), transparent 30%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 251, 255, 0.98) 100%);
-  box-shadow: 0 1rem 2rem rgba(21, 34, 56, 0.06);
-}
-
 .store-search-group .form-control,
 .store-search-group .btn {
-  min-height: 48px;
+  min-height: 42px;
+}
+
+.store-search-group .form-control {
+  border-right: 0;
+}
+
+.store-search-group .btn {
+  min-width: 106px;
+}
+
+#productsSection {
+  margin-top: 0.2rem;
 }
 
 .dashboard-profile-card {
@@ -462,11 +479,28 @@ body.storefront-mode .hero-section {
     height: 150px;
   }
 
-  .store-banner-full {
-    height: 220px;
+  .store-topbar-section {
+    margin-top: -0.9rem;
+    margin-bottom: 0.8rem;
   }
 
-  .store-products-toolbar {
-    padding: 1rem;
+  .store-topbar-panel {
+    padding: 0.9rem;
+  }
+
+  .store-banner-full,
+  .store-banner-section {
+    min-height: 120px;
+    height: 120px;
+  }
+
+  .store-identity-card {
+    gap: 0.7rem;
+    padding: 0.72rem 0.8rem;
+  }
+
+  .store-identity-avatar {
+    width: 46px;
+    height: 46px;
   }
 }

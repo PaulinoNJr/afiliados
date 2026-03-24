@@ -13,19 +13,20 @@
   const refs = {
     navAdmin: document.getElementById('navAdmin'),
     navLogout: document.getElementById('navLogout'),
+    homeHeroBadge: document.getElementById('homeHeroBadge'),
+    homeHeroTitle: document.getElementById('homeHeroTitle'),
+    homeHeroDescription: document.getElementById('homeHeroDescription'),
     heroBadge: document.getElementById('heroBadge'),
     heroTitle: document.getElementById('heroTitle'),
     heroDescription: document.getElementById('heroDescription'),
     marketingCardContent: document.getElementById('marketingCardContent'),
-    storeExperienceCard: document.getElementById('storeExperienceCard'),
     storeBannerSection: document.getElementById('storeBannerSection'),
     storeBannerImage: document.getElementById('storeBannerImage'),
+    storeTopBar: document.getElementById('storeTopBar'),
     storeIdentityCard: document.getElementById('storeIdentityCard'),
     storeIdentityAvatar: document.getElementById('storeIdentityAvatar'),
     storeIdentityName: document.getElementById('storeIdentityName'),
     storeIdentityHeadline: document.getElementById('storeIdentityHeadline'),
-    storeSummaryTitle: document.getElementById('storeSummaryTitle'),
-    storeSummaryDescription: document.getElementById('storeSummaryDescription'),
     searchInput: document.getElementById('searchInput'),
     searchHelperText: document.getElementById('searchHelperText'),
     refreshBtn: document.getElementById('refreshBtn'),
@@ -100,8 +101,8 @@
 
   function resetStoreUi() {
     refs.storeBannerSection.classList.add('d-none');
+    refs.storeTopBar.classList.add('d-none');
     refs.storeIdentityCard.classList.add('d-none');
-    refs.storeExperienceCard.classList.add('d-none');
     refs.productsSection.classList.add('d-none');
     refs.emptyState.classList.add('d-none');
     refs.notFoundState.classList.add('d-none');
@@ -117,11 +118,9 @@
     state.filteredProducts = [];
     document.body.classList.remove('storefront-mode');
 
-    refs.heroBadge.textContent = 'Plataforma de afiliados';
-    refs.heroTitle.textContent = 'Transforme seu link em uma pagina profissional de vendas';
-    refs.heroDescription.textContent = 'Crie sua loja personalizada, publique produtos, gerencie seu catalogo e compartilhe um link unico para vender com mais confianca.';
-    refs.heroBadge.style.backgroundColor = '';
-    refs.heroBadge.style.borderColor = '';
+    refs.homeHeroBadge.textContent = 'Plataforma de afiliados';
+    refs.homeHeroTitle.textContent = 'Transforme seu link em uma pagina profissional de vendas';
+    refs.homeHeroDescription.textContent = 'Crie sua loja personalizada, publique produtos, gerencie seu catalogo e compartilhe um link unico para vender com mais confianca.';
     refs.marketingCardContent.classList.remove('d-none');
     refs.homeMarketingSection.classList.remove('d-none');
     resetStoreUi();
@@ -152,15 +151,13 @@
     refs.heroBadge.style.backgroundColor = accentColor;
     refs.heroBadge.style.borderColor = accentColor;
     refs.marketingCardContent.classList.add('d-none');
-    refs.storeExperienceCard.classList.remove('d-none');
     refs.homeMarketingSection.classList.add('d-none');
+    refs.storeTopBar.classList.remove('d-none');
     refs.productsSection.classList.remove('d-none');
     refs.notFoundState.classList.add('d-none');
 
     refs.storeIdentityName.textContent = store.store_name || 'Loja';
     refs.storeIdentityHeadline.textContent = store.headline || 'Curadoria personalizada de produtos.';
-    refs.storeSummaryTitle.textContent = `Explore os destaques de ${store.store_name || 'esta loja'}`;
-    refs.storeSummaryDescription.textContent = description;
     refs.storeIdentityCard.style.setProperty('--store-accent-preview', accentColor);
     refs.storeIdentityCard.classList.remove('d-none');
 
@@ -202,15 +199,11 @@
     state.products = [];
     state.filteredProducts = [];
     document.body.classList.remove('storefront-mode');
-    refs.heroBadge.textContent = 'Pagina nao encontrada';
-    refs.heroTitle.textContent = 'Essa loja nao esta disponivel';
-    refs.heroDescription.textContent = 'Confira se o endereco foi digitado corretamente ou volte para a pagina inicial.';
-    refs.heroBadge.style.backgroundColor = '';
-    refs.heroBadge.style.borderColor = '';
+
     refs.marketingCardContent.classList.add('d-none');
-    refs.storeExperienceCard.classList.add('d-none');
     refs.homeMarketingSection.classList.add('d-none');
     refs.storeBannerSection.classList.add('d-none');
+    refs.storeTopBar.classList.add('d-none');
     refs.storeIdentityCard.classList.add('d-none');
     refs.notFoundState.classList.remove('d-none');
     refs.emptyState.classList.add('d-none');
@@ -270,7 +263,6 @@
       title.textContent = item.titulo || 'Produto sem titulo';
 
       const descriptionText = item.descricao || 'Sem descricao.';
-
       const desc = document.createElement('p');
       desc.className = 'text-secondary small mb-1 product-desc is-collapsed';
       desc.textContent = descriptionText;
