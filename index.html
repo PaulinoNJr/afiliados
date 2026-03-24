@@ -49,17 +49,29 @@
                 </div>
               </div>
               <div>
-                <span id="heroBadge" class="badge text-bg-primary mb-2">Plataforma de afiliados</span>
                 <h1 id="heroTitle" class="h3 fw-bold mb-2">Transforme seu link em uma pagina profissional de vendas</h1>
                 <p id="heroDescription" class="text-secondary small mb-0">Crie sua loja personalizada, publique produtos, gerencie seu catalogo e compartilhe um link unico para vender com mais confianca.</p>
               </div>
             </div>
           </div>
           <div class="col-12 col-xl-5">
-            <label for="searchInput" class="form-label small text-uppercase fw-semibold mb-2">Buscar produto</label>
-            <div class="input-group store-search-group">
-              <input id="searchInput" type="search" class="form-control" placeholder="Digite nome ou descricao" />
-              <button id="refreshBtn" class="btn btn-primary" type="button">Atualizar</button>
+            <div class="row g-2 align-items-end">
+              <div class="col-12 col-lg-7">
+                <label for="searchInput" class="form-label small text-uppercase fw-semibold mb-2">Buscar produto</label>
+                <div class="store-search-group">
+                  <input id="searchInput" type="search" class="form-control" placeholder="Digite nome ou descricao" />
+                </div>
+              </div>
+              <div class="col-12 col-lg-5">
+                <label for="sortProducts" class="form-label small text-uppercase fw-semibold mb-2">Ordenar por</label>
+                <select id="sortProducts" class="form-select">
+                  <option value="recent">Mais recentes</option>
+                  <option value="title-asc">Nome de A a Z</option>
+                  <option value="title-desc">Nome de Z a A</option>
+                  <option value="price-asc">Menor preco</option>
+                  <option value="price-desc">Maior preco</option>
+                </select>
+              </div>
             </div>
             <small id="searchHelperText" class="text-muted mt-2 d-block">A busca filtra os produtos abaixo em tempo real.</small>
           </div>

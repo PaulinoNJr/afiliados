@@ -16,7 +16,6 @@
     homeHeroBadge: document.getElementById('homeHeroBadge'),
     homeHeroTitle: document.getElementById('homeHeroTitle'),
     homeHeroDescription: document.getElementById('homeHeroDescription'),
-    heroBadge: document.getElementById('heroBadge'),
     heroTitle: document.getElementById('heroTitle'),
     heroDescription: document.getElementById('heroDescription'),
     marketingCardContent: document.getElementById('marketingCardContent'),
@@ -28,8 +27,8 @@
     storeIdentityName: document.getElementById('storeIdentityName'),
     storeIdentityHeadline: document.getElementById('storeIdentityHeadline'),
     searchInput: document.getElementById('searchInput'),
+    sortProducts: document.getElementById('sortProducts'),
     searchHelperText: document.getElementById('searchHelperText'),
-    refreshBtn: document.getElementById('refreshBtn'),
     homeMarketingSection: document.getElementById('homeMarketingSection'),
     productsSection: document.getElementById('productsSection'),
     productsSectionTitle: document.getElementById('productsSectionTitle'),
@@ -85,6 +84,7 @@
 
   function updateSearchSummary(total, filtered) {
     const term = refs.searchInput.value.trim();
+    const sortLabel = refs.sortProducts?.selectedOptions?.[0]?.textContent || 'Mais recentes';
 
     if (!total) {
       refs.productsSearchSummary.textContent = 'Esta loja ainda nao publicou produtos.';
@@ -92,11 +92,30 @@
     }
 
     if (!term) {
-      refs.productsSearchSummary.textContent = `${total} produto(s) disponivel(is), ordenados dos mais recentes para os mais antigos.`;
+      refs.productsSearchSummary.textContent = `${total} produto(s) disponivel(is), ordenados por ${sortLabel.toLowerCase()}.`;
       return;
     }
 
-    refs.productsSearchSummary.textContent = `${filtered} produto(s) encontrado(s) para "${term}".`;
+    refs.productsSearchSummary.textContent = `${filtered} produto(s) encontrado(s) para "${term}", ordenados por ${sortLabel.toLowerCase()}.`;
+  }
+
+  function sortProducts(items) {
+    const sortMode = refs.sortProducts?.value || 'recent';
+    const list = [...items];
+
+    switch (sortMode) {
+      case 'title-asc':
+        return list.sort((a, b) => String(a.titulo || '').localeCompare(String(b.titulo || ''), 'pt-BR'));
+      case 'title-desc':
+        return list.sort((a, b) => String(b.titulo || '').localeCompare(String(a.titulo || ''), 'pt-BR'));
+      case 'price-asc':
+        return list.sort((a, b) => Number(a.preco || 0) - Number(b.preco || 0));
+      case 'price-desc':
+        return list.sort((a, b) => Number(b.preco || 0) - Number(a.preco || 0));
+      case 'recent':
+      default:
+        return list.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+    }
   }
 
   function resetStoreUi() {
@@ -141,15 +160,12 @@
     const description = String(store.bio || store.headline || 'Confira os produtos publicados nesta loja.').trim();
     const accentColor = normalizeAccentColor(store.accent_color);
 
-    refs.heroBadge.textContent = 'Colecao da loja';
     refs.heroTitle.textContent = store.store_name || 'Loja de afiliado';
     refs.heroDescription.textContent = description;
     refs.searchHelperText.textContent = 'A busca filtra apenas os produtos desta loja.';
     refs.productsSectionTitle.textContent = `Produtos de ${store.store_name || 'esta loja'}`;
     refs.emptyStateTitle.textContent = 'Nenhum produto publicado ainda';
     refs.emptyStateDescription.textContent = 'Esta loja ainda nao publicou produtos.';
-    refs.heroBadge.style.backgroundColor = accentColor;
-    refs.heroBadge.style.borderColor = accentColor;
     refs.marketingCardContent.classList.add('d-none');
     refs.homeMarketingSection.classList.add('d-none');
     refs.storeTopBar.classList.remove('d-none');
@@ -320,17 +336,17 @@
     const term = refs.searchInput.value.trim().toLowerCase();
 
     if (!term) {
-      state.filteredProducts = [...state.products];
+      state.filteredProducts = sortProducts(state.products);
       renderProducts(state.filteredProducts);
       updateSearchSummary(state.products.length, state.filteredProducts.length);
       return;
     }
 
-    state.filteredProducts = state.products.filter((item) => {
+    state.filteredProducts = sortProducts(state.products.filter((item) => {
       const title = (item.titulo || '').toLowerCase();
       const desc = (item.descricao || '').toLowerCase();
       return title.includes(term) || desc.includes(term);
-    });
+    }));
 
     renderProducts(state.filteredProducts);
     updateSearchSummary(state.products.length, state.filteredProducts.length);
@@ -419,7 +435,7 @@
 
   function init() {
     refs.searchInput.addEventListener('input', applyFilter);
-    refs.refreshBtn.addEventListener('click', loadPage);
+    refs.sortProducts?.addEventListener('change', applyFilter);
 
     setupNavbarAuthState();
     loadPage();
