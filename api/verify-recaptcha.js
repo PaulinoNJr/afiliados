@@ -1,6 +1,7 @@
 const {
   setJsonSecurityHeaders,
-  verifyRecaptchaToken
+  verifyRecaptchaToken,
+  validateRecaptchaV3Payload
 } = require('./_security');
 
 module.exports = async (req, res) => {
@@ -23,8 +24,16 @@ module.exports = async (req, res) => {
       req
     });
 
+    const validation = validateRecaptchaV3Payload({
+      payload,
+      expectedAction: req.body?.action || '',
+      minScore: Number(req.body?.minScore || process.env.RECAPTCHA_MIN_SCORE || 0.5)
+    });
+
     return res.status(200).json({
       ok: true,
+      action: validation.action || null,
+      score: validation.score,
       hostname: payload.hostname || null,
       challengeTs: payload.challenge_ts || null
     });

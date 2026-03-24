@@ -128,6 +128,29 @@ async function verifyRecaptchaToken({ token, req }) {
   return payload;
 }
 
+function validateRecaptchaV3Payload({ payload, expectedAction, minScore = 0.5 }) {
+  const action = String(payload?.action || '').trim();
+  const score = Number(payload?.score);
+  const normalizedExpectedAction = String(expectedAction || '').trim();
+
+  if (normalizedExpectedAction && action !== normalizedExpectedAction) {
+    throw new Error('Verificacao reCAPTCHA recusada: acao invalida.');
+  }
+
+  if (!Number.isFinite(score)) {
+    throw new Error('Verificacao reCAPTCHA recusada: score ausente.');
+  }
+
+  if (score < minScore) {
+    throw new Error('Verificacao reCAPTCHA recusada: score abaixo do minimo permitido.');
+  }
+
+  return {
+    action,
+    score
+  };
+}
+
 async function getAuthenticatedSupabaseUser(accessToken) {
   const { url, anonKey } = getSupabaseConfig();
   const token = String(accessToken || '').trim();
@@ -212,6 +235,7 @@ module.exports = {
   getSupabaseConfig,
   validatePasswordStrength,
   verifyRecaptchaToken,
+  validateRecaptchaV3Payload,
   getAuthenticatedSupabaseUser,
   getUserRole,
   createSupabaseAuthUser

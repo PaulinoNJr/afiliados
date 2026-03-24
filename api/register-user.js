@@ -2,6 +2,7 @@ const {
   setJsonSecurityHeaders,
   validatePasswordStrength,
   verifyRecaptchaToken,
+  validateRecaptchaV3Payload,
   createSupabaseAuthUser
 } = require('./_security');
 
@@ -22,6 +23,7 @@ module.exports = async (req, res) => {
   const email = String(req.body?.email || '').trim().toLowerCase();
   const password = String(req.body?.password || '');
   const recaptchaToken = String(req.body?.recaptchaToken || '').trim();
+  const recaptchaAction = String(req.body?.recaptchaAction || '').trim();
   const metadata = req.body?.metadata && typeof req.body.metadata === 'object' ? req.body.metadata : {};
 
   if (!email || !password) {
@@ -40,9 +42,15 @@ module.exports = async (req, res) => {
   }
 
   try {
-    await verifyRecaptchaToken({
+    const payload = await verifyRecaptchaToken({
       token: recaptchaToken,
       req
+    });
+
+    validateRecaptchaV3Payload({
+      payload,
+      expectedAction: recaptchaAction || 'register_submit',
+      minScore: Number(process.env.RECAPTCHA_MIN_SCORE || 0.5)
     });
 
     const user = await createSupabaseAuthUser({

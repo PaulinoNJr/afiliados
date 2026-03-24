@@ -1,8 +1,10 @@
 (() => {
+  const RECAPTCHA_ACTION = 'register_submit';
+
   const state = {
     slugCheckNonce: 0,
-    recaptchaWidgetId: null,
-    recaptchaLoaded: false
+    recaptchaLoaded: false,
+    recaptchaScriptPromise: null
   };
 
   const refs = {
@@ -18,7 +20,6 @@
     passwordConfirm: document.getElementById('passwordConfirm'),
     passwordRules: document.getElementById('passwordRules'),
     passwordMatchFeedback: document.getElementById('passwordMatchFeedback'),
-    recaptchaMount: document.getElementById('recaptchaMount'),
     recaptchaStatus: document.getElementById('recaptchaStatus'),
     registerBtn: document.getElementById('registerBtn'),
     signupPublicUrl: document.getElementById('signupPublicUrl'),
@@ -94,17 +95,6 @@
       : `${window.location.origin}/sua-loja`;
   }
 
-  function getRecaptchaToken() {
-    if (!window.grecaptcha || state.recaptchaWidgetId === null) return '';
-    return window.grecaptcha.getResponse(state.recaptchaWidgetId) || '';
-  }
-
-  function resetRecaptcha() {
-    if (window.grecaptcha && state.recaptchaWidgetId !== null) {
-      window.grecaptcha.reset(state.recaptchaWidgetId);
-    }
-  }
-
   async function registerUserViaApi({ email, password, recaptchaToken, metadata }) {
     const response = await fetch('/api/register-user', {
       method: 'POST',
@@ -127,32 +117,83 @@
     return payload;
   }
 
-  function renderRecaptcha() {
+  function markRecaptchaLoaded() {
     if (!window.AppConfig?.recaptchaConfigured) {
       refs.registerBtn.disabled = true;
       setRecaptchaStatus('Configure RECAPTCHA_SITE_KEY no frontend para liberar o cadastro seguro.', 'warning');
       return;
     }
 
-    if (!state.recaptchaLoaded || !window.grecaptcha || state.recaptchaWidgetId !== null) {
-      return;
+    setRecaptchaStatus('Protecao Google reCAPTCHA v3 carregada e pronta para validar o cadastro.', 'secondary');
+  }
+
+  function loadRecaptchaScript() {
+    if (!window.AppConfig?.recaptchaConfigured) {
+      refs.registerBtn.disabled = true;
+      setRecaptchaStatus('Configure RECAPTCHA_SITE_KEY no frontend para liberar o cadastro seguro.', 'warning');
+      return Promise.resolve(false);
     }
 
-    state.recaptchaWidgetId = window.grecaptcha.render(refs.recaptchaMount, {
-      sitekey: window.AppConfig.RECAPTCHA_SITE_KEY,
-      theme: 'light',
-      callback: () => {
-        setRecaptchaStatus('Verificacao concluida. Voce ja pode criar a conta.', 'success');
-      },
-      'expired-callback': () => {
-        setRecaptchaStatus('O reCAPTCHA expirou. Confirme novamente antes de enviar.', 'warning');
-      },
-      'error-callback': () => {
-        setRecaptchaStatus('Falha ao carregar o reCAPTCHA. Atualize a pagina e tente outra vez.', 'danger');
-      }
+    if (window.grecaptcha?.ready) {
+      state.recaptchaLoaded = true;
+      markRecaptchaLoaded();
+      return Promise.resolve(true);
+    }
+
+    if (state.recaptchaScriptPromise) {
+      return state.recaptchaScriptPromise;
+    }
+
+    state.recaptchaScriptPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(window.AppConfig.RECAPTCHA_SITE_KEY)}`;
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        if (!window.grecaptcha?.ready) {
+          reject(new Error('Google reCAPTCHA v3 nao ficou disponivel apos o carregamento do script.'));
+          return;
+        }
+
+        state.recaptchaLoaded = true;
+        markRecaptchaLoaded();
+        resolve(true);
+      };
+      script.onerror = () => reject(new Error('Falha ao carregar o script do Google reCAPTCHA v3.'));
+      document.head.appendChild(script);
+    }).catch((error) => {
+      setRecaptchaStatus(error.message, 'danger');
+      throw error;
     });
 
-    setRecaptchaStatus('Confirme o reCAPTCHA para liberar o cadastro.', 'secondary');
+    return state.recaptchaScriptPromise;
+  }
+
+  async function getRecaptchaToken() {
+    if (!window.AppConfig?.recaptchaConfigured) {
+      throw new Error('RECAPTCHA_SITE_KEY nao configurada no frontend.');
+    }
+
+    if (!state.recaptchaLoaded || !window.grecaptcha) {
+      throw new Error('Google reCAPTCHA v3 ainda nao foi carregado.');
+    }
+
+    setRecaptchaStatus('Validando o risco da solicitacao com Google reCAPTCHA v3...', 'secondary');
+
+    const token = await new Promise((resolve, reject) => {
+      window.grecaptcha.ready(() => {
+        window.grecaptcha.execute(window.AppConfig.RECAPTCHA_SITE_KEY, { action: RECAPTCHA_ACTION })
+          .then(resolve)
+          .catch(() => reject(new Error('Falha ao executar o Google reCAPTCHA v3.')));
+      });
+    });
+
+    if (!token) {
+      throw new Error('Nao foi possivel gerar o token de seguranca do Google reCAPTCHA v3.');
+    }
+
+    setRecaptchaStatus('Token do Google reCAPTCHA v3 gerado com sucesso.', 'success');
+    return token;
   }
 
   async function validateSlugAvailability({ silent = false } = {}) {
@@ -220,13 +261,6 @@
       return;
     }
 
-    const recaptchaToken = getRecaptchaToken();
-    if (!recaptchaToken) {
-      setRecaptchaStatus('Confirme o reCAPTCHA antes de enviar o cadastro.', 'warning');
-      showStatus('Confirme o reCAPTCHA antes de criar a conta.', 'warning');
-      return;
-    }
-
     const slugResult = await validateSlugAvailability();
     if (!slugResult.ok) return;
 
@@ -234,10 +268,13 @@
     refs.status.classList.add('d-none');
 
     try {
+      const recaptchaToken = await getRecaptchaToken();
+
       await registerUserViaApi({
         email,
         password,
         recaptchaToken,
+        recaptchaAction: RECAPTCHA_ACTION,
         metadata: {
           first_name: firstName,
           last_name: lastName || null,
@@ -250,9 +287,8 @@
       refs.form.reset();
       updatePublicUrlPreview();
       updatePasswordValidation();
-      resetRecaptcha();
       setSlugFeedback('Esse endereco sera usado na sua pagina publica.', 'secondary');
-      setRecaptchaStatus('Confirme novamente o reCAPTCHA caso queira cadastrar outra conta.', 'secondary');
+      setRecaptchaStatus('Cadastro validado com Google reCAPTCHA v3. A protecao permanece ativa para a proxima tentativa.', 'secondary');
 
       const loginResult = await window.Auth.login(email, password);
       if (!loginResult?.error) {
@@ -265,8 +301,7 @@
 
       showStatus('Cadastro realizado. Agora entre com seu email e senha para acessar o painel.', 'success');
     } catch (err) {
-      resetRecaptcha();
-      setRecaptchaStatus('A verificacao expirou ou falhou. Confirme novamente antes de enviar.', 'warning');
+      setRecaptchaStatus('A validacao com Google reCAPTCHA v3 falhou. Tente novamente em instantes.', 'warning');
       showStatus(`Erro ao criar conta: ${err.message}`, 'danger');
     } finally {
       setLoading(false);
@@ -308,13 +343,12 @@
     refs.form.addEventListener('submit', onSubmit);
     updatePublicUrlPreview();
     updatePasswordValidation();
-    renderRecaptcha();
+    try {
+      await loadRecaptchaScript();
+    } catch (err) {
+      showStatus(err.message, 'warning');
+    }
   }
-
-  window.onRecaptchaLoaded = () => {
-    state.recaptchaLoaded = true;
-    renderRecaptcha();
-  };
 
   document.addEventListener('DOMContentLoaded', init);
 })();
