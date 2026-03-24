@@ -20,8 +20,41 @@ body {
     linear-gradient(180deg, #ffffff 0%, var(--bg-soft) 100%);
 }
 
+body {
+  font-size: 0.96rem;
+}
+
 body.storefront-mode #homeHeroSection {
   display: none;
+}
+
+.app-shell-main {
+  padding-top: 1rem !important;
+  padding-bottom: 1.5rem !important;
+}
+
+.auth-shell {
+  padding-top: 1rem !important;
+  padding-bottom: 1.25rem !important;
+  align-items: flex-start !important;
+}
+
+.app-nav-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem !important;
+}
+
+.page-header-row {
+  align-items: stretch !important;
+}
+
+.page-header-action,
+.page-header-actions .btn,
+.page-header-actions a {
+  width: 100%;
 }
 
 h1, h2, h3, h4, h5, h6, .navbar-brand {
@@ -31,8 +64,8 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 .btn {
   border-radius: 0.65rem;
   font-weight: 600;
-  min-height: 42px;
-  padding: 0.5rem 0.95rem;
+  min-height: 44px;
+  padding: 0.55rem 0.95rem;
 }
 
 .btn-sm {
@@ -107,6 +140,10 @@ body.storefront-mode .hero-section {
   border-radius: 1rem;
 }
 
+.card-body {
+  padding: 1rem;
+}
+
 .product-card {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   overflow: hidden;
@@ -164,6 +201,7 @@ body.storefront-mode .hero-section {
 }
 
 .admin-hero-panel {
+  padding: 1.1rem !important;
   border-radius: 1.2rem;
   border: 1px solid #dce6f6;
   background:
@@ -255,7 +293,7 @@ body.storefront-mode .hero-section {
 
 .public-store-card {
   --store-accent-preview: #0d6efd;
-  padding: 1rem;
+  padding: 0.9rem;
   border: 1px solid color-mix(in srgb, var(--store-accent-preview) 18%, #dfe8f4);
   border-radius: 1rem;
   background:
@@ -324,7 +362,7 @@ body.storefront-mode .hero-section {
 }
 
 .store-topbar-panel {
-  padding: 1rem 1.15rem;
+  padding: 0.9rem;
   border: 1px solid rgba(220, 230, 246, 0.92);
   border-radius: 1.1rem;
   background:
@@ -370,8 +408,8 @@ body.storefront-mode .hero-section {
 .dashboard-profile-card {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem;
+  gap: 0.85rem;
+  padding: 0.9rem;
   border: 1px solid #dfe8f4;
   border-radius: 1rem;
   background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
@@ -403,7 +441,7 @@ body.storefront-mode .hero-section {
 }
 
 .password-helper {
-  padding: 0.9rem 1rem;
+  padding: 0.85rem 0.9rem;
   border: 1px solid #dfe8f4;
   border-radius: 0.9rem;
   background: #f8fbff;
@@ -429,7 +467,7 @@ body.storefront-mode .hero-section {
 }
 
 .captcha-panel {
-  padding: 1rem;
+  padding: 0.9rem;
   border: 1px solid #dfe8f4;
   border-radius: 1rem;
   background:
@@ -457,9 +495,66 @@ body.storefront-mode .hero-section {
   background-color: #f7fbff;
 }
 
+.table-responsive {
+  border-radius: 1rem;
+}
+
+@media (max-width: 991.98px) {
+  .navbar > .container {
+    align-items: flex-start;
+  }
+
+  .app-nav-actions {
+    width: 100%;
+    justify-content: flex-start;
+    margin-top: 0.75rem;
+  }
+
+  .app-nav-actions .btn {
+    flex: 1 1 0;
+  }
+
+  .app-nav-actions .badge {
+    order: -1;
+  }
+
+  .admin-hero-panel .h2 {
+    font-size: 1.55rem;
+  }
+
+  .dashboard-link-card .card-body,
+  .stat-card .card-body,
+  .auth-info-card .card-body,
+  .auth-form-card .card-body {
+    padding: 1rem !important;
+  }
+
+  .page-header-row {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .page-header-actions {
+    width: 100%;
+  }
+
+  .page-header-actions .btn,
+  .page-header-actions a {
+    width: 100%;
+  }
+
+  .dashboard-profile-card {
+    align-items: flex-start;
+  }
+
+  .admin-table {
+    min-width: 700px;
+  }
+}
+
 @media (max-width: 768px) {
   .hero-section .display-6 {
-    font-size: 1.8rem;
+    font-size: 1.65rem;
   }
 
   .admin-form-card {
@@ -470,8 +565,17 @@ body.storefront-mode .hero-section {
     position: static;
   }
 
+  .hero-section {
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+  }
+
+  .preview-source-tag {
+    white-space: normal;
+  }
+
   .preview-image {
-    height: 150px;
+    height: 145px;
   }
 
   .store-topbar-section {
@@ -480,7 +584,7 @@ body.storefront-mode .hero-section {
   }
 
   .store-topbar-panel {
-    padding: 0.9rem;
+    padding: 0.85rem;
   }
 
   .store-banner-full,
@@ -497,5 +601,45 @@ body.storefront-mode .hero-section {
   .store-identity-avatar {
     width: 46px;
     height: 46px;
+  }
+}
+
+@media (min-width: 768px) {
+  .card-body {
+    padding: 1.25rem;
+  }
+
+  .auth-shell {
+    align-items: center !important;
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+  }
+
+  .page-header-action,
+  .page-header-actions .btn,
+  .page-header-actions a {
+    width: auto;
+  }
+}
+
+@media (min-width: 992px) {
+  .app-shell-main {
+    padding-top: 1.5rem !important;
+    padding-bottom: 2.5rem !important;
+  }
+
+  .admin-hero-panel {
+    padding: 2rem !important;
+  }
+
+  .store-topbar-panel {
+    padding: 1rem 1.15rem;
+  }
+
+  .public-store-card,
+  .dashboard-profile-card,
+  .password-helper,
+  .captcha-panel {
+    padding: 1rem;
   }
 }
