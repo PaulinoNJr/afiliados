@@ -156,7 +156,7 @@
     refs.storeBio.value = profile?.bio || '';
     refs.storeBannerUrl.value = profile?.banner_url || '';
     setUploadStatus(refs.photoUploadStatus, 'Envie JPG, PNG, WEBP ou GIF com ate 5 MB.', 'secondary');
-    setUploadStatus(refs.bannerUploadStatus, 'Tamanho recomendado do banner: 1600 x 480 px. Envie JPG, PNG, WEBP ou GIF com ate 5 MB.', 'secondary');
+    setUploadStatus(refs.bannerUploadStatus, 'Tamanho recomendado do banner: 1600 x 400 px. Use imagem horizontal para melhor encaixe. Envie JPG, PNG, WEBP ou GIF com ate 5 MB.', 'secondary');
     updatePreview();
   }
 

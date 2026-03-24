@@ -289,12 +289,8 @@ body.storefront-mode .hero-section {
 .store-banner-section {
   --store-banner-accent: #0d6efd;
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 100%;
   min-height: clamp(140px, 18vw, 220px);
-  padding: 0.4rem 0;
   overflow: hidden;
   background:
     radial-gradient(circle at 15% 20%, color-mix(in srgb, var(--store-banner-accent) 26%, transparent), transparent 30%),
@@ -307,10 +303,9 @@ body.storefront-mode .hero-section {
 
 .store-banner-full {
   display: block;
-  width: min(100%, 1440px);
+  width: 100%;
   height: clamp(140px, 18vw, 220px);
-  object-fit: contain;
-  object-position: center;
+  object-fit: cover;
 }
 
 .store-banner-overlay {

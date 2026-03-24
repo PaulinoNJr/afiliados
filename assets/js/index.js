@@ -17,22 +17,14 @@
     homeHeroTitle: document.getElementById('homeHeroTitle'),
     homeHeroDescription: document.getElementById('homeHeroDescription'),
     heroTitle: document.getElementById('heroTitle'),
-    heroDescription: document.getElementById('heroDescription'),
     marketingCardContent: document.getElementById('marketingCardContent'),
     storeBannerSection: document.getElementById('storeBannerSection'),
     storeBannerImage: document.getElementById('storeBannerImage'),
     storeTopBar: document.getElementById('storeTopBar'),
-    storeIdentityCard: document.getElementById('storeIdentityCard'),
-    storeIdentityAvatar: document.getElementById('storeIdentityAvatar'),
-    storeIdentityName: document.getElementById('storeIdentityName'),
-    storeIdentityHeadline: document.getElementById('storeIdentityHeadline'),
     searchInput: document.getElementById('searchInput'),
     sortProducts: document.getElementById('sortProducts'),
-    searchHelperText: document.getElementById('searchHelperText'),
     homeMarketingSection: document.getElementById('homeMarketingSection'),
     productsSection: document.getElementById('productsSection'),
-    productsSectionTitle: document.getElementById('productsSectionTitle'),
-    productsSearchSummary: document.getElementById('productsSearchSummary'),
     productsGrid: document.getElementById('productsGrid'),
     loading: document.getElementById('loading'),
     emptyState: document.getElementById('emptyState'),
@@ -83,20 +75,7 @@
   }
 
   function updateSearchSummary(total, filtered) {
-    const term = refs.searchInput.value.trim();
-    const sortLabel = refs.sortProducts?.selectedOptions?.[0]?.textContent || 'Mais recentes';
-
-    if (!total) {
-      refs.productsSearchSummary.textContent = 'Esta loja ainda nao publicou produtos.';
-      return;
-    }
-
-    if (!term) {
-      refs.productsSearchSummary.textContent = `${total} produto(s) disponivel(is), ordenados por ${sortLabel.toLowerCase()}.`;
-      return;
-    }
-
-    refs.productsSearchSummary.textContent = `${filtered} produto(s) encontrado(s) para "${term}", ordenados por ${sortLabel.toLowerCase()}.`;
+    return { total, filtered };
   }
 
   function sortProducts(items) {
@@ -121,7 +100,6 @@
   function resetStoreUi() {
     refs.storeBannerSection.classList.add('d-none');
     refs.storeTopBar.classList.add('d-none');
-    refs.storeIdentityCard.classList.add('d-none');
     refs.productsSection.classList.add('d-none');
     refs.emptyState.classList.add('d-none');
     refs.notFoundState.classList.add('d-none');
@@ -145,7 +123,7 @@
     resetStoreUi();
 
     updateSeo({
-      title: 'Afiliados ML | Sua pagina de vendas para afiliados',
+      title: 'Afiliados | Sua pagina de vendas para afiliados',
       description: 'Crie sua vitrine de afiliado, publique produtos e tenha uma pagina personalizada para vender mais.',
       image: defaultImage(),
       url: `${window.location.origin}/`
@@ -161,9 +139,6 @@
     const accentColor = normalizeAccentColor(store.accent_color);
 
     refs.heroTitle.textContent = store.store_name || 'Loja de afiliado';
-    refs.heroDescription.textContent = description;
-    refs.searchHelperText.textContent = 'A busca filtra apenas os produtos desta loja.';
-    refs.productsSectionTitle.textContent = `Produtos de ${store.store_name || 'esta loja'}`;
     refs.emptyStateTitle.textContent = 'Nenhum produto publicado ainda';
     refs.emptyStateDescription.textContent = 'Esta loja ainda nao publicou produtos.';
     refs.marketingCardContent.classList.add('d-none');
@@ -171,19 +146,6 @@
     refs.storeTopBar.classList.remove('d-none');
     refs.productsSection.classList.remove('d-none');
     refs.notFoundState.classList.add('d-none');
-
-    refs.storeIdentityName.textContent = store.store_name || 'Loja';
-    refs.storeIdentityHeadline.textContent = store.headline || 'Curadoria personalizada de produtos.';
-    refs.storeIdentityCard.style.setProperty('--store-accent-preview', accentColor);
-    refs.storeIdentityCard.classList.remove('d-none');
-
-    if (store.photo_url) {
-      refs.storeIdentityAvatar.src = store.photo_url;
-      refs.storeIdentityAvatar.classList.remove('d-none');
-      refs.storeIdentityAvatar.onerror = () => refs.storeIdentityAvatar.classList.add('d-none');
-    } else {
-      refs.storeIdentityAvatar.classList.add('d-none');
-    }
 
     refs.storeBannerSection.style.setProperty('--store-banner-accent', accentColor);
     if (store.banner_url) {
@@ -220,14 +182,13 @@
     refs.homeMarketingSection.classList.add('d-none');
     refs.storeBannerSection.classList.add('d-none');
     refs.storeTopBar.classList.add('d-none');
-    refs.storeIdentityCard.classList.add('d-none');
     refs.notFoundState.classList.remove('d-none');
     refs.emptyState.classList.add('d-none');
     refs.productsSection.classList.add('d-none');
     refs.productsGrid.innerHTML = '';
 
     updateSeo({
-      title: 'Loja nao encontrada | Afiliados ML',
+      title: 'Loja nao encontrada | Afiliados',
       description: 'Essa loja publica nao foi encontrada.',
       image: defaultImage(),
       url: window.location.href
