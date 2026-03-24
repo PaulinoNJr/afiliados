@@ -697,7 +697,18 @@ function selectHtmlDescriptionCandidate(html, maxLength = 6000) {
 
 function isMercadoLivreHost(hostname) {
   const host = String(hostname || '').toLowerCase();
-  return host.includes('mercadolivre.com.br') || host.includes('mercadolibre.com');
+  return (
+    host === 'meli.la' ||
+    host.endsWith('.meli.la') ||
+    host === 'mercadolivre.com.br' ||
+    host.endsWith('.mercadolivre.com.br') ||
+    host === 'mercadolivre.com' ||
+    host.endsWith('.mercadolivre.com') ||
+    host === 'mercadolibre.com' ||
+    host.endsWith('.mercadolibre.com') ||
+    host === 'mercadolibre.com.br' ||
+    host.endsWith('.mercadolibre.com.br')
+  );
 }
 
 function isMercadoLivreVerificationPath(pathname) {
@@ -1517,12 +1528,12 @@ module.exports = async (req, res) => {
     return res.status(400).json({ ok: false, error: 'Apenas URLs http/https são aceitas.' });
   }
 
-  if (!isMercadoLivreHost(parsed.hostname)) {
-    return res.status(400).json({
-      ok: false,
-      error: 'A captura automatica aceita somente URLs do Mercado Livre.'
-    });
-  }
+    if (!isMercadoLivreHost(parsed.hostname)) {
+      return res.status(400).json({
+        ok: false,
+        error: 'A captura automatica aceita somente URLs oficiais do Mercado Livre, incluindo o encurtador meli.la.'
+      });
+    }
 
   try {
     console.info('[preview] request started', {
