@@ -30,6 +30,11 @@
     </div>
   </nav>
 
+  <section id="storeBannerSection" class="store-banner-section d-none">
+    <img id="storeBannerImage" class="store-banner-full" alt="Banner da loja" />
+    <div class="store-banner-overlay"></div>
+  </section>
+
   <header class="hero-section py-5 border-bottom">
     <div class="container">
       <div class="row align-items-center g-4">
@@ -53,23 +58,17 @@
             </div>
           </div>
 
-          <div id="storeExperienceCard" class="card shadow-sm border-0 p-3 hero-side-card d-none">
-            <div id="storeBannerWrapper" class="d-none mb-3">
-              <img id="storeBannerImage" class="store-hero-banner" alt="Banner da loja" />
-            </div>
-            <div id="storeIdentityCard" class="store-identity-card d-none mb-3">
+          <div id="storeExperienceCard" class="card shadow-sm border-0 p-4 hero-side-card store-hero-card d-none">
+            <div id="storeIdentityCard" class="store-identity-card mb-3 d-none">
               <img id="storeIdentityAvatar" class="store-identity-avatar d-none" alt="Foto da loja" />
               <div>
                 <p id="storeIdentityName" class="fw-semibold mb-1">Loja</p>
                 <p id="storeIdentityHeadline" class="small text-secondary mb-0">Produtos organizados por esta loja.</p>
               </div>
             </div>
-            <label for="searchInput" class="form-label mb-2">Buscar produto</label>
-            <div class="input-group">
-              <input id="searchInput" type="search" class="form-control" placeholder="Digite nome ou descricao" />
-              <button id="refreshBtn" class="btn btn-primary" type="button">Atualizar</button>
-            </div>
-            <small id="searchHelperText" class="text-muted mt-2">A busca filtra os produtos abaixo em tempo real.</small>
+            <p class="dashboard-link-label mb-2">Curadoria da loja</p>
+            <h2 id="storeSummaryTitle" class="h4 mb-2">Uma vitrine criada para converter melhor</h2>
+            <p id="storeSummaryDescription" class="text-secondary mb-0">Explore os produtos selecionados por esta pagina e encontre rapidamente o que voce procura.</p>
           </div>
         </div>
       </div>
@@ -146,10 +145,22 @@
       </div>
 
       <section id="productsSection" class="d-none">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-          <div>
-            <h2 id="productsSectionTitle" class="h4 mb-1">Produtos</h2>
-            <p id="productsSearchSummary" class="text-secondary mb-0">Os produtos mais recentes aparecem primeiro.</p>
+        <div class="store-products-toolbar mb-4">
+          <div class="row g-3 align-items-center">
+            <div class="col-12 col-lg-7">
+              <div>
+                <h2 id="productsSectionTitle" class="h3 mb-1">Produtos</h2>
+                <p id="productsSearchSummary" class="text-secondary mb-0">Os produtos mais recentes aparecem primeiro.</p>
+              </div>
+            </div>
+            <div class="col-12 col-lg-5">
+              <label for="searchInput" class="form-label mb-2">Buscar produto</label>
+              <div class="input-group store-search-group">
+                <input id="searchInput" type="search" class="form-control" placeholder="Digite nome ou descricao" />
+                <button id="refreshBtn" class="btn btn-primary" type="button">Atualizar</button>
+              </div>
+              <small id="searchHelperText" class="text-muted mt-2 d-block">A busca filtra os produtos abaixo em tempo real.</small>
+            </div>
           </div>
         </div>
         <div id="productsGrid" class="row g-4"></div>

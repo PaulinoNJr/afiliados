@@ -18,12 +18,14 @@
     heroDescription: document.getElementById('heroDescription'),
     marketingCardContent: document.getElementById('marketingCardContent'),
     storeExperienceCard: document.getElementById('storeExperienceCard'),
-    storeBannerWrapper: document.getElementById('storeBannerWrapper'),
+    storeBannerSection: document.getElementById('storeBannerSection'),
     storeBannerImage: document.getElementById('storeBannerImage'),
     storeIdentityCard: document.getElementById('storeIdentityCard'),
     storeIdentityAvatar: document.getElementById('storeIdentityAvatar'),
     storeIdentityName: document.getElementById('storeIdentityName'),
     storeIdentityHeadline: document.getElementById('storeIdentityHeadline'),
+    storeSummaryTitle: document.getElementById('storeSummaryTitle'),
+    storeSummaryDescription: document.getElementById('storeSummaryDescription'),
     searchInput: document.getElementById('searchInput'),
     searchHelperText: document.getElementById('searchHelperText'),
     refreshBtn: document.getElementById('refreshBtn'),
@@ -97,8 +99,9 @@
   }
 
   function resetStoreUi() {
-    refs.storeBannerWrapper.classList.add('d-none');
+    refs.storeBannerSection.classList.add('d-none');
     refs.storeIdentityCard.classList.add('d-none');
+    refs.storeExperienceCard.classList.add('d-none');
     refs.productsSection.classList.add('d-none');
     refs.emptyState.classList.add('d-none');
     refs.notFoundState.classList.add('d-none');
@@ -112,6 +115,7 @@
     state.store = null;
     state.products = [];
     state.filteredProducts = [];
+    document.body.classList.remove('storefront-mode');
 
     refs.heroBadge.textContent = 'Plataforma de afiliados';
     refs.heroTitle.textContent = 'Transforme seu link em uma pagina profissional de vendas';
@@ -119,7 +123,6 @@
     refs.heroBadge.style.backgroundColor = '';
     refs.heroBadge.style.borderColor = '';
     refs.marketingCardContent.classList.remove('d-none');
-    refs.storeExperienceCard.classList.add('d-none');
     refs.homeMarketingSection.classList.remove('d-none');
     resetStoreUi();
 
@@ -134,11 +137,12 @@
   function applyStoreHero(store) {
     state.mode = 'store';
     state.store = store;
+    document.body.classList.add('storefront-mode');
 
     const description = String(store.bio || store.headline || 'Confira os produtos publicados nesta loja.').trim();
     const accentColor = normalizeAccentColor(store.accent_color);
 
-    refs.heroBadge.textContent = 'Produtos da loja';
+    refs.heroBadge.textContent = 'Colecao da loja';
     refs.heroTitle.textContent = store.store_name || 'Loja de afiliado';
     refs.heroDescription.textContent = description;
     refs.searchHelperText.textContent = 'A busca filtra apenas os produtos desta loja.';
@@ -155,6 +159,8 @@
 
     refs.storeIdentityName.textContent = store.store_name || 'Loja';
     refs.storeIdentityHeadline.textContent = store.headline || 'Curadoria personalizada de produtos.';
+    refs.storeSummaryTitle.textContent = `Explore os destaques de ${store.store_name || 'esta loja'}`;
+    refs.storeSummaryDescription.textContent = description;
     refs.storeIdentityCard.style.setProperty('--store-accent-preview', accentColor);
     refs.storeIdentityCard.classList.remove('d-none');
 
@@ -166,12 +172,20 @@
       refs.storeIdentityAvatar.classList.add('d-none');
     }
 
+    refs.storeBannerSection.style.setProperty('--store-banner-accent', accentColor);
     if (store.banner_url) {
       refs.storeBannerImage.src = store.banner_url;
-      refs.storeBannerWrapper.classList.remove('d-none');
-      refs.storeBannerImage.onerror = () => refs.storeBannerWrapper.classList.add('d-none');
+      refs.storeBannerSection.classList.remove('is-placeholder');
+      refs.storeBannerSection.classList.remove('d-none');
+      refs.storeBannerImage.classList.remove('d-none');
+      refs.storeBannerImage.onerror = () => {
+        refs.storeBannerSection.classList.add('is-placeholder');
+        refs.storeBannerImage.classList.add('d-none');
+      };
     } else {
-      refs.storeBannerWrapper.classList.add('d-none');
+      refs.storeBannerSection.classList.remove('d-none');
+      refs.storeBannerSection.classList.add('is-placeholder');
+      refs.storeBannerImage.classList.add('d-none');
     }
 
     updateSeo({
@@ -187,15 +201,16 @@
     state.store = null;
     state.products = [];
     state.filteredProducts = [];
+    document.body.classList.remove('storefront-mode');
     refs.heroBadge.textContent = 'Pagina nao encontrada';
     refs.heroTitle.textContent = 'Essa loja nao esta disponivel';
     refs.heroDescription.textContent = 'Confira se o endereco foi digitado corretamente ou volte para a pagina inicial.';
     refs.heroBadge.style.backgroundColor = '';
     refs.heroBadge.style.borderColor = '';
     refs.marketingCardContent.classList.add('d-none');
-    refs.storeExperienceCard.classList.remove('d-none');
+    refs.storeExperienceCard.classList.add('d-none');
     refs.homeMarketingSection.classList.add('d-none');
-    refs.storeBannerWrapper.classList.add('d-none');
+    refs.storeBannerSection.classList.add('d-none');
     refs.storeIdentityCard.classList.add('d-none');
     refs.notFoundState.classList.remove('d-none');
     refs.emptyState.classList.add('d-none');
@@ -237,10 +252,11 @@
 
     products.forEach((item) => {
       const col = document.createElement('div');
-      col.className = 'col-12 col-sm-6 col-lg-3';
+      col.className = 'col-12 col-sm-6 col-lg-4 col-xxl-3';
 
       const card = document.createElement('article');
       card.className = 'card h-100 border-0 shadow-sm p-3 product-card';
+      card.style.setProperty('--product-accent', accentColor);
 
       const image = document.createElement('img');
       image.className = 'product-image mb-3';
