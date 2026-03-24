@@ -11,6 +11,36 @@ function getClientIp(req) {
   return forwardedFor.split(',')[0]?.trim() || '';
 }
 
+function normalizeHostname(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/\/.*$/, '')
+    .replace(/:\d+$/, '')
+    .replace(/^www\./, '');
+}
+
+function getAllowedRecaptchaHostnames(req) {
+  const configured = String(process.env.RECAPTCHA_ALLOWED_HOSTNAMES || '')
+    .split(',')
+    .map(normalizeHostname)
+    .filter(Boolean);
+
+  if (configured.length) {
+    return configured;
+  }
+
+  const requestHosts = [
+    req?.headers?.['x-forwarded-host'],
+    req?.headers?.host
+  ]
+    .map(normalizeHostname)
+    .filter(Boolean);
+
+  return Array.from(new Set(requestHosts));
+}
+
 function getSupabaseConfig() {
   const url = String(process.env.SUPABASE_URL || '').trim().replace(/\/+$/, '');
   const anonKey = String(process.env.SUPABASE_ANON_KEY || '').trim();
@@ -86,6 +116,13 @@ async function verifyRecaptchaToken({ token, req }) {
   if (!payload?.success) {
     const codes = Array.isArray(payload?.['error-codes']) ? payload['error-codes'].join(', ') : '';
     throw new Error(codes ? `Verificacao reCAPTCHA recusada: ${codes}` : 'Verificacao reCAPTCHA recusada.');
+  }
+
+  const responseHostname = normalizeHostname(payload?.hostname);
+  const allowedHostnames = getAllowedRecaptchaHostnames(req);
+
+  if (allowedHostnames.length && (!responseHostname || !allowedHostnames.includes(responseHostname))) {
+    throw new Error('Verificacao reCAPTCHA recusada: dominio invalido.');
   }
 
   return payload;
@@ -170,6 +207,8 @@ async function createSupabaseAuthUser({ email, password, metadata = {}, emailCon
 module.exports = {
   setJsonSecurityHeaders,
   getClientIp,
+  normalizeHostname,
+  getAllowedRecaptchaHostnames,
   getSupabaseConfig,
   validatePasswordStrength,
   verifyRecaptchaToken,
