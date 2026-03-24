@@ -340,7 +340,7 @@
 
     const { data: store, error: storeError } = await window.db
       .from('public_store_profiles')
-      .select('id, store_name, slug, headline, accent_color, cta_label, bio, photo_url, banner_url, created_at, updated_at')
+      .select('id, store_name, slug, headline, accent_color, cta_label, bio, photo_url, banner_url')
       .eq('slug', slug)
       .maybeSingle();
 
@@ -356,7 +356,7 @@
 
     const { data: products, error: productsError } = await window.db
       .from('public_store_products')
-      .select('id, titulo, preco, imagem_url, link_afiliado, descricao, created_at, updated_at')
+      .select('id, titulo, preco, imagem_url, link_afiliado, descricao, created_at')
       .eq('profile_id', store.id)
       .order('created_at', { ascending: false });
 

@@ -19,36 +19,7 @@
   }
 
   async function register(email, password, profileData = {}) {
-    ensureClient();
-
-    const isolatedClient = window.supabase.createClient(
-      window.AppConfig.SUPABASE_URL,
-      window.AppConfig.SUPABASE_ANON_KEY,
-      {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-          detectSessionInUrl: false
-        }
-      }
-    );
-
-    const metadata = {
-      first_name: profileData.first_name || null,
-      last_name: profileData.last_name || null,
-      phone: profileData.phone || null,
-      photo_url: profileData.photo_url || null,
-      slug: profileData.slug || null
-    };
-
-    const { data, error } = await isolatedClient.auth.signUp({
-      email,
-      password,
-      options: {
-        data: metadata
-      }
-    });
-    return { data, error };
+    throw new Error('Cadastro direto pelo frontend foi desativado. Use os endpoints seguros do backend.');
   }
 
   async function getProfile() {

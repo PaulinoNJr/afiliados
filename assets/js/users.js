@@ -409,17 +409,26 @@
     setCreateUserLoading(true);
 
     try {
-      const { data, error } = await window.Auth.register(email, password);
-      if (error) throw error;
+      const response = await fetch('/api/admin-create-user', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${state.session.access_token}`
+        },
+        body: JSON.stringify({
+          email,
+          password
+        })
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.error || 'Nao foi possivel criar o usuario com seguranca.');
+      }
 
       refs.createUserForm.reset();
       updatePasswordValidation();
-
-      if (data?.user && !data?.session) {
-        showStatus('Usuario criado. Ele precisa confirmar o email antes de entrar.', 'success');
-      } else {
-        showStatus('Usuario criado com sucesso.', 'success');
-      }
+      showStatus('Usuario criado com sucesso.', 'success');
 
       await loadUsers();
     } catch (err) {

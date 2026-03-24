@@ -1487,6 +1487,8 @@ function parsePrice(html) {
 }
 
 module.exports = async (req, res) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -1513,6 +1515,13 @@ module.exports = async (req, res) => {
 
   if (!['http:', 'https:'].includes(parsed.protocol)) {
     return res.status(400).json({ ok: false, error: 'Apenas URLs http/https são aceitas.' });
+  }
+
+  if (!isMercadoLivreHost(parsed.hostname)) {
+    return res.status(400).json({
+      ok: false,
+      error: 'A captura automatica aceita somente URLs do Mercado Livre.'
+    });
   }
 
   try {

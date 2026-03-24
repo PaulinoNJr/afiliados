@@ -105,19 +105,23 @@
     }
   }
 
-  async function verifyRecaptchaToken(token) {
-    const response = await fetch('/api/verify-recaptcha', {
+  async function registerUserViaApi({ email, password, recaptchaToken, metadata }) {
+    const response = await fetch('/api/register-user', {
       method: 'POST',
       headers: {
         'content-type': 'application/json'
       },
-      body: JSON.stringify({ token })
+      body: JSON.stringify({
+        email,
+        password,
+        recaptchaToken,
+        metadata
+      })
     });
 
     const payload = await response.json().catch(() => ({}));
-
     if (!response.ok || !payload.ok) {
-      throw new Error(payload.error || 'Nao foi possivel validar o reCAPTCHA.');
+      throw new Error(payload.error || 'Nao foi possivel criar a conta com seguranca.');
     }
 
     return payload;
@@ -230,17 +234,18 @@
     refs.status.classList.add('d-none');
 
     try {
-      await verifyRecaptchaToken(recaptchaToken);
-
-      const { data, error } = await window.Auth.register(email, password, {
-        first_name: firstName,
-        last_name: lastName || null,
-        phone: phone || null,
-        photo_url: photoUrl || null,
-        slug: slugResult.slug
+      await registerUserViaApi({
+        email,
+        password,
+        recaptchaToken,
+        metadata: {
+          first_name: firstName,
+          last_name: lastName || null,
+          phone: phone || null,
+          photo_url: photoUrl || null,
+          slug: slugResult.slug
+        }
       });
-
-      if (error) throw error;
 
       refs.form.reset();
       updatePublicUrlPreview();
@@ -249,15 +254,13 @@
       setSlugFeedback('Esse endereco sera usado na sua pagina publica.', 'secondary');
       setRecaptchaStatus('Confirme novamente o reCAPTCHA caso queira cadastrar outra conta.', 'secondary');
 
-      if (data?.session) {
-        const loginResult = await window.Auth.login(email, password);
-        if (!loginResult?.error) {
-          showStatus('Conta criada com sucesso. Redirecionando para o painel...', 'success');
-          setTimeout(() => {
-            window.location.href = 'admin.html';
-          }, 700);
-          return;
-        }
+      const loginResult = await window.Auth.login(email, password);
+      if (!loginResult?.error) {
+        showStatus('Conta criada com sucesso. Redirecionando para o painel...', 'success');
+        setTimeout(() => {
+          window.location.href = 'admin.html';
+        }, 700);
+        return;
       }
 
       showStatus('Cadastro realizado. Agora entre com seu email e senha para acessar o painel.', 'success');

@@ -1,0 +1,179 @@
+function setJsonSecurityHeaders(res) {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+}
+
+function getClientIp(req) {
+  const forwardedFor = String(req.headers['x-forwarded-for'] || '').trim();
+  return forwardedFor.split(',')[0]?.trim() || '';
+}
+
+function getSupabaseConfig() {
+  const url = String(process.env.SUPABASE_URL || '').trim().replace(/\/+$/, '');
+  const anonKey = String(process.env.SUPABASE_ANON_KEY || '').trim();
+  const serviceRoleKey = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+
+  if (!url || !anonKey || !serviceRoleKey) {
+    throw new Error('SUPABASE_URL, SUPABASE_ANON_KEY e SUPABASE_SERVICE_ROLE_KEY precisam estar configuradas no backend.');
+  }
+
+  return {
+    url,
+    anonKey,
+    serviceRoleKey
+  };
+}
+
+function validatePasswordStrength(password) {
+  const value = String(password || '');
+  const rules = {
+    minLength: value.length >= 8,
+    lowercase: /[a-z]/.test(value),
+    uppercase: /[A-Z]/.test(value),
+    number: /\d/.test(value),
+    special: /[!@#$%^&*()_\+\-=\[\]{};':"\\|<>?,./`~]/.test(value)
+  };
+
+  return {
+    ok: Object.values(rules).every(Boolean),
+    rules
+  };
+}
+
+async function verifyRecaptchaToken({ token, req }) {
+  const secret = String(
+    process.env.RECAPTCHA_SECRET_KEY ||
+    process.env.RECAPTCHA_SECRET ||
+    ''
+  ).trim();
+
+  if (!secret) {
+    throw new Error('RECAPTCHA_SECRET_KEY nao configurada no backend.');
+  }
+
+  const normalizedToken = String(token || '').trim();
+  if (!normalizedToken) {
+    throw new Error('Token do reCAPTCHA ausente.');
+  }
+
+  const body = new URLSearchParams({
+    secret,
+    response: normalizedToken
+  });
+
+  const remoteIp = getClientIp(req);
+  if (remoteIp) {
+    body.set('remoteip', remoteIp);
+  }
+
+  const googleResponse = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded'
+    },
+    body: body.toString()
+  });
+
+  const payload = await googleResponse.json();
+
+  if (!googleResponse.ok) {
+    throw new Error('Falha ao consultar o servico do reCAPTCHA.');
+  }
+
+  if (!payload?.success) {
+    const codes = Array.isArray(payload?.['error-codes']) ? payload['error-codes'].join(', ') : '';
+    throw new Error(codes ? `Verificacao reCAPTCHA recusada: ${codes}` : 'Verificacao reCAPTCHA recusada.');
+  }
+
+  return payload;
+}
+
+async function getAuthenticatedSupabaseUser(accessToken) {
+  const { url, anonKey } = getSupabaseConfig();
+  const token = String(accessToken || '').trim();
+
+  if (!token) {
+    return null;
+  }
+
+  const response = await fetch(`${url}/auth/v1/user`, {
+    method: 'GET',
+    headers: {
+      apikey: anonKey,
+      authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  return response.json();
+}
+
+async function getUserRole(userId) {
+  const { url, serviceRoleKey } = getSupabaseConfig();
+  const normalizedUserId = String(userId || '').trim();
+
+  if (!normalizedUserId) {
+    return null;
+  }
+
+  const endpoint = `${url}/rest/v1/user_profiles?select=role&user_id=eq.${encodeURIComponent(normalizedUserId)}`;
+  const response = await fetch(endpoint, {
+    method: 'GET',
+    headers: {
+      apikey: serviceRoleKey,
+      authorization: `Bearer ${serviceRoleKey}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error('Nao foi possivel consultar o papel do usuario.');
+  }
+
+  const rows = await response.json();
+  return rows?.[0]?.role || null;
+}
+
+async function createSupabaseAuthUser({ email, password, metadata = {}, emailConfirm = true }) {
+  const { url, serviceRoleKey } = getSupabaseConfig();
+
+  const response = await fetch(`${url}/auth/v1/admin/users`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      apikey: serviceRoleKey,
+      authorization: `Bearer ${serviceRoleKey}`
+    },
+    body: JSON.stringify({
+      email,
+      password,
+      user_metadata: metadata,
+      email_confirm: Boolean(emailConfirm)
+    })
+  });
+
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const message = payload?.msg || payload?.message || payload?.error_description || payload?.error || 'Falha ao criar usuario no Auth.';
+    throw new Error(message);
+  }
+
+  return payload;
+}
+
+module.exports = {
+  setJsonSecurityHeaders,
+  getClientIp,
+  getSupabaseConfig,
+  validatePasswordStrength,
+  verifyRecaptchaToken,
+  getAuthenticatedSupabaseUser,
+  getUserRole,
+  createSupabaseAuthUser
+};

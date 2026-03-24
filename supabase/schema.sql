@@ -391,9 +391,6 @@ create view public.public_store_profiles
 with (security_invoker = true) as
 select
   profile.user_id as id,
-  profile.first_name,
-  profile.last_name,
-  profile.phone,
   profile.photo_url,
   profile.store_name,
   profile.slug,
@@ -401,9 +398,7 @@ select
   profile.accent_color,
   profile.cta_label,
   profile.bio,
-  profile.banner_url,
-  profile.created_at,
-  profile.updated_at
+  profile.banner_url
 from public.user_profiles profile
 where profile.slug is not null
   and profile.slug <> '';
@@ -499,9 +494,7 @@ select
   product.imagem_url,
   product.link_afiliado,
   product.descricao,
-  product.source_url,
-  product.created_at,
-  product.updated_at
+  product.created_at
 from public.produtos product;
 
 alter table public.user_profiles enable row level security;

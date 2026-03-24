@@ -127,6 +127,12 @@ function buildProbePayload({ model, url }) {
 }
 
 module.exports = async (req, res) => {
+  if (String(process.env.PREVIEW_DEBUG_ENABLED || '').trim() !== '1') {
+    return res.status(404).json({ ok: false, error: 'Endpoint indisponivel.' });
+  }
+
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
