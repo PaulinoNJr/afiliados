@@ -3,7 +3,8 @@ const {
   validatePasswordStrength,
   verifyRecaptchaToken,
   validateRecaptchaV3Payload,
-  createSupabaseAuthUser
+  getRequestOrigin,
+  createSupabasePendingSignup
 } = require('./_security');
 
 module.exports = async (req, res) => {
@@ -25,6 +26,7 @@ module.exports = async (req, res) => {
   const recaptchaToken = String(req.body?.recaptchaToken || '').trim();
   const recaptchaAction = String(req.body?.recaptchaAction || '').trim();
   const metadata = req.body?.metadata && typeof req.body.metadata === 'object' ? req.body.metadata : {};
+  const activationWindowDays = 5;
 
   if (!email || !password) {
     return res.status(400).json({
@@ -53,7 +55,11 @@ module.exports = async (req, res) => {
       minScore: Number(process.env.RECAPTCHA_MIN_SCORE || 0.5)
     });
 
-    const user = await createSupabaseAuthUser({
+    const activationExpiresAt = new Date(Date.now() + activationWindowDays * 24 * 60 * 60 * 1000).toISOString();
+    const requestOrigin = getRequestOrigin(req);
+    const emailRedirectTo = `${requestOrigin}/ativacao`;
+
+    const signup = await createSupabasePendingSignup({
       email,
       password,
       metadata: {
@@ -61,16 +67,24 @@ module.exports = async (req, res) => {
         last_name: metadata.last_name || null,
         phone: metadata.phone || null,
         photo_url: metadata.photo_url || null,
-        slug: metadata.slug || null
+        slug: metadata.slug || null,
+        activation_window_days: activationWindowDays,
+        activation_expires_at: activationExpiresAt
       },
-      emailConfirm: true
+      emailRedirectTo
     });
 
     return res.status(200).json({
       ok: true,
+      activation: {
+        status: 'pending',
+        expiresAt: activationExpiresAt,
+        windowDays: activationWindowDays,
+        redirectTo: emailRedirectTo
+      },
       user: {
-        id: user?.user?.id || null,
-        email: user?.user?.email || email
+        id: signup?.user?.id || null,
+        email: signup?.user?.email || email
       }
     });
   } catch (error) {

@@ -32,7 +32,7 @@
 
     const { data, error } = await window.db
       .from('user_profiles')
-      .select('user_id, user_email, role, first_name, last_name, phone, photo_url, store_name, slug, slug_changed_at, headline, accent_color, text_color, page_background, button_text_color, button_style, card_style, cta_label, bio, banner_url, created_at, updated_at')
+      .select('user_id, user_email, role, first_name, last_name, phone, photo_url, store_name, slug, slug_changed_at, activation_status, activation_requested_at, activation_email_sent_at, activation_expires_at, activation_confirmed_at, headline, accent_color, text_color, page_background, button_text_color, button_style, card_style, cta_label, bio, banner_url, created_at, updated_at')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -44,9 +44,10 @@
       .insert({
         user_id: userId,
         user_email: session.user.email || null,
-        role: 'produtor'
+        role: 'produtor',
+        activation_status: 'pending'
       })
-      .select('user_id, user_email, role, first_name, last_name, phone, photo_url, store_name, slug, slug_changed_at, headline, accent_color, text_color, page_background, button_text_color, button_style, card_style, cta_label, bio, banner_url, created_at, updated_at')
+      .select('user_id, user_email, role, first_name, last_name, phone, photo_url, store_name, slug, slug_changed_at, activation_status, activation_requested_at, activation_email_sent_at, activation_expires_at, activation_confirmed_at, headline, accent_color, text_color, page_background, button_text_color, button_style, card_style, cta_label, bio, banner_url, created_at, updated_at')
       .single();
 
     if (insertError) throw insertError;
@@ -56,6 +57,30 @@
   async function getRole() {
     const profile = await getProfile();
     return profile?.role || 'produtor';
+  }
+
+  function isActivationExpired(profile) {
+    if (!profile?.activation_expires_at) return false;
+    return new Date(profile.activation_expires_at).getTime() < Date.now();
+  }
+
+  function isAccountActive(profile) {
+    return profile?.activation_status === 'active';
+  }
+
+  async function ensureActivatedSession(redirectTo = 'ativacao.html') {
+    const session = await getSession();
+    if (!session) return null;
+
+    const profile = await getProfile();
+    if (!profile) return null;
+
+    if (!isAccountActive(profile)) {
+      window.location.href = `${redirectTo}?status=${encodeURIComponent(profile.activation_status || 'pending')}`;
+      return null;
+    }
+
+    return { session, profile };
   }
 
   async function logout() {
@@ -75,6 +100,11 @@
   async function redirectIfAuthenticated(target = 'admin.html') {
     const session = await getSession();
     if (session) {
+      const profile = await getProfile();
+      if (profile && !isAccountActive(profile)) {
+        window.location.href = `ativacao.html?status=${encodeURIComponent(profile.activation_status || 'pending')}`;
+        return true;
+      }
       window.location.href = target;
       return true;
     }
@@ -85,6 +115,9 @@
     getSession,
     getProfile,
     getRole,
+    isActivationExpired,
+    isAccountActive,
+    ensureActivatedSession,
     login,
     register,
     logout,

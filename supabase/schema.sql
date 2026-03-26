@@ -59,6 +59,7 @@ as $$
     'api',
     'users',
     'cadastro',
+    'ativacao',
     'loja',
     'produtos'
   ]);
@@ -74,6 +75,11 @@ create table if not exists public.user_profiles (
   store_name text,
   slug text,
   slug_changed_at timestamptz,
+  activation_status text,
+  activation_requested_at timestamptz,
+  activation_email_sent_at timestamptz,
+  activation_expires_at timestamptz,
+  activation_confirmed_at timestamptz,
   headline text,
   accent_color text,
   text_color text,
@@ -98,6 +104,11 @@ alter table public.user_profiles
   add column if not exists store_name text,
   add column if not exists slug text,
   add column if not exists slug_changed_at timestamptz,
+  add column if not exists activation_status text,
+  add column if not exists activation_requested_at timestamptz,
+  add column if not exists activation_email_sent_at timestamptz,
+  add column if not exists activation_expires_at timestamptz,
+  add column if not exists activation_confirmed_at timestamptz,
   add column if not exists headline text,
   add column if not exists accent_color text,
   add column if not exists text_color text,
@@ -114,6 +125,9 @@ alter table public.user_profiles
 
 alter table public.user_profiles
   alter column role set default 'produtor',
+  alter column activation_status set default 'pending',
+  alter column activation_requested_at set default now(),
+  alter column activation_email_sent_at set default now(),
   alter column accent_color set default '#0d6efd',
   alter column text_color set default '#152238',
   alter column page_background set default '#f3f6fb',
@@ -125,6 +139,27 @@ alter table public.user_profiles
 update public.user_profiles
 set role = 'produtor'
 where role is null;
+
+update public.user_profiles
+set activation_status = 'active'
+where activation_status is null;
+
+update public.user_profiles
+set activation_requested_at = created_at
+where activation_requested_at is null;
+
+update public.user_profiles
+set activation_email_sent_at = activation_requested_at
+where activation_email_sent_at is null;
+
+update public.user_profiles
+set activation_expires_at = activation_requested_at + interval '5 days'
+where activation_expires_at is null;
+
+update public.user_profiles
+set activation_confirmed_at = coalesce(activation_confirmed_at, activation_requested_at)
+where activation_status = 'active'
+  and activation_confirmed_at is null;
 
 create index if not exists idx_user_profiles_user_email on public.user_profiles (lower(user_email));
 
@@ -225,6 +260,13 @@ begin
     new.cta_label := 'Ver produto';
   end if;
 
+  new.activation_status := lower(nullif(trim(coalesce(new.activation_status, '')), ''));
+  if new.activation_status is null then
+    new.activation_status := 'pending';
+  elsif new.activation_status not in ('pending', 'active', 'expired') then
+    raise exception 'Status de ativacao invalido.';
+  end if;
+
   fallback_store_name := coalesce(
     nullif(trim(new.store_name), ''),
     nullif(trim(concat_ws(' ', new.first_name, new.last_name)), ''),
@@ -253,6 +295,29 @@ begin
   elsif new.slug_changed_at is null then
     new.slug_changed_at := now() - interval '8 days';
   end if;
+
+  if tg_op = 'INSERT' then
+    new.activation_requested_at := coalesce(new.activation_requested_at, now());
+    new.activation_email_sent_at := coalesce(new.activation_email_sent_at, new.activation_requested_at);
+  else
+    new.activation_requested_at := coalesce(new.activation_requested_at, old.activation_requested_at);
+    new.activation_email_sent_at := coalesce(new.activation_email_sent_at, old.activation_email_sent_at);
+
+    if new.activation_status is distinct from old.activation_status then
+      if new.activation_status = 'active' and old.activation_status <> 'active' then
+        new.activation_confirmed_at := coalesce(new.activation_confirmed_at, now());
+      elsif new.activation_status <> 'active' then
+        new.activation_confirmed_at := null;
+      end if;
+    else
+      new.activation_confirmed_at := old.activation_confirmed_at;
+    end if;
+  end if;
+
+  new.activation_expires_at := coalesce(
+    new.activation_expires_at,
+    new.activation_requested_at + interval '5 days'
+  );
 
   if new.slug is null or new.slug = '' then
     raise exception 'Slug inválido.';
@@ -297,7 +362,21 @@ begin
     'Minha loja'
   );
 
-  insert into public.user_profiles (user_id, user_email, role, first_name, last_name, phone, photo_url, store_name, slug)
+  insert into public.user_profiles (
+    user_id,
+    user_email,
+    role,
+    first_name,
+    last_name,
+    phone,
+    photo_url,
+    store_name,
+    slug,
+    activation_status,
+    activation_requested_at,
+    activation_email_sent_at,
+    activation_expires_at
+  )
   values (
     new.id,
     new.email,
@@ -307,7 +386,11 @@ begin
     phone_value,
     photo_url_value,
     generated_store_name,
-    public.generate_unique_store_slug(coalesce(slug_value, generated_store_name), new.id)
+    public.generate_unique_store_slug(coalesce(slug_value, generated_store_name), new.id),
+    'pending',
+    now(),
+    now(),
+    now() + interval '5 days'
   )
   on conflict (user_id) do update
     set user_email = excluded.user_email,
@@ -442,6 +525,17 @@ begin
         and not public.is_reserved_store_slug(slug)
       );
   end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'ck_user_profiles_activation_status_valid'
+      and conrelid = 'public.user_profiles'::regclass
+  ) then
+    alter table public.user_profiles
+      add constraint ck_user_profiles_activation_status_valid
+      check (activation_status in ('pending', 'active', 'expired'));
+  end if;
 end;
 $$;
 
@@ -472,6 +566,47 @@ begin
   end if;
 
   return new;
+end;
+$$;
+
+create or replace function public.finalize_account_activation()
+returns public.user_profiles
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  current_profile public.user_profiles;
+begin
+  select *
+  into current_profile
+  from public.user_profiles
+  where user_id = auth.uid();
+
+  if current_profile.user_id is null then
+    raise exception 'Perfil do usuario nao encontrado.';
+  end if;
+
+  if current_profile.activation_status = 'active' then
+    return current_profile;
+  end if;
+
+  if current_profile.activation_expires_at is not null and current_profile.activation_expires_at < now() then
+    update public.user_profiles
+    set activation_status = 'expired'
+    where user_id = current_profile.user_id;
+
+    raise exception 'O prazo para ativacao expirou. Solicite um novo email de ativacao.';
+  end if;
+
+  update public.user_profiles
+  set activation_status = 'active',
+      activation_confirmed_at = now()
+  where user_id = current_profile.user_id
+  returning *
+  into current_profile;
+
+  return current_profile;
 end;
 $$;
 
@@ -597,7 +732,8 @@ select
   product.created_at
 from public.produtos product;
 
-create or replace function public.get_public_store_by_slug(store_slug text)
+drop function if exists public.get_public_store_by_slug(text);
+create function public.get_public_store_by_slug(store_slug text)
 returns table (
   id uuid,
   photo_url text,
@@ -764,6 +900,7 @@ create policy "Exclusao por dono ou admin"
 
 grant usage on schema public to anon, authenticated;
 grant execute on function public.is_admin() to authenticated;
+grant execute on function public.finalize_account_activation() to authenticated;
 grant execute on function public.get_public_store_by_slug(text) to anon, authenticated;
 grant execute on function public.get_public_products_by_profile(uuid) to anon, authenticated;
 grant execute on function public.check_public_slug_availability(text, uuid) to anon, authenticated;
@@ -826,9 +963,11 @@ create policy "Autenticado pode excluir store-assets proprios"
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
-insert into public.user_profiles (user_id, role)
-select id, 'admin'
+insert into public.user_profiles (user_id, role, activation_status, activation_confirmed_at)
+select id, 'admin', 'active', now()
 from auth.users
 where lower(email) = lower('paulino.covabra@gmail.com')
 on conflict (user_id)
-do update set role = 'admin';
+do update set role = 'admin',
+              activation_status = 'active',
+              activation_confirmed_at = coalesce(public.user_profiles.activation_confirmed_at, now());

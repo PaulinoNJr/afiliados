@@ -11,6 +11,19 @@ function getClientIp(req) {
   return forwardedFor.split(',')[0]?.trim() || '';
 }
 
+function getRequestOrigin(req) {
+  const host = String(req?.headers?.['x-forwarded-host'] || req?.headers?.host || '').trim();
+  const fallbackProtocol = /localhost|127\.0\.0\.1/i.test(host) ? 'http' : 'https';
+  const protocol = String(req?.headers?.['x-forwarded-proto'] || '').trim() || fallbackProtocol;
+
+  if (!host) {
+    const fallback = String(process.env.APP_URL || process.env.SITE_URL || '').trim().replace(/\/+$/, '');
+    return fallback || '';
+  }
+
+  return `${protocol}://${host}`;
+}
+
 function normalizeHostname(value) {
   return String(value || '')
     .trim()
@@ -227,9 +240,40 @@ async function createSupabaseAuthUser({ email, password, metadata = {}, emailCon
   return payload;
 }
 
+async function createSupabasePendingSignup({ email, password, metadata = {}, emailRedirectTo = '' }) {
+  const { url, anonKey } = getSupabaseConfig();
+
+  const response = await fetch(`${url}/auth/v1/signup`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      apikey: anonKey
+    },
+    body: JSON.stringify({
+      email,
+      password,
+      data: metadata,
+      options: {
+        data: metadata,
+        emailRedirectTo: emailRedirectTo || undefined
+      }
+    })
+  });
+
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const message = payload?.msg || payload?.message || payload?.error_description || payload?.error || 'Falha ao iniciar o cadastro com confirmacao por email.';
+    throw new Error(message);
+  }
+
+  return payload;
+}
+
 module.exports = {
   setJsonSecurityHeaders,
   getClientIp,
+  getRequestOrigin,
   normalizeHostname,
   getAllowedRecaptchaHostnames,
   getSupabaseConfig,
@@ -238,5 +282,6 @@ module.exports = {
   validateRecaptchaV3Payload,
   getAuthenticatedSupabaseUser,
   getUserRole,
-  createSupabaseAuthUser
+  createSupabaseAuthUser,
+  createSupabasePendingSignup
 };

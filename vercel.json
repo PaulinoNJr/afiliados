@@ -31,7 +31,7 @@
       ]
     },
     {
-      "source": "/(login|admin|users|cadastro|loja|produtos)",
+      "source": "/(login|admin|users|cadastro|loja|produtos|ativacao)",
       "headers": [
         {
           "key": "X-Robots-Tag",
@@ -66,11 +66,15 @@
       "destination": "/produtos.html"
     },
     {
+      "source": "/ativacao",
+      "destination": "/ativacao.html"
+    },
+    {
       "source": "/dashboard",
       "destination": "/admin.html"
     },
     {
-      "source": "/:slug((?!api|assets|login|admin|users|dashboard|cadastro|loja|produtos|.*\\..*)[^/]+)",
+      "source": "/:slug((?!api|assets|login|admin|users|dashboard|cadastro|ativacao|loja|produtos|.*\\..*)[^/]+)",
       "destination": "/index.html"
     }
   ]

@@ -1,0 +1,14 @@
+<h2>Ative sua conta</h2>
+
+<p>Seu cadastro na plataforma Afiliados foi criado com sucesso.</p>
+
+<p>Para liberar o painel, a configuracao da loja e o cadastro de produtos, confirme sua conta pelo link abaixo:</p>
+
+<p>
+  <a href="{{ .ConfirmationURL }}">Ativar minha conta</a>
+</p>
+
+<p>Prazo para ativacao: <strong>{{ .Data.activation_window_days }} dias</strong>.</p>
+<p>Data limite registrada: <strong>{{ .Data.activation_expires_at }}</strong>.</p>
+
+<p>Se voce nao concluir a ativacao dentro desse prazo, sera necessario solicitar um novo email de confirmacao.</p>

@@ -445,10 +445,11 @@
     }
 
     try {
-      state.session = await window.Auth.requireAuth('login.html');
-      if (!state.session) return;
+      const activation = await window.Auth.ensureActivatedSession('ativacao.html');
+      if (!activation) return;
 
-      state.profile = await window.Auth.getProfile();
+      state.session = activation.session;
+      state.profile = activation.profile;
       const isAdmin = state.profile?.role === 'admin';
 
       if (!isAdmin) {

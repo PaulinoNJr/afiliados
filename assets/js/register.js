@@ -23,6 +23,7 @@
     recaptchaStatus: document.getElementById('recaptchaStatus'),
     registerBtn: document.getElementById('registerBtn'),
     signupPublicUrl: document.getElementById('signupPublicUrl'),
+    activationHelp: document.getElementById('activationHelp'),
     status: document.getElementById('statusMessage')
   };
 
@@ -124,7 +125,34 @@
       : `${window.location.origin}/sua-loja`;
   }
 
-  async function registerUserViaApi({ email, password, recaptchaToken, metadata }) {
+  function formatActivationDate(value) {
+    if (!value) return '';
+    return new Date(value).toLocaleString('pt-BR', {
+      dateStyle: 'short',
+      timeStyle: 'short'
+    });
+  }
+
+  function updateActivationHelp(expiresAt = null) {
+    if (!refs.activationHelp) return;
+
+    const details = expiresAt
+      ? `O link enviado para o seu email ficara disponivel ate ${formatActivationDate(expiresAt)}.`
+      : 'O link enviado para o seu email ficara disponivel por ate 5 dias.';
+
+    refs.activationHelp.innerHTML = `
+      <p class="small text-uppercase fw-semibold text-secondary mb-2">Como ativar sua conta</p>
+      <ol class="small text-secondary mb-2 ps-3">
+        <li>Finalize o cadastro.</li>
+        <li>Abra o email de confirmacao enviado para o endereco informado.</li>
+        <li>Clique no link de ativacao dentro de ate 5 dias.</li>
+        <li>Apos a confirmacao, sua conta passa a ficar ativa e o painel sera liberado.</li>
+      </ol>
+      <p class="small text-secondary mb-0">${details}</p>
+    `;
+  }
+
+  async function registerUserViaApi({ email, password, recaptchaToken, recaptchaAction, metadata }) {
     const response = await fetch('/api/register-user', {
       method: 'POST',
       headers: {
@@ -134,6 +162,7 @@
         email,
         password,
         recaptchaToken,
+        recaptchaAction,
         metadata
       })
     });
@@ -303,7 +332,7 @@
     try {
       const recaptchaToken = await getRecaptchaToken();
 
-      await registerUserViaApi({
+      const registerPayload = await registerUserViaApi({
         email,
         password,
         recaptchaToken,
@@ -320,19 +349,10 @@
       refs.form.reset();
       updatePublicUrlPreview();
       updatePasswordValidation();
+      updateActivationHelp(registerPayload?.activation?.expiresAt || null);
       setSlugFeedback('Esse endereco sera usado na sua pagina publica.', 'secondary');
       setRecaptchaStatus('Cadastro validado com Google reCAPTCHA v3. A protecao permanece ativa para a proxima tentativa.', 'secondary');
-
-      const loginResult = await window.Auth.login(email, password);
-      if (!loginResult?.error) {
-        showStatus('Conta criada com sucesso. Redirecionando para o painel...', 'success');
-        setTimeout(() => {
-          window.location.href = 'admin.html';
-        }, 700);
-        return;
-      }
-
-      showStatus('Cadastro realizado. Agora entre com seu email e senha para acessar o painel.', 'success');
+      showStatus(`Cadastro realizado. Enviamos um email de ativacao para ${email}. Confirme sua conta em ate 5 dias para liberar o painel.`, 'success');
     } catch (err) {
       setRecaptchaStatus('A validacao com Google reCAPTCHA v3 falhou. Tente novamente em instantes.', 'warning');
       showStatus(`Erro ao criar conta: ${err.message}`, 'danger');
@@ -376,6 +396,7 @@
     refs.form.addEventListener('submit', onSubmit);
     updatePublicUrlPreview();
     updatePasswordValidation();
+    updateActivationHelp();
     try {
       await loadRecaptchaScript();
     } catch (err) {

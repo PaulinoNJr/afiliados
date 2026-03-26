@@ -17,7 +17,7 @@
             <div class="card-body p-4 p-md-5">
               <span class="badge text-bg-primary mb-3">Novo afiliado</span>
               <h1 class="h3 mb-2">Crie sua pagina personalizada</h1>
-              <p class="text-secondary mb-4">Cadastre seus dados, reserve o slug da sua pagina e entre no painel para configurar a loja e os produtos.</p>
+              <p class="text-secondary mb-4">Cadastre seus dados, reserve o slug da sua pagina e confirme sua conta por email para liberar o painel.</p>
 
               <div class="public-store-card">
                 <p class="text-uppercase small fw-semibold text-secondary mb-2">Previa dos seus links</p>
@@ -27,6 +27,12 @@
                   <span class="btn btn-outline-dark btn-sm disabled">Pagina administrativa</span>
                   <span class="btn btn-outline-secondary btn-sm disabled">Pagina de produtos</span>
                 </div>
+              </div>
+
+              <div class="password-helper mt-3">
+                <p class="small text-uppercase fw-semibold text-secondary mb-2">Ativacao da conta</p>
+                <p class="small text-secondary mb-2">Depois do cadastro, enviaremos um email de confirmacao. Sua conta ficara pendente ate voce clicar no link.</p>
+                <p class="small text-secondary mb-0">Esse link de ativacao vale por <strong>5 dias</strong>. Se o prazo expirar, sera necessario solicitar um novo email.</p>
               </div>
             </div>
           </div>
@@ -107,6 +113,16 @@
                       <small id="recaptchaStatus" class="d-block text-secondary">Carregando protecao reCAPTCHA v3...</small>
                     </div>
                   </div>
+                </div>
+
+                <div id="activationHelp" class="password-helper mt-4">
+                  <p class="small text-uppercase fw-semibold text-secondary mb-2">Como ativar sua conta</p>
+                  <ol class="small text-secondary mb-0 ps-3">
+                    <li>Finalize o cadastro.</li>
+                    <li>Abra o email de confirmacao enviado para o endereco informado.</li>
+                    <li>Clique no link de ativacao dentro de ate 5 dias.</li>
+                    <li>Apos a confirmacao, sua conta passa a ficar ativa e o painel sera liberado.</li>
+                  </ol>
                 </div>
 
                 <button id="registerBtn" type="submit" class="btn btn-primary w-100 mt-4">Criar conta</button>
