@@ -56,6 +56,35 @@
     refs.recaptchaStatus.textContent = message;
   }
 
+  async function ensureRecaptchaSiteKey() {
+    const currentKey = String(window.AppConfig?.RECAPTCHA_SITE_KEY || '').trim();
+    if (currentKey) {
+      return currentKey;
+    }
+
+    try {
+      const response = await fetch('/api/public-config', {
+        method: 'GET',
+        headers: {
+          accept: 'application/json'
+        }
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      const resolvedKey = String(payload?.recaptchaSiteKey || '').trim();
+
+      if (!response.ok || !resolvedKey) {
+        return '';
+      }
+
+      window.AppConfig.RECAPTCHA_SITE_KEY = resolvedKey;
+      window.AppConfig.recaptchaConfigured = true;
+      return resolvedKey;
+    } catch {
+      return '';
+    }
+  }
+
   function updatePasswordValidation() {
     const result = window.StoreUtils.validatePasswordRules(refs.password.value);
     const rulesList = refs.passwordRules?.querySelectorAll('[data-rule]') || [];
@@ -120,47 +149,50 @@
   function markRecaptchaLoaded() {
     if (!window.AppConfig?.recaptchaConfigured) {
       refs.registerBtn.disabled = true;
-      setRecaptchaStatus('Configure RECAPTCHA_SITE_KEY no frontend para liberar o cadastro seguro.', 'warning');
+      setRecaptchaStatus('Configure RECAPTCHA_SITE_KEY na Vercel ou no frontend para ativar a protecao automatica do Google reCAPTCHA v3.', 'warning');
       return;
     }
 
-    setRecaptchaStatus('Protecao Google reCAPTCHA v3 carregada e pronta para validar o cadastro.', 'secondary');
+    refs.registerBtn.disabled = false;
+    setRecaptchaStatus('Protecao automatica Google reCAPTCHA v3 ativa. Nao existe caixa para marcar: a validacao acontece ao enviar o cadastro.', 'success');
   }
 
   function loadRecaptchaScript() {
-    if (!window.AppConfig?.recaptchaConfigured) {
-      refs.registerBtn.disabled = true;
-      setRecaptchaStatus('Configure RECAPTCHA_SITE_KEY no frontend para liberar o cadastro seguro.', 'warning');
-      return Promise.resolve(false);
-    }
-
-    if (window.grecaptcha?.ready) {
-      state.recaptchaLoaded = true;
-      markRecaptchaLoaded();
-      return Promise.resolve(true);
-    }
-
     if (state.recaptchaScriptPromise) {
       return state.recaptchaScriptPromise;
     }
 
-    state.recaptchaScriptPromise = new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(window.AppConfig.RECAPTCHA_SITE_KEY)}`;
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
-        if (!window.grecaptcha?.ready) {
-          reject(new Error('Google reCAPTCHA v3 nao ficou disponivel apos o carregamento do script.'));
-          return;
-        }
+    state.recaptchaScriptPromise = ensureRecaptchaSiteKey().then((siteKey) => {
+      if (!siteKey) {
+        refs.registerBtn.disabled = true;
+        setRecaptchaStatus('Configure RECAPTCHA_SITE_KEY na Vercel ou no frontend para ativar a protecao automatica do Google reCAPTCHA v3.', 'warning');
+        return false;
+      }
 
+      if (window.grecaptcha?.ready) {
         state.recaptchaLoaded = true;
         markRecaptchaLoaded();
-        resolve(true);
-      };
-      script.onerror = () => reject(new Error('Falha ao carregar o script do Google reCAPTCHA v3.'));
-      document.head.appendChild(script);
+        return true;
+      }
+
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(siteKey)}`;
+        script.async = true;
+        script.defer = true;
+        script.onload = () => {
+          if (!window.grecaptcha?.ready) {
+            reject(new Error('Google reCAPTCHA v3 nao ficou disponivel apos o carregamento do script.'));
+            return;
+          }
+
+          state.recaptchaLoaded = true;
+          markRecaptchaLoaded();
+          resolve(true);
+        };
+        script.onerror = () => reject(new Error('Falha ao carregar o script do Google reCAPTCHA v3.'));
+        document.head.appendChild(script);
+      });
     }).catch((error) => {
       setRecaptchaStatus(error.message, 'danger');
       throw error;
@@ -170,8 +202,9 @@
   }
 
   async function getRecaptchaToken() {
-    if (!window.AppConfig?.recaptchaConfigured) {
-      throw new Error('RECAPTCHA_SITE_KEY nao configurada no frontend.');
+    const siteKey = await ensureRecaptchaSiteKey();
+    if (!siteKey) {
+      throw new Error('RECAPTCHA_SITE_KEY nao configurada na Vercel ou no frontend.');
     }
 
     if (!state.recaptchaLoaded || !window.grecaptcha) {
@@ -182,7 +215,7 @@
 
     const token = await new Promise((resolve, reject) => {
       window.grecaptcha.ready(() => {
-        window.grecaptcha.execute(window.AppConfig.RECAPTCHA_SITE_KEY, { action: RECAPTCHA_ACTION })
+        window.grecaptcha.execute(siteKey, { action: RECAPTCHA_ACTION })
           .then(resolve)
           .catch(() => reject(new Error('Falha ao executar o Google reCAPTCHA v3.')));
       });
