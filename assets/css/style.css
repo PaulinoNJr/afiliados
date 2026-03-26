@@ -148,6 +148,12 @@ body.storefront-mode .hero-section {
     linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 249, 252, 0.92) 100%);
 }
 
+body.storefront-mode {
+  color: var(--store-text-color, var(--text-main));
+  background:
+    linear-gradient(180deg, #ffffff 0%, var(--store-page-bg, var(--bg-soft)) 100%);
+}
+
 .card {
   border-radius: 1rem;
 }
@@ -163,6 +169,19 @@ body.storefront-mode .hero-section {
   border: 1px solid rgba(220, 230, 246, 0.9);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 251, 255, 0.98) 100%);
+  color: var(--product-text, var(--text-main));
+}
+
+.product-card[data-card-style="outline"] {
+  background: #ffffff;
+  border-width: 2px;
+  box-shadow: none !important;
+}
+
+.product-card[data-card-style="glass"] {
+  background: rgba(255, 255, 255, 0.74);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .product-card:hover {
@@ -185,6 +204,15 @@ body.storefront-mode .hero-section {
   font-size: 1.15rem;
   font-weight: 700;
   color: #116530;
+}
+
+.product-card .btn[data-button-style="outline"] {
+  background: transparent !important;
+  color: var(--product-accent) !important;
+}
+
+.product-card .btn[data-button-style="pill"] {
+  border-radius: 999px;
 }
 
 .product-desc {
@@ -274,6 +302,46 @@ body.storefront-mode .hero-section {
   box-shadow: 0 0 0 0.22rem rgba(13, 110, 253, 0.15);
 }
 
+.form-control-color {
+  width: 100%;
+  min-width: 100%;
+  height: 46px;
+  padding: 0.35rem;
+}
+
+.store-settings-card {
+  border: 1px solid #dfe8f4;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(13, 110, 253, 0.06), transparent 26%),
+    linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+}
+
+.store-settings-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.15rem;
+}
+
+.store-settings-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #295eb6;
+}
+
+.store-settings-badge {
+  border: 1px solid #d9e5f5;
+  color: #4a5c79 !important;
+}
+
+.store-settings-sidebar {
+  position: sticky;
+  top: 88px;
+}
+
 .product-preview .card {
   border: 1px solid #e0e8f5 !important;
 }
@@ -305,12 +373,37 @@ body.storefront-mode .hero-section {
 
 .public-store-card {
   --store-accent-preview: #0d6efd;
+  --store-text-preview: #152238;
+  --store-surface-preview: #f7fbff;
+  --store-button-text-preview: #ffffff;
   padding: 0.9rem;
   border: 1px solid color-mix(in srgb, var(--store-accent-preview) 18%, #dfe8f4);
   border-radius: 1rem;
   background:
     radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--store-accent-preview) 10%, transparent), transparent 30%),
-    linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+    linear-gradient(180deg, #ffffff 0%, var(--store-surface-preview) 100%);
+  color: var(--store-text-preview);
+}
+
+.public-store-card[data-card-style="outline"] {
+  background: #ffffff;
+  border-width: 2px;
+  box-shadow: none;
+}
+
+.public-store-card[data-card-style="glass"] {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.public-store-card .btn[data-button-style="outline"] {
+  background: transparent !important;
+  color: var(--store-accent-preview) !important;
+}
+
+.public-store-card .btn[data-button-style="pill"] {
+  border-radius: 999px;
 }
 
 .store-banner-preview,
@@ -428,6 +521,20 @@ body.storefront-mode #statusMessage {
 
 body.storefront-mode #productsGrid {
   margin-top: 0;
+}
+
+body.storefront-mode .store-topbar-panel,
+body.storefront-mode .product-card h2 {
+  color: var(--store-text-color, var(--text-main));
+}
+
+body.storefront-mode .product-desc,
+body.storefront-mode .text-secondary {
+  color: color-mix(in srgb, var(--store-text-color, var(--text-main)) 66%, #ffffff 34%) !important;
+}
+
+body.storefront-mode .price-tag {
+  color: var(--store-accent-color, #116530);
 }
 
 .dashboard-profile-card {
@@ -575,6 +682,10 @@ body.storefront-mode #productsGrid {
   .admin-table {
     min-width: 700px;
   }
+
+  .store-settings-sidebar {
+    position: static;
+  }
 }
 
 @media (max-width: 768px) {
@@ -610,6 +721,10 @@ body.storefront-mode #productsGrid {
 
   .store-topbar-panel {
     padding: 0.68rem 0.72rem;
+  }
+
+  .store-settings-section-head {
+    flex-direction: column;
   }
 
   .store-banner-full,

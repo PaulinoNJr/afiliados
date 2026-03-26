@@ -73,8 +73,14 @@ create table if not exists public.user_profiles (
   phone text,
   store_name text,
   slug text,
+  slug_changed_at timestamptz,
   headline text,
   accent_color text,
+  text_color text,
+  page_background text,
+  button_text_color text,
+  button_style text,
+  card_style text,
   cta_label text,
   bio text,
   photo_url text,
@@ -91,8 +97,14 @@ alter table public.user_profiles
   add column if not exists phone text,
   add column if not exists store_name text,
   add column if not exists slug text,
+  add column if not exists slug_changed_at timestamptz,
   add column if not exists headline text,
   add column if not exists accent_color text,
+  add column if not exists text_color text,
+  add column if not exists page_background text,
+  add column if not exists button_text_color text,
+  add column if not exists button_style text,
+  add column if not exists card_style text,
   add column if not exists cta_label text,
   add column if not exists bio text,
   add column if not exists photo_url text,
@@ -103,6 +115,11 @@ alter table public.user_profiles
 alter table public.user_profiles
   alter column role set default 'produtor',
   alter column accent_color set default '#0d6efd',
+  alter column text_color set default '#152238',
+  alter column page_background set default '#f3f6fb',
+  alter column button_text_color set default '#ffffff',
+  alter column button_style set default 'solid',
+  alter column card_style set default 'soft',
   alter column cta_label set default 'Ver produto';
 
 update public.user_profiles
@@ -162,11 +179,46 @@ begin
   new.bio := nullif(trim(coalesce(new.bio, '')), '');
   new.banner_url := nullif(trim(coalesce(new.banner_url, '')), '');
   new.accent_color := lower(nullif(trim(coalesce(new.accent_color, '')), ''));
+  new.text_color := lower(nullif(trim(coalesce(new.text_color, '')), ''));
+  new.page_background := lower(nullif(trim(coalesce(new.page_background, '')), ''));
+  new.button_text_color := lower(nullif(trim(coalesce(new.button_text_color, '')), ''));
+  new.button_style := lower(nullif(trim(coalesce(new.button_style, '')), ''));
+  new.card_style := lower(nullif(trim(coalesce(new.card_style, '')), ''));
 
   if new.accent_color is null then
     new.accent_color := '#0d6efd';
   elsif new.accent_color !~ '^#([0-9a-f]{6}|[0-9a-f]{3})$' then
     raise exception 'Cor de destaque invalida.';
+  end if;
+
+  if new.text_color is null then
+    new.text_color := '#152238';
+  elsif new.text_color !~ '^#([0-9a-f]{6}|[0-9a-f]{3})$' then
+    raise exception 'Cor do texto invalida.';
+  end if;
+
+  if new.page_background is null then
+    new.page_background := '#f3f6fb';
+  elsif new.page_background !~ '^#([0-9a-f]{6}|[0-9a-f]{3})$' then
+    raise exception 'Cor de fundo invalida.';
+  end if;
+
+  if new.button_text_color is null then
+    new.button_text_color := '#ffffff';
+  elsif new.button_text_color !~ '^#([0-9a-f]{6}|[0-9a-f]{3})$' then
+    raise exception 'Cor do botao invalida.';
+  end if;
+
+  if new.button_style is null then
+    new.button_style := 'solid';
+  elsif new.button_style not in ('solid', 'outline', 'pill') then
+    raise exception 'Estilo de botao invalido.';
+  end if;
+
+  if new.card_style is null then
+    new.card_style := 'soft';
+  elsif new.card_style not in ('soft', 'outline', 'glass') then
+    raise exception 'Estilo de card invalido.';
   end if;
 
   if new.cta_label is null then
@@ -186,6 +238,20 @@ begin
     new.slug := public.generate_unique_store_slug(fallback_store_name, new.user_id);
   else
     new.slug := public.normalize_slug(new.slug);
+  end if;
+
+  if tg_op = 'UPDATE' then
+    if new.slug is distinct from old.slug then
+      if old.slug_changed_at is not null and old.slug_changed_at > now() - interval '7 days' then
+        raise exception 'O slug so pode ser alterado uma vez a cada 7 dias.';
+      end if;
+
+      new.slug_changed_at := now();
+    else
+      new.slug_changed_at := old.slug_changed_at;
+    end if;
+  elsif new.slug_changed_at is null then
+    new.slug_changed_at := now() - interval '8 days';
   end if;
 
   if new.slug is null or new.slug = '' then
@@ -289,6 +355,31 @@ where accent_color is null
    or trim(accent_color) = '';
 
 update public.user_profiles
+set text_color = '#152238'
+where text_color is null
+   or trim(text_color) = '';
+
+update public.user_profiles
+set page_background = '#f3f6fb'
+where page_background is null
+   or trim(page_background) = '';
+
+update public.user_profiles
+set button_text_color = '#ffffff'
+where button_text_color is null
+   or trim(button_text_color) = '';
+
+update public.user_profiles
+set button_style = 'solid'
+where button_style is null
+   or trim(button_style) = '';
+
+update public.user_profiles
+set card_style = 'soft'
+where card_style is null
+   or trim(card_style) = '';
+
+update public.user_profiles
 set cta_label = 'Ver produto'
 where cta_label is null
    or trim(cta_label) = '';
@@ -300,6 +391,10 @@ set slug = public.generate_unique_store_slug(
 )
 where profile.slug is null
    or trim(profile.slug) = '';
+
+update public.user_profiles
+set slug_changed_at = now() - interval '8 days'
+where slug_changed_at is null;
 
 alter table public.user_profiles
   alter column store_name set not null,
@@ -396,6 +491,11 @@ select
   profile.slug,
   profile.headline,
   profile.accent_color,
+  profile.text_color,
+  profile.page_background,
+  profile.button_text_color,
+  profile.button_style,
+  profile.card_style,
   profile.cta_label,
   profile.bio,
   profile.banner_url
@@ -505,6 +605,11 @@ returns table (
   slug text,
   headline text,
   accent_color text,
+  text_color text,
+  page_background text,
+  button_text_color text,
+  button_style text,
+  card_style text,
   cta_label text,
   bio text,
   banner_url text
@@ -521,6 +626,11 @@ as $$
     profile.slug,
     profile.headline,
     profile.accent_color,
+    profile.text_color,
+    profile.page_background,
+    profile.button_text_color,
+    profile.button_style,
+    profile.card_style,
     profile.cta_label,
     profile.bio,
     profile.banner_url

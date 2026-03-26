@@ -22,132 +22,213 @@
 
   <main class="py-4 py-lg-5 admin-main app-shell-main">
     <div class="container">
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 page-header-row">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 page-header-row">
         <div>
           <h1 class="h3 mb-1">Configuracoes da loja</h1>
-          <p class="text-secondary mb-0">Edite sua identidade publica, seu visual e o endereco da vitrine.</p>
+          <p class="text-secondary mb-0">Organize visual, dados pessoais e identidade da sua vitrine em um unico lugar.</p>
         </div>
-        <a href="admin.html" class="btn btn-outline-primary page-header-action">Voltar ao painel</a>
+        <div class="d-flex flex-wrap gap-2 page-header-actions">
+          <a id="headerStorePublicLink" href="index.html" class="btn btn-outline-dark" target="_blank" rel="noopener noreferrer">Ver pagina publica</a>
+          <a href="admin.html" class="btn btn-outline-primary">Voltar ao painel</a>
+          <button id="saveStoreBtn" type="submit" form="storeProfileForm" class="btn btn-primary">Salvar alteracoes</button>
+        </div>
       </div>
 
       <div id="statusMessage" class="alert d-none" role="alert"></div>
 
-      <div class="row g-4">
-        <div class="col-12 col-xl-7">
-          <div class="card border-0 shadow-sm">
-            <div class="card-body p-4">
-              <div class="d-flex justify-content-between align-items-start mb-3">
-                <div>
-                  <h2 class="h5 mb-1">Perfil publico do afiliado</h2>
-                  <p class="text-secondary small mb-0">As imagens enviadas ficam salvas no bucket <strong>store-assets</strong> do Supabase Storage, em uma pasta separada por usuario.</p>
+      <form id="storeProfileForm" novalidate>
+        <div class="row g-4">
+          <div class="col-12 col-xl-8">
+            <div class="card border-0 shadow-sm store-settings-card mb-4">
+              <div class="card-body p-4 p-lg-4">
+                <div class="store-settings-section-head">
+                  <div>
+                    <p class="store-settings-kicker mb-1">Identidade da loja</p>
+                    <h2 class="h5 mb-1">Informacoes publicas principais</h2>
+                    <p class="text-secondary small mb-0">As imagens enviadas ficam salvas no bucket <strong>store-assets</strong> do Supabase Storage, em uma pasta separada por usuario.</p>
+                  </div>
+                  <span class="badge text-bg-light store-settings-badge">Publico</span>
                 </div>
-                <button id="saveStoreBtn" type="submit" form="storeProfileForm" class="btn btn-primary">Salvar alteracoes</button>
-              </div>
 
-              <form id="storeProfileForm" novalidate>
                 <div class="row g-3">
-                  <div class="col-12 col-md-6">
-                    <label for="firstName" class="form-label">Nome</label>
-                    <input id="firstName" type="text" class="form-control" maxlength="80" required />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="lastName" class="form-label">Sobrenome</label>
-                    <input id="lastName" type="text" class="form-control" maxlength="80" />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="phone" class="form-label">Telefone</label>
-                    <input id="phone" type="tel" class="form-control" maxlength="30" />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="photoUpload" class="form-label">Foto do perfil</label>
-                    <input id="photoUpload" type="file" class="form-control" accept="image/*" />
-                    <small id="photoUploadStatus" class="d-block mt-2 text-secondary">Envie JPG, PNG, WEBP ou GIF com ate 5 MB.</small>
+                  <div class="col-12">
+                    <label for="storeName" class="form-label">Nome da loja</label>
+                    <input id="storeName" type="text" class="form-control" maxlength="120" required />
                   </div>
                   <div class="col-12">
-                    <label for="photoUrl" class="form-label">Foto do perfil por URL</label>
-                    <input id="photoUrl" type="url" class="form-control" placeholder="https://foto..." />
+                    <label for="headline" class="form-label">Headline da loja</label>
+                    <input id="headline" type="text" class="form-control" maxlength="120" placeholder="Ex.: Achados da semana com curadoria propria" />
+                  </div>
+                  <div class="col-12">
+                    <label for="storeBio" class="form-label">Bio</label>
+                    <textarea id="storeBio" class="form-control" rows="4" maxlength="300" placeholder="Explique o foco da sua loja."></textarea>
+                  </div>
+                  <div class="col-12 col-lg-6">
+                    <label for="bannerUpload" class="form-label">Banner da loja</label>
+                    <input id="bannerUpload" type="file" class="form-control" accept="image/*" />
+                    <small id="bannerUploadStatus" class="d-block mt-2 text-secondary">Tamanho recomendado do banner: 1600 x 400 px. Use imagem horizontal para melhor encaixe. Envie JPG, PNG, WEBP ou GIF com ate 5 MB.</small>
+                  </div>
+                  <div class="col-12 col-lg-6">
+                    <label for="storeBannerUrl" class="form-label">Banner por URL</label>
+                    <input id="storeBannerUrl" type="url" class="form-control" placeholder="https://imagem..." />
                   </div>
                 </div>
+              </div>
+            </div>
 
-                <hr class="my-4" />
-
-                <div class="mb-3">
-                  <label for="storeName" class="form-label">Nome da loja</label>
-                  <input id="storeName" type="text" class="form-control" maxlength="120" required />
-                </div>
-
-                <div class="mb-2">
-                  <label for="storeSlug" class="form-label">Slug publico</label>
-                  <div class="input-group">
-                    <span class="input-group-text">/</span>
-                    <input id="storeSlug" type="text" class="form-control" maxlength="80" placeholder="minha-loja" required />
+            <div class="card border-0 shadow-sm store-settings-card mb-4">
+              <div class="card-body p-4 p-lg-4">
+                <div class="store-settings-section-head">
+                  <div>
+                    <p class="store-settings-kicker mb-1">Slug da pagina</p>
+                    <h2 class="h5 mb-1">Endereco publico da sua vitrine</h2>
+                    <p class="text-secondary small mb-0">Confira disponibilidade antes de trocar. Por seguranca, a troca so pode ser feita uma vez a cada 7 dias.</p>
                   </div>
-                  <small id="storeSlugFeedback" class="d-block mt-2 text-secondary">Use letras minusculas, numeros e hifens.</small>
+                  <span class="badge text-bg-light store-settings-badge">Controlado</span>
                 </div>
 
-                <div class="mb-3">
-                  <label for="headline" class="form-label">Headline da loja</label>
-                  <input id="headline" type="text" class="form-control" maxlength="120" placeholder="Ex.: Achados da semana com curadoria propria" />
+                <div class="row g-3 align-items-end">
+                  <div class="col-12 col-lg-8">
+                    <label for="storeSlug" class="form-label">Slug publico</label>
+                    <div class="input-group">
+                      <span class="input-group-text">/</span>
+                      <input id="storeSlug" type="text" class="form-control" maxlength="80" placeholder="minha-loja" required />
+                    </div>
+                    <small id="storeSlugFeedback" class="d-block mt-2 text-secondary">Use letras minusculas, numeros e hifens.</small>
+                    <small id="storeSlugSchedule" class="d-block mt-2 text-secondary">Verifique o slug antes de salvar. Se voce trocar agora, outra troca so sera liberada daqui a 7 dias.</small>
+                  </div>
+                  <div class="col-12 col-lg-4">
+                    <button id="checkSlugBtn" type="button" class="btn btn-outline-primary w-100">Checar disponibilidade</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card border-0 shadow-sm store-settings-card">
+              <div class="card-body p-4 p-lg-4">
+                <div class="store-settings-section-head">
+                  <div>
+                    <p class="store-settings-kicker mb-1">Aparencia da vitrine</p>
+                    <h2 class="h5 mb-1">Tema e elementos visuais</h2>
+                    <p class="text-secondary small mb-0">Cores, botao e estilo dos cards sao personalizacoes comuns em plataformas de criacao de loja. Aqui voce configura o essencial de forma simples.</p>
+                  </div>
+                  <span class="badge text-bg-light store-settings-badge">Tema</span>
                 </div>
 
                 <div class="row g-3">
-                  <div class="col-12 col-md-6">
-                    <label for="accentColor" class="form-label">Cor de destaque</label>
+                  <div class="col-12 col-md-6 col-xl-4">
+                    <label for="accentColor" class="form-label">Cor principal</label>
                     <input id="accentColor" type="color" class="form-control form-control-color" value="#0d6efd" title="Escolha a cor principal da loja" />
+                  </div>
+                  <div class="col-12 col-md-6 col-xl-4">
+                    <label for="textColor" class="form-label">Cor do texto</label>
+                    <input id="textColor" type="color" class="form-control form-control-color" value="#152238" title="Escolha a cor principal do texto" />
+                  </div>
+                  <div class="col-12 col-md-6 col-xl-4">
+                    <label for="pageBackground" class="form-label">Cor de fundo</label>
+                    <input id="pageBackground" type="color" class="form-control form-control-color" value="#f3f6fb" title="Escolha a cor de fundo da pagina" />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="buttonTextColor" class="form-label">Cor do texto do botao</label>
+                    <input id="buttonTextColor" type="color" class="form-control form-control-color" value="#ffffff" title="Escolha a cor do texto do botao" />
                   </div>
                   <div class="col-12 col-md-6">
                     <label for="ctaLabel" class="form-label">Texto do botao</label>
                     <input id="ctaLabel" type="text" class="form-control" maxlength="40" placeholder="Ver produto" />
                   </div>
-                </div>
-
-                <div class="mb-3 mt-3">
-                  <label for="storeBio" class="form-label">Bio</label>
-                  <textarea id="storeBio" class="form-control" rows="4" maxlength="300" placeholder="Explique o foco da sua loja."></textarea>
-                </div>
-
-                <div class="mb-3">
-                  <label for="bannerUpload" class="form-label">Banner da loja</label>
-                  <input id="bannerUpload" type="file" class="form-control" accept="image/*" />
-                  <small id="bannerUploadStatus" class="d-block mt-2 text-secondary">Tamanho recomendado do banner: 1600 x 400 px. Use imagem horizontal para melhor encaixe. Envie JPG, PNG, WEBP ou GIF com ate 5 MB.</small>
-                </div>
-
-                <div class="mb-3">
-                  <label for="storeBannerUrl" class="form-label">Banner por URL</label>
-                  <input id="storeBannerUrl" type="url" class="form-control" placeholder="https://imagem..." />
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 col-xl-5">
-          <div class="card border-0 shadow-sm">
-            <div class="card-body p-4">
-              <p class="text-uppercase small fw-semibold text-secondary mb-3">Previa</p>
-              <div class="dashboard-profile-card mb-3">
-                <img id="photoPreview" class="dashboard-avatar d-none" alt="Foto do perfil" />
-                <div>
-                  <p id="profileNamePreview" class="fw-semibold mb-1">Seu nome</p>
-                  <p id="profilePhonePreview" class="small text-secondary mb-0">Telefone nao informado</p>
-                </div>
-              </div>
-              <img id="storeBannerPreview" class="store-banner-preview d-none mb-3" alt="Previa do banner da loja" />
-              <div id="storePreviewCard" class="public-store-card">
-                <p id="storeNamePreview" class="fw-semibold mb-1">Sua loja</p>
-                <p id="headlinePreview" class="small mb-2 text-secondary">Adicione uma headline para destacar sua proposta.</p>
-                <p id="storeBioPreview" class="small text-secondary mb-3">Adicione uma bio para apresentar sua loja.</p>
-                <p id="storePublicUrl" class="small mb-3 text-break">Pagina publica indisponivel.</p>
-                <div class="d-grid gap-2">
-                  <a id="storePublicUrlLink" href="index.html" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener noreferrer">Abrir pagina publica</a>
-                  <a href="produtos.html" class="btn btn-outline-dark btn-sm">Abrir pagina administrativa</a>
-                  <button id="ctaPreviewBtn" type="button" class="btn btn-primary btn-sm" disabled>Ver produto</button>
+                  <div class="col-12 col-md-6">
+                    <label for="buttonStyle" class="form-label">Estilo do botao</label>
+                    <select id="buttonStyle" class="form-select">
+                      <option value="solid">Solido</option>
+                      <option value="outline">Contornado</option>
+                      <option value="pill">Pill arredondado</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="cardStyle" class="form-label">Estilo dos cards</label>
+                    <select id="cardStyle" class="form-select">
+                      <option value="soft">Suave</option>
+                      <option value="outline">Contorno limpo</option>
+                      <option value="glass">Glass</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+
+          <div class="col-12 col-xl-4">
+            <div class="store-settings-sidebar">
+              <div class="card border-0 shadow-sm store-settings-card mb-4">
+                <div class="card-body p-4 p-lg-4">
+                  <div class="store-settings-section-head">
+                    <div>
+                      <p class="store-settings-kicker mb-1">Dados pessoais</p>
+                      <h2 class="h5 mb-1">Cadastro do afiliado</h2>
+                      <p class="text-secondary small mb-0">Esses dados alimentam seu perfil publico e a identificacao da conta.</p>
+                    </div>
+                    <span class="badge text-bg-light store-settings-badge">Privado</span>
+                  </div>
+
+                  <div class="row g-3">
+                    <div class="col-12">
+                      <label for="userEmailReadonly" class="form-label">Email da conta</label>
+                      <input id="userEmailReadonly" type="email" class="form-control" readonly />
+                    </div>
+                    <div class="col-12">
+                      <label for="firstName" class="form-label">Nome</label>
+                      <input id="firstName" type="text" class="form-control" maxlength="80" required />
+                    </div>
+                    <div class="col-12">
+                      <label for="lastName" class="form-label">Sobrenome</label>
+                      <input id="lastName" type="text" class="form-control" maxlength="80" />
+                    </div>
+                    <div class="col-12">
+                      <label for="phone" class="form-label">Telefone</label>
+                      <input id="phone" type="tel" class="form-control" maxlength="30" />
+                    </div>
+                    <div class="col-12">
+                      <label for="photoUpload" class="form-label">Foto do perfil</label>
+                      <input id="photoUpload" type="file" class="form-control" accept="image/*" />
+                      <small id="photoUploadStatus" class="d-block mt-2 text-secondary">Envie JPG, PNG, WEBP ou GIF com ate 5 MB.</small>
+                    </div>
+                    <div class="col-12">
+                      <label for="photoUrl" class="form-label">Foto do perfil por URL</label>
+                      <input id="photoUrl" type="url" class="form-control" placeholder="https://foto..." />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card border-0 shadow-sm store-settings-card">
+                <div class="card-body p-4 p-lg-4">
+                  <p class="store-settings-kicker mb-1">Previa</p>
+                  <h2 class="h5 mb-3">Como sua pagina pode ficar</h2>
+                  <div class="dashboard-profile-card mb-3">
+                    <img id="photoPreview" class="dashboard-avatar d-none" alt="Foto do perfil" />
+                    <div>
+                      <p id="profileNamePreview" class="fw-semibold mb-1">Seu nome</p>
+                      <p id="profilePhonePreview" class="small text-secondary mb-0">Telefone nao informado</p>
+                    </div>
+                  </div>
+                  <img id="storeBannerPreview" class="store-banner-preview d-none mb-3" alt="Previa do banner da loja" />
+                  <div id="storePreviewCard" class="public-store-card">
+                    <p id="storeNamePreview" class="fw-semibold mb-1">Sua loja</p>
+                    <p id="headlinePreview" class="small mb-2 text-secondary">Adicione uma headline para destacar sua proposta.</p>
+                    <p id="storeBioPreview" class="small text-secondary mb-3">Adicione uma bio para apresentar sua loja.</p>
+                    <p id="storePublicUrl" class="small mb-3 text-break">Pagina publica indisponivel.</p>
+                    <div class="d-grid gap-2">
+                      <a id="storePublicUrlLink" href="index.html" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener noreferrer">Abrir pagina publica</a>
+                      <a href="produtos.html" class="btn btn-outline-dark btn-sm">Abrir pagina administrativa</a>
+                      <button id="ctaPreviewBtn" type="button" class="btn btn-primary btn-sm" disabled>Ver produto</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </form>
     </div>
   </main>
 

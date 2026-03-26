@@ -1,5 +1,8 @@
 (() => {
   const DEFAULT_ACCENT = '#0d6efd';
+  const DEFAULT_TEXT = '#152238';
+  const DEFAULT_PAGE_BACKGROUND = '#f3f6fb';
+  const DEFAULT_BUTTON_TEXT = '#ffffff';
   const DEFAULT_CTA = 'Ver produto';
 
   const state = {
@@ -48,6 +51,21 @@
   function normalizeAccentColor(value) {
     const raw = String(value || '').trim().toLowerCase();
     return /^#([0-9a-f]{6}|[0-9a-f]{3})$/.test(raw) ? raw : DEFAULT_ACCENT;
+  }
+
+  function normalizeHexColor(value, fallback) {
+    const raw = String(value || '').trim().toLowerCase();
+    return /^#([0-9a-f]{6}|[0-9a-f]{3})$/.test(raw) ? raw : fallback;
+  }
+
+  function normalizeButtonStyle(value) {
+    const raw = String(value || '').trim().toLowerCase();
+    return ['solid', 'outline', 'pill'].includes(raw) ? raw : 'solid';
+  }
+
+  function normalizeCardStyle(value) {
+    const raw = String(value || '').trim().toLowerCase();
+    return ['soft', 'outline', 'glass'].includes(raw) ? raw : 'soft';
   }
 
   function showStatus(message, type = 'warning') {
@@ -118,6 +136,10 @@
     state.products = [];
     state.filteredProducts = [];
     document.body.classList.remove('storefront-mode');
+    document.body.style.removeProperty('--store-page-bg');
+    document.body.style.removeProperty('--store-text-color');
+    document.body.style.removeProperty('--store-accent-color');
+    document.body.style.removeProperty('--store-button-text-color');
 
     refs.homeHeroBadge.textContent = 'Plataforma de afiliados';
     refs.homeHeroTitle.textContent = 'Transforme seu link em uma pagina profissional de vendas';
@@ -142,6 +164,9 @@
 
     const description = String(store.bio || store.headline || 'Confira os produtos publicados nesta loja.').trim();
     const accentColor = normalizeAccentColor(store.accent_color);
+    const textColor = normalizeHexColor(store.text_color, DEFAULT_TEXT);
+    const pageBackground = normalizeHexColor(store.page_background, DEFAULT_PAGE_BACKGROUND);
+    const buttonTextColor = normalizeHexColor(store.button_text_color, DEFAULT_BUTTON_TEXT);
 
     refs.heroTitle.textContent = store.store_name || 'Loja de afiliado';
     refs.emptyStateTitle.textContent = 'Nenhum produto publicado ainda';
@@ -152,6 +177,11 @@
     refs.productsSection.classList.remove('d-none');
     refs.notFoundState.classList.add('d-none');
     finishResolvingPage();
+
+    document.body.style.setProperty('--store-page-bg', pageBackground);
+    document.body.style.setProperty('--store-text-color', textColor);
+    document.body.style.setProperty('--store-accent-color', accentColor);
+    document.body.style.setProperty('--store-button-text-color', buttonTextColor);
 
     refs.storeBannerSection.style.setProperty('--store-banner-accent', accentColor);
     if (store.banner_url) {
@@ -183,6 +213,10 @@
     state.products = [];
     state.filteredProducts = [];
     document.body.classList.remove('storefront-mode');
+    document.body.style.removeProperty('--store-page-bg');
+    document.body.style.removeProperty('--store-text-color');
+    document.body.style.removeProperty('--store-accent-color');
+    document.body.style.removeProperty('--store-button-text-color');
 
     refs.marketingCardContent.classList.add('d-none');
     refs.homeMarketingSection.classList.add('d-none');
@@ -225,6 +259,10 @@
     refs.productsSection.classList.remove('d-none');
 
     const accentColor = normalizeAccentColor(state.store?.accent_color || DEFAULT_ACCENT);
+    const textColor = normalizeHexColor(state.store?.text_color, DEFAULT_TEXT);
+    const buttonTextColor = normalizeHexColor(state.store?.button_text_color, DEFAULT_BUTTON_TEXT);
+    const buttonStyle = normalizeButtonStyle(state.store?.button_style);
+    const cardStyle = normalizeCardStyle(state.store?.card_style);
     const ctaLabel = state.store?.cta_label || DEFAULT_CTA;
 
     products.forEach((item) => {
@@ -234,6 +272,9 @@
       const card = document.createElement('article');
       card.className = 'card h-100 border-0 shadow-sm p-3 product-card';
       card.style.setProperty('--product-accent', accentColor);
+      card.style.setProperty('--product-text', textColor);
+      card.style.setProperty('--product-button-text', buttonTextColor);
+      card.dataset.cardStyle = cardStyle;
 
       const image = document.createElement('img');
       image.className = 'product-image mb-3';
@@ -287,8 +328,15 @@
       link.textContent = ctaLabel;
       link.target = '_blank';
       link.rel = 'noopener noreferrer nofollow';
-      link.style.backgroundColor = accentColor;
       link.style.borderColor = accentColor;
+      link.dataset.buttonStyle = buttonStyle;
+      if (buttonStyle === 'outline') {
+        link.style.backgroundColor = 'transparent';
+        link.style.color = accentColor;
+      } else {
+        link.style.backgroundColor = accentColor;
+        link.style.color = buttonTextColor;
+      }
 
       card.append(image, title, desc);
       if (shouldShowToggle) card.append(descMeta);
