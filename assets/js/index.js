@@ -60,6 +60,10 @@
     refs.status.classList.add('d-none');
   }
 
+  function finishResolvingPage() {
+    document.body.classList.remove('page-resolving');
+  }
+
   function setMetaTag(selector, attribute, value) {
     const tag = document.querySelector(selector);
     if (tag) tag.setAttribute(attribute, value);
@@ -121,6 +125,7 @@
     refs.marketingCardContent.classList.remove('d-none');
     refs.homeMarketingSection.classList.remove('d-none');
     resetStoreUi();
+    finishResolvingPage();
 
     updateSeo({
       title: 'Afiliados | Sua pagina de vendas para afiliados',
@@ -146,6 +151,7 @@
     refs.storeTopBar.classList.remove('d-none');
     refs.productsSection.classList.remove('d-none');
     refs.notFoundState.classList.add('d-none');
+    finishResolvingPage();
 
     refs.storeBannerSection.style.setProperty('--store-banner-accent', accentColor);
     if (store.banner_url) {
@@ -186,6 +192,7 @@
     refs.emptyState.classList.add('d-none');
     refs.productsSection.classList.add('d-none');
     refs.productsGrid.innerHTML = '';
+    finishResolvingPage();
 
     updateSeo({
       title: 'Loja nao encontrada | Afiliados',
@@ -360,8 +367,11 @@
       return;
     }
 
+    refs.loading.classList.remove('d-none');
+
     if (window.AppConfig?.missingConfig) {
       applyNotFoundState();
+      finishResolvingPage();
       showStatus('Configure o Supabase em assets/js/config.js para carregar as lojas publicas.', 'warning');
       return;
     }
@@ -370,6 +380,7 @@
       await loadStorefront(state.storeSlug);
     } catch (err) {
       refs.loading.classList.add('d-none');
+      finishResolvingPage();
       showStatus(`Erro ao carregar pagina publica: ${err.message}`, 'danger');
     }
   }

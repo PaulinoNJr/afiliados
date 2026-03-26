@@ -28,6 +28,18 @@ body.storefront-mode #homeHeroSection {
   display: none;
 }
 
+body.page-resolving #homeHeroSection,
+body.page-resolving #homeMarketingSection,
+body.page-resolving #storeBannerSection,
+body.page-resolving #storeTopBar,
+body.page-resolving #productsSection,
+body.page-resolving #emptyState,
+body.page-resolving #notFoundState,
+body.page-resolving #statusMessage,
+body.page-resolving footer {
+  display: none !important;
+}
+
 .app-shell-main {
   padding-top: 1rem !important;
   padding-bottom: 1.5rem !important;
