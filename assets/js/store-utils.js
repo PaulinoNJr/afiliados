@@ -50,16 +50,25 @@
   }
 
   function getStoreSlugFromPath(pathname = window.location.pathname) {
-    const cleaned = String(pathname || '')
-      .replace(/^\/+|\/+$/g, '')
-      .trim();
+    const cleaned = String(pathname || '').trim();
+    const segments = cleaned
+      .split('/')
+      .map((segment) => String(segment || '').trim())
+      .filter(Boolean);
 
-    if (!cleaned || cleaned === 'index.html') return null;
-    if (cleaned.includes('/')) return null;
-    if (cleaned.includes('.')) return null;
-    if (isReservedSlug(cleaned)) return null;
+    if (!segments.length) return null;
 
-    const slug = normalizeStoreSlug(cleaned);
+    const candidate = segments.find((segment) => {
+      if (!segment) return false;
+      if (segment === 'index.html') return false;
+      if (segment.includes('.')) return false;
+      if (isReservedSlug(segment)) return false;
+      return true;
+    });
+
+    if (!candidate) return null;
+
+    const slug = normalizeStoreSlug(candidate);
     return slug || null;
   }
 
@@ -165,14 +174,15 @@
     }
 
     const { data, error } = await window.db
-      .from('public_store_profiles')
-      .select('id, slug')
-      .eq('slug', validation.slug)
-      .maybeSingle();
+      .rpc('check_public_slug_availability', {
+        store_slug: validation.slug,
+        current_profile_id: currentProfileId
+      });
 
     if (error) throw error;
 
-    const available = !data || data.id === currentProfileId;
+    const row = Array.isArray(data) ? (data[0] || null) : (data || null);
+    const available = Boolean(row?.available);
     return {
       available,
       slug: validation.slug,

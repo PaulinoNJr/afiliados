@@ -323,13 +323,14 @@
     refs.notFoundState.classList.add('d-none');
     refs.productsGrid.innerHTML = '';
 
-    const { data: store, error: storeError } = await window.db
-      .from('public_store_profiles')
-      .select('id, store_name, slug, headline, accent_color, cta_label, bio, photo_url, banner_url')
-      .eq('slug', slug)
-      .maybeSingle();
+    const { data: storeRows, error: storeError } = await window.db
+      .rpc('get_public_store_by_slug', {
+        store_slug: slug
+      });
 
     if (storeError) throw storeError;
+
+    const store = Array.isArray(storeRows) ? (storeRows[0] || null) : (storeRows || null);
 
     if (!store) {
       refs.loading.classList.add('d-none');
@@ -340,10 +341,9 @@
     applyStoreHero(store);
 
     const { data: products, error: productsError } = await window.db
-      .from('public_store_products')
-      .select('id, titulo, preco, imagem_url, link_afiliado, descricao, created_at')
-      .eq('profile_id', store.id)
-      .order('created_at', { ascending: false });
+      .rpc('get_public_products_by_profile', {
+        store_profile_id: store.id
+      });
 
     if (productsError) throw productsError;
 

@@ -497,6 +497,102 @@ select
   product.created_at
 from public.produtos product;
 
+create or replace function public.get_public_store_by_slug(store_slug text)
+returns table (
+  id uuid,
+  photo_url text,
+  store_name text,
+  slug text,
+  headline text,
+  accent_color text,
+  cta_label text,
+  bio text,
+  banner_url text
+)
+language sql
+stable
+security definer
+set search_path = pg_catalog, public
+as $$
+  select
+    profile.user_id as id,
+    profile.photo_url,
+    profile.store_name,
+    profile.slug,
+    profile.headline,
+    profile.accent_color,
+    profile.cta_label,
+    profile.bio,
+    profile.banner_url
+  from public.user_profiles profile
+  where profile.slug = public.normalize_slug(store_slug)
+  limit 1;
+$$;
+
+create or replace function public.get_public_products_by_profile(store_profile_id uuid)
+returns table (
+  id uuid,
+  profile_id uuid,
+  titulo text,
+  preco numeric,
+  imagem_url text,
+  link_afiliado text,
+  descricao text,
+  created_at timestamptz
+)
+language sql
+stable
+security definer
+set search_path = pg_catalog, public
+as $$
+  select
+    product.id,
+    product.profile_id,
+    product.titulo,
+    product.preco,
+    product.imagem_url,
+    product.link_afiliado,
+    product.descricao,
+    product.created_at
+  from public.produtos product
+  where product.profile_id = store_profile_id
+  order by product.created_at desc;
+$$;
+
+create or replace function public.check_public_slug_availability(store_slug text, current_profile_id uuid default null)
+returns table (
+  slug text,
+  available boolean,
+  profile_id uuid
+)
+language sql
+stable
+security definer
+set search_path = pg_catalog, public
+as $$
+  with normalized as (
+    select public.normalize_slug(store_slug) as slug_value
+  ),
+  matched as (
+    select profile.user_id
+    from public.user_profiles profile
+    join normalized on profile.slug = normalized.slug_value
+    limit 1
+  )
+  select
+    normalized.slug_value as slug,
+    case
+      when normalized.slug_value is null then false
+      when not exists (select 1 from matched) then true
+      when current_profile_id is not null and exists (
+        select 1 from matched where matched.user_id = current_profile_id
+      ) then true
+      else false
+    end as available,
+    (select matched.user_id from matched) as profile_id
+  from normalized;
+$$;
+
 alter table public.user_profiles enable row level security;
 alter table public.produtos enable row level security;
 
@@ -558,6 +654,9 @@ create policy "Exclusao por dono ou admin"
 
 grant usage on schema public to anon, authenticated;
 grant execute on function public.is_admin() to authenticated;
+grant execute on function public.get_public_store_by_slug(text) to anon, authenticated;
+grant execute on function public.get_public_products_by_profile(uuid) to anon, authenticated;
+grant execute on function public.check_public_slug_availability(text, uuid) to anon, authenticated;
 grant select on public.public_store_profiles to anon, authenticated;
 grant select on public.public_store_products to anon, authenticated;
 grant select, insert, update on public.user_profiles to authenticated;
