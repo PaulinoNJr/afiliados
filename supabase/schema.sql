@@ -868,14 +868,13 @@ where created_by is null
   and profile_id is not null;
 
 update public.produtos product
-set category_id = default_category.id
-from lateral (
+set category_id = (
   select category_item.id
   from public.product_categories category_item
   where category_item.profile_id = product.profile_id
   order by category_item.sort_order asc, category_item.created_at asc
   limit 1
-) default_category
+)
 where product.category_id is null
   and product.profile_id is not null;
 

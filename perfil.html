@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dados Pessoais | Afiliados</title>
+  <meta name="description" content="Atualize seus dados pessoais na area administrativa." />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm sticky-top">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="index.html">Afiliados</a>
+      <div class="ms-auto d-flex align-items-center gap-3 app-nav-actions">
+        <span id="userRoleBadge" class="badge text-bg-secondary">perfil</span>
+        <small id="userEmail" class="text-secondary d-none d-md-inline"></small>
+        <button id="logoutBtn" class="btn btn-outline-danger btn-sm" type="button">Sair</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="py-4 py-lg-5 admin-main app-shell-main">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 page-header-row">
+        <div>
+          <h1 class="h3 mb-1">Dados pessoais</h1>
+          <p class="text-secondary mb-0">Atualize as informacoes privadas da sua conta sem misturar isso com a configuracao da loja.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2 page-header-actions">
+          <a href="admin.html" class="btn btn-outline-dark">Voltar ao painel</a>
+          <a href="loja.html" class="btn btn-outline-primary">Configuracoes da loja</a>
+          <button id="saveProfileBtn" type="submit" form="personalProfileForm" class="btn btn-primary">Salvar dados</button>
+        </div>
+      </div>
+
+      <div id="statusMessage" class="alert d-none" role="alert"></div>
+
+      <form id="personalProfileForm" novalidate>
+        <div class="row g-4">
+          <div class="col-12 col-xl-8">
+            <div class="card border-0 shadow-sm store-settings-card">
+              <div class="card-body p-4 p-lg-4">
+                <div class="store-settings-section-head">
+                  <div>
+                    <p class="store-settings-kicker mb-1">Conta do afiliado</p>
+                    <h2 class="h5 mb-1">Informacoes privadas</h2>
+                    <p class="text-secondary small mb-0">Esses dados alimentam sua identificacao e a foto do perfil usada nas areas administrativas e na loja publica.</p>
+                  </div>
+                  <span class="badge text-bg-light store-settings-badge">Privado</span>
+                </div>
+
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label for="userEmailReadonly" class="form-label">Email da conta</label>
+                    <input id="userEmailReadonly" type="email" class="form-control" readonly />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="firstName" class="form-label">Nome</label>
+                    <input id="firstName" type="text" class="form-control" maxlength="80" required />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="lastName" class="form-label">Sobrenome</label>
+                    <input id="lastName" type="text" class="form-control" maxlength="80" />
+                  </div>
+                  <div class="col-12">
+                    <label for="phone" class="form-label">Telefone</label>
+                    <input id="phone" type="tel" class="form-control" maxlength="30" />
+                  </div>
+                  <div class="col-12 col-lg-6">
+                    <label for="photoUpload" class="form-label">Foto do perfil</label>
+                    <input id="photoUpload" type="file" class="form-control" accept="image/*" />
+                    <small id="photoUploadStatus" class="d-block mt-2 text-secondary">Envie JPG, PNG, WEBP ou GIF com ate 5 MB.</small>
+                  </div>
+                  <div class="col-12 col-lg-6">
+                    <label for="photoUrl" class="form-label">Foto do perfil por URL</label>
+                    <input id="photoUrl" type="url" class="form-control" placeholder="https://foto..." />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-xl-4">
+            <div class="store-settings-sidebar">
+              <div class="card border-0 shadow-sm store-settings-card">
+                <div class="card-body p-4 p-lg-4">
+                  <p class="store-settings-kicker mb-1">Previa</p>
+                  <h2 class="h5 mb-3">Como seu perfil aparece</h2>
+                  <div class="dashboard-profile-card mb-3">
+                    <img id="photoPreview" class="dashboard-avatar d-none" alt="Foto do perfil" />
+                    <div>
+                      <p id="profileNamePreview" class="fw-semibold mb-1">Seu nome</p>
+                      <p id="profilePhonePreview" class="small text-secondary mb-0">Telefone nao informado</p>
+                    </div>
+                  </div>
+                  <div class="public-store-card">
+                    <p class="fw-semibold mb-1">Dados pessoais separados</p>
+                    <p class="small text-secondary mb-3">As configuracoes da loja ficam em outra pagina. Aqui voce cuida apenas dos dados da conta.</p>
+                    <div class="d-grid gap-2">
+                      <a href="loja.html" class="btn btn-outline-primary btn-sm">Ir para configuracoes da loja</a>
+                      <a href="admin.html" class="btn btn-outline-dark btn-sm">Voltar ao painel</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/store-utils.js"></script>
+  <script src="assets/js/profile.js"></script>
+</body>
+</html>

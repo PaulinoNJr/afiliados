@@ -135,6 +135,7 @@
     refs.userEmail.textContent = state.session.user.email || 'Usuario autenticado';
     refs.userRoleBadge.textContent = state.profile.role;
     refs.userRoleBadge.className = state.profile.role === 'admin' ? 'badge text-bg-primary' : 'badge text-bg-secondary';
+    window.Auth.applyProfileAccess(state.profile);
   }
 
   function clearEditor() {

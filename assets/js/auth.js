@@ -59,6 +59,70 @@
     return profile?.role || 'produtor';
   }
 
+  function getProfileDisplayName(profile) {
+    return [profile?.first_name, profile?.last_name].filter(Boolean).join(' ').trim()
+      || profile?.store_name
+      || 'Perfil';
+  }
+
+  function getProfileInitials(profile) {
+    const base = getProfileDisplayName(profile)
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() || '')
+      .join('');
+    return base || 'P';
+  }
+
+  function applyProfileAccess(profile) {
+    const actions = document.querySelector('.app-nav-actions');
+    if (!actions) return;
+
+    let link = document.getElementById('profileAccessLink');
+    if (!link) {
+      link = document.createElement('a');
+      link.id = 'profileAccessLink';
+      link.href = 'perfil.html';
+      link.className = 'profile-access-link';
+      link.setAttribute('aria-label', 'Abrir dados pessoais');
+      link.innerHTML = `
+        <img id="profileAccessAvatar" class="profile-access-avatar d-none" alt="Acessar dados pessoais" />
+        <span id="profileAccessFallback" class="profile-access-fallback">P</span>
+      `;
+
+      const logoutBtn = document.getElementById('logoutBtn');
+      if (logoutBtn?.parentNode === actions) {
+        actions.insertBefore(link, logoutBtn);
+      } else {
+        actions.appendChild(link);
+      }
+    }
+
+    const avatar = document.getElementById('profileAccessAvatar');
+    const fallback = document.getElementById('profileAccessFallback');
+    const displayName = getProfileDisplayName(profile);
+
+    link.href = 'perfil.html';
+    link.title = `Dados pessoais de ${displayName}`;
+    link.setAttribute('aria-label', `Abrir dados pessoais de ${displayName}`);
+
+    if (profile?.photo_url) {
+      avatar.src = profile.photo_url;
+      avatar.classList.remove('d-none');
+      fallback.classList.add('d-none');
+      avatar.onerror = () => {
+        avatar.classList.add('d-none');
+        fallback.classList.remove('d-none');
+        fallback.textContent = getProfileInitials(profile);
+      };
+    } else {
+      avatar.classList.add('d-none');
+      fallback.classList.remove('d-none');
+      fallback.textContent = getProfileInitials(profile);
+    }
+  }
+
   function isActivationExpired(profile) {
     if (!profile?.activation_expires_at) return false;
     return new Date(profile.activation_expires_at).getTime() < Date.now();
@@ -115,6 +179,7 @@
     getSession,
     getProfile,
     getRole,
+    applyProfileAccess,
     isActivationExpired,
     isAccountActive,
     ensureActivatedSession,

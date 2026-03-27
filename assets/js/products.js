@@ -212,6 +212,7 @@
     refs.userRoleBadge.textContent = state.isAdmin ? 'admin' : 'produtor';
     refs.userRoleBadge.className = state.isAdmin ? 'badge text-bg-primary' : 'badge text-bg-secondary';
     refs.viewPublicStoreLink.href = state.profile?.slug ? window.StoreUtils.getStoreUrl(state.profile.slug) : 'loja.html';
+    window.Auth.applyProfileAccess(state.profile);
   }
 
   function updateFormHeader() {

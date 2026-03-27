@@ -55,6 +55,7 @@
     refs.userRoleBadge.textContent = state.isAdmin ? 'admin' : 'produtor';
     refs.userRoleBadge.className = state.isAdmin ? 'badge text-bg-primary' : 'badge text-bg-secondary';
     refs.manageUsersLink.classList.toggle('d-none', !state.isAdmin);
+    window.Auth.applyProfileAccess(state.profile);
   }
 
   function applyProfileSummary() {

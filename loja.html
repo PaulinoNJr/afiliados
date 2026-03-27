@@ -25,10 +25,11 @@
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 page-header-row">
         <div>
           <h1 class="h3 mb-1">Configuracoes da loja</h1>
-          <p class="text-secondary mb-0">Organize visual, dados pessoais e identidade da sua vitrine em um unico lugar.</p>
+          <p class="text-secondary mb-0">Organize a identidade visual e os elementos publicos da sua vitrine em um unico lugar.</p>
         </div>
         <div class="d-flex flex-wrap gap-2 page-header-actions">
           <a id="headerStorePublicLink" href="index.html" class="btn btn-outline-dark" target="_blank" rel="noopener noreferrer">Ver pagina publica</a>
+          <a href="perfil.html" class="btn btn-outline-secondary">Dados pessoais</a>
           <a href="admin.html" class="btn btn-outline-primary">Voltar ao painel</a>
           <button id="saveStoreBtn" type="submit" form="storeProfileForm" class="btn btn-primary">Salvar alteracoes</button>
         </div>
@@ -163,39 +164,16 @@
                 <div class="card-body p-4 p-lg-4">
                   <div class="store-settings-section-head">
                     <div>
-                      <p class="store-settings-kicker mb-1">Dados pessoais</p>
-                      <h2 class="h5 mb-1">Cadastro do afiliado</h2>
-                      <p class="text-secondary small mb-0">Esses dados alimentam seu perfil publico e a identificacao da conta.</p>
+                      <p class="store-settings-kicker mb-1">Acesso rapido</p>
+                      <h2 class="h5 mb-1">Dados pessoais separados</h2>
+                      <p class="text-secondary small mb-0">Seu cadastro pessoal agora fica em uma pagina propria, acessivel tambem pelo circulo no topo direito.</p>
                     </div>
                     <span class="badge text-bg-light store-settings-badge">Privado</span>
                   </div>
 
-                  <div class="row g-3">
-                    <div class="col-12">
-                      <label for="userEmailReadonly" class="form-label">Email da conta</label>
-                      <input id="userEmailReadonly" type="email" class="form-control" readonly />
-                    </div>
-                    <div class="col-12">
-                      <label for="firstName" class="form-label">Nome</label>
-                      <input id="firstName" type="text" class="form-control" maxlength="80" required />
-                    </div>
-                    <div class="col-12">
-                      <label for="lastName" class="form-label">Sobrenome</label>
-                      <input id="lastName" type="text" class="form-control" maxlength="80" />
-                    </div>
-                    <div class="col-12">
-                      <label for="phone" class="form-label">Telefone</label>
-                      <input id="phone" type="tel" class="form-control" maxlength="30" />
-                    </div>
-                    <div class="col-12">
-                      <label for="photoUpload" class="form-label">Foto do perfil</label>
-                      <input id="photoUpload" type="file" class="form-control" accept="image/*" />
-                      <small id="photoUploadStatus" class="d-block mt-2 text-secondary">Envie JPG, PNG, WEBP ou GIF com ate 5 MB.</small>
-                    </div>
-                    <div class="col-12">
-                      <label for="photoUrl" class="form-label">Foto do perfil por URL</label>
-                      <input id="photoUrl" type="url" class="form-control" placeholder="https://foto..." />
-                    </div>
+                  <div class="d-grid gap-2">
+                    <a href="perfil.html" class="btn btn-outline-primary">Abrir dados pessoais</a>
+                    <p class="small text-secondary mb-0">Nome, telefone, email da conta e foto do perfil ficam centralizados ali.</p>
                   </div>
                 </div>
               </div>

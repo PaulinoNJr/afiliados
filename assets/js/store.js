@@ -21,18 +21,11 @@
   const refs = {
     userRoleBadge: document.getElementById('userRoleBadge'),
     userEmail: document.getElementById('userEmail'),
-    userEmailReadonly: document.getElementById('userEmailReadonly'),
     logoutBtn: document.getElementById('logoutBtn'),
     status: document.getElementById('statusMessage'),
     storeProfileForm: document.getElementById('storeProfileForm'),
     saveStoreBtn: document.getElementById('saveStoreBtn'),
     headerStorePublicLink: document.getElementById('headerStorePublicLink'),
-    firstName: document.getElementById('firstName'),
-    lastName: document.getElementById('lastName'),
-    phone: document.getElementById('phone'),
-    photoUpload: document.getElementById('photoUpload'),
-    photoUploadStatus: document.getElementById('photoUploadStatus'),
-    photoUrl: document.getElementById('photoUrl'),
     storeName: document.getElementById('storeName'),
     storeSlug: document.getElementById('storeSlug'),
     checkSlugBtn: document.getElementById('checkSlugBtn'),
@@ -163,7 +156,7 @@
   }
 
   function getFullName() {
-    return [refs.firstName.value.trim(), refs.lastName.value.trim()].filter(Boolean).join(' ').trim() || 'Seu nome';
+    return [state.profile?.first_name, state.profile?.last_name].filter(Boolean).join(' ').trim() || 'Seu nome';
   }
 
   function getCurrentStoreTheme() {
@@ -181,9 +174,9 @@
   function applyHeader() {
     const email = state.session.user.email || 'Usuario autenticado';
     refs.userEmail.textContent = email;
-    refs.userEmailReadonly.value = email;
     refs.userRoleBadge.textContent = state.isAdmin ? 'admin' : 'produtor';
     refs.userRoleBadge.className = state.isAdmin ? 'badge text-bg-primary' : 'badge text-bg-secondary';
+    window.Auth.applyProfileAccess(state.profile);
   }
 
   function applyPreviewTheme() {
@@ -211,7 +204,7 @@
 
   function updatePreview() {
     const slug = window.StoreUtils.normalizeStoreSlug(refs.storeSlug.value);
-    const photoUrl = refs.photoUrl.value.trim();
+    const photoUrl = String(state.profile?.photo_url || '').trim();
     const bannerUrl = refs.storeBannerUrl.value.trim();
     const publicUrl = slug ? window.StoreUtils.getStoreUrl(slug) : null;
     const headline = refs.headline.value.trim();
@@ -219,7 +212,7 @@
     const theme = getCurrentStoreTheme();
 
     refs.profileNamePreview.textContent = getFullName();
-    refs.profilePhonePreview.textContent = refs.phone.value.trim() || 'Telefone nao informado';
+    refs.profilePhonePreview.textContent = String(state.profile?.phone || '').trim() || 'Telefone nao informado';
     refs.storeNamePreview.textContent = refs.storeName.value.trim() || 'Sua loja';
     refs.headlinePreview.textContent = headline || 'Adicione uma headline para destacar sua proposta.';
     refs.storeBioPreview.textContent = bio || 'Adicione uma bio para apresentar sua loja.';
@@ -260,10 +253,6 @@
   }
 
   function populateForm(profile) {
-    refs.firstName.value = profile?.first_name || '';
-    refs.lastName.value = profile?.last_name || '';
-    refs.phone.value = profile?.phone || '';
-    refs.photoUrl.value = profile?.photo_url || '';
     refs.storeName.value = profile?.store_name || '';
     refs.storeSlug.value = profile?.slug || '';
     refs.headline.value = profile?.headline || '';
@@ -281,7 +270,6 @@
     state.slugCheckedValue = state.originalSlug;
     state.slugAvailable = true;
 
-    setUploadStatus(refs.photoUploadStatus, 'Envie JPG, PNG, WEBP ou GIF com ate 5 MB.', 'secondary');
     setUploadStatus(refs.bannerUploadStatus, 'Tamanho recomendado do banner: 1600 x 400 px. Use imagem horizontal para melhor encaixe. Envie JPG, PNG, WEBP ou GIF com ate 5 MB.', 'secondary');
     setSlugFeedback(state.originalSlug ? 'Slug atual da sua loja.' : 'Use letras minusculas, numeros e hifens.', state.originalSlug ? 'success' : 'secondary');
     updatePreview();
@@ -354,9 +342,9 @@
   async function handleAssetUpload(file, assetType) {
     if (!file) return null;
 
-    const statusRef = assetType === 'banner' ? refs.bannerUploadStatus : refs.photoUploadStatus;
-    const urlRef = assetType === 'banner' ? refs.storeBannerUrl : refs.photoUrl;
-    const label = assetType === 'banner' ? 'banner' : 'foto';
+    const statusRef = refs.bannerUploadStatus;
+    const urlRef = refs.storeBannerUrl;
+    const label = 'banner';
 
     setUploadStatus(statusRef, `Enviando ${label}...`, 'secondary');
 
@@ -384,10 +372,6 @@
     event.preventDefault();
     hideStatus();
 
-    const firstName = refs.firstName.value.trim();
-    const lastName = refs.lastName.value.trim();
-    const phone = refs.phone.value.trim();
-    const photoUrl = refs.photoUrl.value.trim();
     const storeName = refs.storeName.value.trim();
     const headline = refs.headline.value.trim();
     const bio = refs.storeBio.value.trim();
@@ -395,18 +379,8 @@
     const theme = getCurrentStoreTheme();
     const requestedSlug = window.StoreUtils.normalizeStoreSlug(refs.storeSlug.value);
 
-    if (!firstName) {
-      showStatus('Informe seu nome.', 'warning');
-      return;
-    }
-
     if (!storeName) {
       showStatus('Informe o nome da loja.', 'warning');
-      return;
-    }
-
-    if (photoUrl && !isValidHttpUrl(photoUrl)) {
-      showStatus('Informe uma URL valida para a foto ou deixe o campo vazio.', 'warning');
       return;
     }
 
@@ -430,10 +404,6 @@
       const { data, error } = await window.db
         .from('user_profiles')
         .update({
-          first_name: firstName,
-          last_name: lastName || null,
-          phone: phone || null,
-          photo_url: photoUrl || null,
           store_name: storeName,
           slug: slugResult.slug,
           headline: headline || null,
@@ -465,10 +435,6 @@
 
   function bindEvents() {
     [
-      refs.firstName,
-      refs.lastName,
-      refs.phone,
-      refs.photoUrl,
       refs.storeName,
       refs.storeSlug,
       refs.headline,
@@ -483,11 +449,6 @@
       refs.storeBannerUrl
     ].forEach((field) => field.addEventListener('input', updatePreview));
 
-    refs.phone.addEventListener('input', () => {
-      refs.phone.value = window.StoreUtils.formatPhone(refs.phone.value);
-      updatePreview();
-    });
-
     refs.storeSlug.addEventListener('input', () => {
       refs.storeSlug.value = window.StoreUtils.normalizeStoreSlug(refs.storeSlug.value);
       invalidateSlugCheck();
@@ -499,13 +460,6 @@
     refs.checkSlugBtn.addEventListener('click', async () => {
       hideStatus();
       await validateSlugAvailability({ silent: false, forceCheck: true });
-    });
-
-    refs.photoUpload.addEventListener('change', async () => {
-      if (!refs.photoUpload.files?.length) return;
-      try {
-        await handleAssetUpload(refs.photoUpload.files[0], 'photo');
-      } catch {}
     });
 
     refs.bannerUpload.addEventListener('change', async () => {
