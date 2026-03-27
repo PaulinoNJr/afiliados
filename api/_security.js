@@ -54,13 +54,21 @@ function getAllowedRecaptchaHostnames(req) {
   return Array.from(new Set(requestHosts));
 }
 
-function getSupabaseConfig() {
+function getSupabaseConfig({ requireAnonKey = false, requireServiceRoleKey = false } = {}) {
   const url = String(process.env.SUPABASE_URL || '').trim().replace(/\/+$/, '');
   const anonKey = String(process.env.SUPABASE_ANON_KEY || '').trim();
   const serviceRoleKey = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
 
-  if (!url || !anonKey || !serviceRoleKey) {
-    throw new Error('SUPABASE_URL, SUPABASE_ANON_KEY e SUPABASE_SERVICE_ROLE_KEY precisam estar configuradas no backend.');
+  if (!url) {
+    throw new Error('SUPABASE_URL precisa estar configurada no backend.');
+  }
+
+  if (requireAnonKey && !anonKey) {
+    throw new Error('SUPABASE_ANON_KEY precisa estar configurada no backend.');
+  }
+
+  if (requireServiceRoleKey && !serviceRoleKey) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY precisa estar configurada no backend.');
   }
 
   return {
@@ -165,7 +173,7 @@ function validateRecaptchaV3Payload({ payload, expectedAction, minScore = 0.5 })
 }
 
 async function getAuthenticatedSupabaseUser(accessToken) {
-  const { url, anonKey } = getSupabaseConfig();
+  const { url, anonKey } = getSupabaseConfig({ requireAnonKey: true });
   const token = String(accessToken || '').trim();
 
   if (!token) {
@@ -188,7 +196,7 @@ async function getAuthenticatedSupabaseUser(accessToken) {
 }
 
 async function getUserRole(userId) {
-  const { url, serviceRoleKey } = getSupabaseConfig();
+  const { url, serviceRoleKey } = getSupabaseConfig({ requireServiceRoleKey: true });
   const normalizedUserId = String(userId || '').trim();
 
   if (!normalizedUserId) {
@@ -213,7 +221,7 @@ async function getUserRole(userId) {
 }
 
 async function createSupabaseAuthUser({ email, password, metadata = {}, emailConfirm = true }) {
-  const { url, serviceRoleKey } = getSupabaseConfig();
+  const { url, serviceRoleKey } = getSupabaseConfig({ requireServiceRoleKey: true });
 
   const response = await fetch(`${url}/auth/v1/admin/users`, {
     method: 'POST',
@@ -241,7 +249,7 @@ async function createSupabaseAuthUser({ email, password, metadata = {}, emailCon
 }
 
 async function createSupabasePendingSignup({ email, password, metadata = {}, emailRedirectTo = '' }) {
-  const { url, anonKey } = getSupabaseConfig();
+  const { url, anonKey } = getSupabaseConfig({ requireAnonKey: true });
 
   const response = await fetch(`${url}/auth/v1/signup`, {
     method: 'POST',
