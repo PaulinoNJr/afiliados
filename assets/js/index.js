@@ -9,6 +9,7 @@
     mode: 'home',
     storeSlug: window.StoreUtils.getStoreSlugFromPath(),
     store: null,
+    categories: [],
     products: [],
     filteredProducts: []
   };
@@ -24,6 +25,7 @@
     storeBannerSection: document.getElementById('storeBannerSection'),
     storeBannerImage: document.getElementById('storeBannerImage'),
     storeTopBar: document.getElementById('storeTopBar'),
+    storeCategoryFilter: document.getElementById('storeCategoryFilter'),
     searchInput: document.getElementById('searchInput'),
     sortProducts: document.getElementById('sortProducts'),
     homeMarketingSection: document.getElementById('homeMarketingSection'),
@@ -100,11 +102,51 @@
     return { total, filtered };
   }
 
+  function buildStoreCategories(products = []) {
+    const categoriesMap = new Map();
+
+    products.forEach((product) => {
+      if (!product.category_id) return;
+      if (categoriesMap.has(product.category_id)) return;
+      categoriesMap.set(product.category_id, {
+        id: product.category_id,
+        name: product.category_name || 'Geral',
+        slug: product.category_slug || '',
+        sort_order: Number(product.category_sort_order || 0)
+      });
+    });
+
+    return [...categoriesMap.values()].sort((a, b) => {
+      const orderDiff = Number(a.sort_order || 0) - Number(b.sort_order || 0);
+      if (orderDiff !== 0) return orderDiff;
+      return String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR');
+    });
+  }
+
+  function renderCategoryFilter() {
+    refs.storeCategoryFilter.innerHTML = '<option value="all">Todas</option>';
+
+    state.categories.forEach((category) => {
+      const option = document.createElement('option');
+      option.value = category.id;
+      option.textContent = category.name;
+      refs.storeCategoryFilter.appendChild(option);
+    });
+  }
+
   function sortProducts(items) {
     const sortMode = refs.sortProducts?.value || 'recent';
     const list = [...items];
 
     switch (sortMode) {
+      case 'category':
+        return list.sort((a, b) => {
+          const categoryOrder = Number(a.category_sort_order || 0) - Number(b.category_sort_order || 0);
+          if (categoryOrder !== 0) return categoryOrder;
+          const categoryName = String(a.category_name || '').localeCompare(String(b.category_name || ''), 'pt-BR');
+          if (categoryName !== 0) return categoryName;
+          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+        });
       case 'title-asc':
         return list.sort((a, b) => String(a.titulo || '').localeCompare(String(b.titulo || ''), 'pt-BR'));
       case 'title-desc':
@@ -127,12 +169,15 @@
     refs.notFoundState.classList.add('d-none');
     refs.loading.classList.add('d-none');
     refs.productsGrid.innerHTML = '';
+    refs.storeCategoryFilter.value = 'all';
+    refs.storeCategoryFilter.innerHTML = '<option value="all">Todas</option>';
     refs.searchInput.value = '';
   }
 
   function applyHomeHero() {
     state.mode = 'home';
     state.store = null;
+    state.categories = [];
     state.products = [];
     state.filteredProducts = [];
     document.body.classList.remove('storefront-mode');
@@ -210,6 +255,7 @@
   function applyNotFoundState() {
     state.mode = 'not_found';
     state.store = null;
+    state.categories = [];
     state.products = [];
     state.filteredProducts = [];
     document.body.classList.remove('storefront-mode');
@@ -287,6 +333,10 @@
       title.className = 'h6 mb-2';
       title.textContent = item.titulo || 'Produto sem titulo';
 
+      const categoryBadge = document.createElement('div');
+      categoryBadge.className = 'store-category-pill mb-2';
+      categoryBadge.textContent = item.category_name || 'Geral';
+
       const descriptionText = item.descricao || 'Sem descricao.';
       const desc = document.createElement('p');
       desc.className = 'text-secondary small mb-1 product-desc is-collapsed';
@@ -338,7 +388,7 @@
         link.style.color = buttonTextColor;
       }
 
-      card.append(image, title, desc);
+      card.append(image, categoryBadge, title, desc);
       if (shouldShowToggle) card.append(descMeta);
       card.append(price, link);
       col.appendChild(card);
@@ -350,19 +400,26 @@
     if (state.mode !== 'store') return;
 
     const term = refs.searchInput.value.trim().toLowerCase();
+    const categoryId = refs.storeCategoryFilter.value;
 
-    if (!term) {
-      state.filteredProducts = sortProducts(state.products);
+    const filteredBase = state.products.filter((item) => {
+      if (categoryId !== 'all' && item.category_id !== categoryId) return false;
+      if (!term) return true;
+
+      const title = (item.titulo || '').toLowerCase();
+      const desc = (item.descricao || '').toLowerCase();
+      const categoryName = (item.category_name || '').toLowerCase();
+      return title.includes(term) || desc.includes(term) || categoryName.includes(term);
+    });
+
+    if (!term && categoryId === 'all') {
+      state.filteredProducts = sortProducts(filteredBase);
       renderProducts(state.filteredProducts);
       updateSearchSummary(state.products.length, state.filteredProducts.length);
       return;
     }
 
-    state.filteredProducts = sortProducts(state.products.filter((item) => {
-      const title = (item.titulo || '').toLowerCase();
-      const desc = (item.descricao || '').toLowerCase();
-      return title.includes(term) || desc.includes(term);
-    }));
+    state.filteredProducts = sortProducts(filteredBase);
 
     renderProducts(state.filteredProducts);
     updateSearchSummary(state.products.length, state.filteredProducts.length);
@@ -403,6 +460,8 @@
     if (productsError) throw productsError;
 
     state.products = products || [];
+    state.categories = buildStoreCategories(state.products);
+    renderCategoryFilter();
     refs.loading.classList.add('d-none');
     applyFilter();
   }
@@ -455,6 +514,7 @@
 
   function init() {
     refs.searchInput.addEventListener('input', applyFilter);
+    refs.storeCategoryFilter?.addEventListener('change', applyFilter);
     refs.sortProducts?.addEventListener('change', applyFilter);
 
     setupNavbarAuthState();

@@ -638,6 +638,183 @@ from public.user_profiles profile
 where profile.slug is not null
   and profile.slug <> '';
 
+create table if not exists public.product_categories (
+  id uuid primary key default gen_random_uuid(),
+  profile_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  slug text not null,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.product_categories
+  add column if not exists profile_id uuid references auth.users(id) on delete cascade,
+  add column if not exists name text,
+  add column if not exists slug text,
+  add column if not exists sort_order integer not null default 0,
+  add column if not exists created_at timestamptz not null default now(),
+  add column if not exists updated_at timestamptz not null default now();
+
+create index if not exists idx_product_categories_profile_id on public.product_categories (profile_id);
+create index if not exists idx_product_categories_sort_order on public.product_categories (profile_id, sort_order asc, created_at asc);
+create unique index if not exists idx_product_categories_profile_slug on public.product_categories (profile_id, slug);
+create unique index if not exists idx_product_categories_profile_name on public.product_categories (profile_id, lower(name));
+
+create or replace function public.generate_unique_category_slug(
+  base_value text,
+  target_profile_id uuid,
+  current_category_id uuid default null
+)
+returns text
+language plpgsql
+set search_path = public
+as $$
+declare
+  normalized_base text := public.normalize_slug(base_value);
+  candidate text;
+  suffix integer := 1;
+begin
+  if target_profile_id is null then
+    raise exception 'Perfil da categoria nao informado.';
+  end if;
+
+  if normalized_base is null or normalized_base = '' then
+    normalized_base := 'categoria';
+  end if;
+
+  candidate := normalized_base;
+
+  while exists (
+    select 1
+    from public.product_categories category_item
+    where category_item.profile_id = target_profile_id
+      and category_item.slug = candidate
+      and (current_category_id is null or category_item.id <> current_category_id)
+  ) loop
+    suffix := suffix + 1;
+    candidate := normalized_base || '-' || suffix::text;
+  end loop;
+
+  return candidate;
+end;
+$$;
+
+create or replace function public.prepare_product_category()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+declare
+  highest_sort_order integer;
+begin
+  new.name := nullif(trim(coalesce(new.name, '')), '');
+  new.slug := nullif(trim(coalesce(new.slug, '')), '');
+
+  if new.profile_id is null then
+    raise exception 'Perfil da categoria nao informado.';
+  end if;
+
+  if new.name is null then
+    raise exception 'Informe o nome da categoria.';
+  end if;
+
+  if new.slug is null then
+    new.slug := public.generate_unique_category_slug(new.name, new.profile_id, new.id);
+  else
+    new.slug := public.generate_unique_category_slug(new.slug, new.profile_id, new.id);
+  end if;
+
+  if new.sort_order is null then
+    select coalesce(max(category_item.sort_order), -1)
+    into highest_sort_order
+    from public.product_categories category_item
+    where category_item.profile_id = new.profile_id
+      and (tg_op = 'INSERT' or category_item.id <> new.id);
+
+    new.sort_order := highest_sort_order + 1;
+  end if;
+
+  if new.sort_order < 0 then
+    new.sort_order := 0;
+  end if;
+
+  return new;
+end;
+$$;
+
+create or replace function public.ensure_default_product_category(target_profile_id uuid)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  existing_category_id uuid;
+begin
+  if target_profile_id is null then
+    raise exception 'Perfil da categoria nao informado.';
+  end if;
+
+  select category_item.id
+  into existing_category_id
+  from public.product_categories category_item
+  where category_item.profile_id = target_profile_id
+  order by category_item.sort_order asc, category_item.created_at asc
+  limit 1;
+
+  if existing_category_id is not null then
+    return existing_category_id;
+  end if;
+
+  insert into public.product_categories (profile_id, name, slug, sort_order)
+  values (target_profile_id, 'Geral', 'geral', 0)
+  returning id into existing_category_id;
+
+  return existing_category_id;
+exception
+  when unique_violation then
+    select category_item.id
+    into existing_category_id
+    from public.product_categories category_item
+    where category_item.profile_id = target_profile_id
+    order by category_item.sort_order asc, category_item.created_at asc
+    limit 1;
+
+    return existing_category_id;
+end;
+$$;
+
+create or replace function public.ensure_profile_has_default_category()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  perform public.ensure_default_product_category(new.user_id);
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_product_categories_prepare on public.product_categories;
+create trigger trg_product_categories_prepare
+before insert or update on public.product_categories
+for each row
+execute function public.prepare_product_category();
+
+drop trigger if exists trg_product_categories_updated_at on public.product_categories;
+create trigger trg_product_categories_updated_at
+before update on public.product_categories
+for each row
+execute function public.set_updated_at();
+
+drop trigger if exists trg_user_profiles_default_category on public.user_profiles;
+create trigger trg_user_profiles_default_category
+after insert on public.user_profiles
+for each row
+execute function public.ensure_profile_has_default_category();
+
 create table if not exists public.produtos (
   id uuid primary key default gen_random_uuid(),
   titulo text not null,
@@ -654,7 +831,8 @@ create table if not exists public.produtos (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   created_by uuid references auth.users(id) on delete cascade,
-  profile_id uuid references auth.users(id) on delete cascade
+  profile_id uuid references auth.users(id) on delete cascade,
+  category_id uuid references public.product_categories(id) on delete restrict
 );
 
 alter table public.produtos
@@ -665,7 +843,19 @@ alter table public.produtos
   add column if not exists ml_thumbnail text,
   add column if not exists ml_pictures jsonb not null default '[]'::jsonb,
   add column if not exists updated_at timestamptz not null default now(),
-  add column if not exists profile_id uuid references auth.users(id) on delete cascade;
+  add column if not exists profile_id uuid references auth.users(id) on delete cascade,
+  add column if not exists category_id uuid references public.product_categories(id) on delete restrict;
+
+select public.ensure_default_product_category(profile.user_id)
+from public.user_profiles profile
+where profile.user_id is not null;
+
+select public.ensure_default_product_category(existing_products.profile_id)
+from (
+  select distinct product.profile_id
+  from public.produtos product
+  where product.profile_id is not null
+) existing_products;
 
 update public.produtos
 set profile_id = created_by
@@ -677,15 +867,30 @@ set created_by = profile_id
 where created_by is null
   and profile_id is not null;
 
+update public.produtos product
+set category_id = default_category.id
+from lateral (
+  select category_item.id
+  from public.product_categories category_item
+  where category_item.profile_id = product.profile_id
+  order by category_item.sort_order asc, category_item.created_at asc
+  limit 1
+) default_category
+where product.category_id is null
+  and product.profile_id is not null;
+
 alter table public.produtos
   alter column created_by set not null,
-  alter column profile_id set not null;
+  alter column profile_id set not null,
+  alter column category_id set not null;
 
 create or replace function public.sync_product_profile_id()
 returns trigger
 language plpgsql
 set search_path = public
 as $$
+declare
+  category_profile_id uuid;
 begin
   if new.profile_id is null and new.created_by is null then
     new.profile_id := auth.uid();
@@ -698,7 +903,59 @@ begin
     new.created_by := new.profile_id;
   end if;
 
+  if new.profile_id is not null and new.category_id is null then
+    new.category_id := public.ensure_default_product_category(new.profile_id);
+  end if;
+
+  if new.category_id is not null then
+    select category_item.profile_id
+    into category_profile_id
+    from public.product_categories category_item
+    where category_item.id = new.category_id;
+
+    if category_profile_id is null then
+      raise exception 'Categoria nao encontrada.';
+    end if;
+
+    if new.profile_id is null then
+      new.profile_id := category_profile_id;
+      new.created_by := category_profile_id;
+    elsif category_profile_id <> new.profile_id then
+      raise exception 'A categoria selecionada nao pertence ao perfil informado.';
+    end if;
+  end if;
+
   return new;
+end;
+$$;
+
+create or replace function public.prevent_invalid_category_delete()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+declare
+  remaining_count integer;
+begin
+  select count(*)
+  into remaining_count
+  from public.product_categories category_item
+  where category_item.profile_id = old.profile_id
+    and category_item.id <> old.id;
+
+  if remaining_count <= 0 then
+    raise exception 'Mantenha pelo menos uma categoria cadastrada.';
+  end if;
+
+  if exists (
+    select 1
+    from public.produtos product
+    where product.category_id = old.id
+  ) then
+    raise exception 'Nao e possivel excluir uma categoria com produtos vinculados.';
+  end if;
+
+  return old;
 end;
 $$;
 
@@ -714,9 +971,16 @@ before update on public.produtos
 for each row
 execute function public.set_updated_at();
 
+drop trigger if exists trg_product_categories_delete_guard on public.product_categories;
+create trigger trg_product_categories_delete_guard
+before delete on public.product_categories
+for each row
+execute function public.prevent_invalid_category_delete();
+
 create index if not exists idx_produtos_created_at on public.produtos (created_at desc);
 create index if not exists idx_produtos_created_by on public.produtos (created_by);
 create index if not exists idx_produtos_profile_id on public.produtos (profile_id);
+create index if not exists idx_produtos_category_id on public.produtos (category_id);
 
 drop view if exists public.public_store_products;
 create view public.public_store_products
@@ -724,13 +988,19 @@ with (security_invoker = true) as
 select
   product.id,
   product.profile_id,
+  category_item.id as category_id,
+  category_item.name as category_name,
+  category_item.slug as category_slug,
+  category_item.sort_order as category_sort_order,
   product.titulo,
   product.preco,
   product.imagem_url,
   product.link_afiliado,
   product.descricao,
   product.created_at
-from public.produtos product;
+from public.produtos product
+join public.product_categories category_item
+  on category_item.id = product.category_id;
 
 drop function if exists public.get_public_store_by_slug(text);
 create function public.get_public_store_by_slug(store_slug text)
@@ -775,10 +1045,15 @@ as $$
   limit 1;
 $$;
 
-create or replace function public.get_public_products_by_profile(store_profile_id uuid)
+drop function if exists public.get_public_products_by_profile(uuid);
+create function public.get_public_products_by_profile(store_profile_id uuid)
 returns table (
   id uuid,
   profile_id uuid,
+  category_id uuid,
+  category_name text,
+  category_slug text,
+  category_sort_order integer,
   titulo text,
   preco numeric,
   imagem_url text,
@@ -794,6 +1069,10 @@ as $$
   select
     product.id,
     product.profile_id,
+    category_item.id as category_id,
+    category_item.name as category_name,
+    category_item.slug as category_slug,
+    category_item.sort_order as category_sort_order,
     product.titulo,
     product.preco,
     product.imagem_url,
@@ -801,8 +1080,10 @@ as $$
     product.descricao,
     product.created_at
   from public.produtos product
+  join public.product_categories category_item
+    on category_item.id = product.category_id
   where product.profile_id = store_profile_id
-  order by product.created_at desc;
+  order by category_item.sort_order asc, lower(category_item.name) asc, product.created_at desc;
 $$;
 
 create or replace function public.check_public_slug_availability(store_slug text, current_profile_id uuid default null)
@@ -840,6 +1121,7 @@ as $$
 $$;
 
 alter table public.user_profiles enable row level security;
+alter table public.product_categories enable row level security;
 alter table public.produtos enable row level security;
 
 drop policy if exists "Perfil proprio ou admin pode ler" on public.user_profiles;
@@ -864,6 +1146,35 @@ create policy "Usuario ou admin pode atualizar perfil"
   to authenticated
   using (auth.uid() = user_id or public.is_admin())
   with check (auth.uid() = user_id or public.is_admin());
+
+drop policy if exists "Leitura de categorias por dono ou admin" on public.product_categories;
+create policy "Leitura de categorias por dono ou admin"
+  on public.product_categories
+  for select
+  to authenticated
+  using (auth.uid() = profile_id or public.is_admin());
+
+drop policy if exists "Insercao de categorias por dono ou admin" on public.product_categories;
+create policy "Insercao de categorias por dono ou admin"
+  on public.product_categories
+  for insert
+  to authenticated
+  with check (auth.uid() = profile_id or public.is_admin());
+
+drop policy if exists "Atualizacao de categorias por dono ou admin" on public.product_categories;
+create policy "Atualizacao de categorias por dono ou admin"
+  on public.product_categories
+  for update
+  to authenticated
+  using (auth.uid() = profile_id or public.is_admin())
+  with check (auth.uid() = profile_id or public.is_admin());
+
+drop policy if exists "Exclusao de categorias por dono ou admin" on public.product_categories;
+create policy "Exclusao de categorias por dono ou admin"
+  on public.product_categories
+  for delete
+  to authenticated
+  using (auth.uid() = profile_id or public.is_admin());
 
 drop policy if exists "Leitura publica de produtos" on public.produtos;
 drop policy if exists "Leitura de produtos por dono ou admin" on public.produtos;
@@ -906,6 +1217,7 @@ grant execute on function public.get_public_products_by_profile(uuid) to anon, a
 grant execute on function public.check_public_slug_availability(text, uuid) to anon, authenticated;
 grant select on public.public_store_profiles to anon, authenticated;
 grant select on public.public_store_products to anon, authenticated;
+grant select, insert, update, delete on public.product_categories to authenticated;
 grant select, insert, update on public.user_profiles to authenticated;
 grant select, insert, update, delete on public.produtos to authenticated;
 

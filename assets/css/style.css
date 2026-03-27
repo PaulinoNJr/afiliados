@@ -502,6 +502,7 @@ body.storefront-mode {
   min-height: 42px;
 }
 
+#storeCategoryFilter,
 #sortProducts {
   min-height: 42px;
 }
@@ -631,6 +632,51 @@ body.storefront-mode .price-tag {
   border-radius: 1rem;
 }
 
+.catalog-note {
+  padding: 0.8rem 0.9rem;
+  border: 1px solid #dfe8f4;
+  border-radius: 0.95rem;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+  color: #54627a;
+  font-size: 0.92rem;
+}
+
+.category-admin-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid #dfe8f4;
+  border-radius: 0.95rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+}
+
+.category-admin-copy {
+  min-width: 0;
+}
+
+.category-admin-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.store-category-pill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.24rem 0.6rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--product-accent, #0d6efd) 10%, #ffffff);
+  color: color-mix(in srgb, var(--product-accent, #0d6efd) 82%, #0f172a);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
 @media (max-width: 991.98px) {
   .navbar > .container {
     align-items: flex-start;
@@ -685,6 +731,15 @@ body.storefront-mode .price-tag {
 
   .store-settings-sidebar {
     position: static;
+  }
+
+  .category-admin-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .category-admin-actions {
+    justify-content: flex-start;
   }
 }
 
