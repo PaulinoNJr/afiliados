@@ -1,7 +1,7 @@
 (() => {
-  const DEFAULT_ACCENT = '#0d6efd';
-  const DEFAULT_TEXT = '#152238';
-  const DEFAULT_PAGE_BACKGROUND = '#f3f6fb';
+  const DEFAULT_ACCENT = '#2563eb';
+  const DEFAULT_TEXT = '#0f172a';
+  const DEFAULT_PAGE_BACKGROUND = '#f8fafc';
   const DEFAULT_BUTTON_TEXT = '#ffffff';
   const DEFAULT_CTA = 'Ver produto';
 
@@ -186,17 +186,17 @@
     document.body.style.removeProperty('--store-accent-color');
     document.body.style.removeProperty('--store-button-text-color');
 
-    refs.homeHeroBadge.textContent = 'Plataforma de afiliados';
-    refs.homeHeroTitle.textContent = 'Transforme seu link em uma pagina profissional de vendas';
-    refs.homeHeroDescription.textContent = 'Crie sua loja personalizada, publique produtos, gerencie seu catalogo e compartilhe um link unico para vender com mais confianca.';
+    refs.homeHeroBadge.textContent = 'Seu proprio site de vendas em minutos';
+    refs.homeHeroTitle.textContent = 'Crie sua pagina de afiliados e comece a vender hoje';
+    refs.homeHeroDescription.textContent = 'Monte sua vitrine online personalizada e compartilhe seu link para ganhar comissoes com uma pagina mais profissional.';
     refs.marketingCardContent.classList.remove('d-none');
     refs.homeMarketingSection.classList.remove('d-none');
     resetStoreUi();
     finishResolvingPage();
 
     updateSeo({
-      title: 'Afiliados | Sua pagina de vendas para afiliados',
-      description: 'Crie sua vitrine de afiliado, publique produtos e tenha uma pagina personalizada para vender mais.',
+      title: 'Afiliados | Crie sua pagina de afiliados',
+      description: 'Monte sua vitrine online personalizada, publique produtos e compartilhe seu link para ganhar comissoes.',
       image: defaultImage(),
       url: `${window.location.origin}/`
     });
@@ -513,6 +513,10 @@
   }
 
   function init() {
+    window.criarConta = function criarConta() {
+      window.location.href = '/login.html';
+    };
+
     refs.searchInput.addEventListener('input', applyFilter);
     refs.storeCategoryFilter?.addEventListener('change', applyFilter);
     refs.sortProducts?.addEventListener('change', applyFilter);

@@ -3,189 +3,398 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Afiliados | Sua pagina de vendas para afiliados</title>
-  <meta name="description" content="Crie sua vitrine de afiliado, publique produtos e tenha uma pagina personalizada para vender mais." />
-  <meta property="og:title" content="Afiliados | Sua pagina de vendas para afiliados" />
-  <meta property="og:description" content="Crie sua vitrine de afiliado, publique produtos e tenha uma pagina personalizada para vender mais." />
+  <title>Afiliados | Crie sua pagina de afiliados</title>
+  <meta
+    name="description"
+    content="Crie sua pagina de afiliados, monte sua vitrine personalizada e compartilhe seu link para vender todos os dias."
+  />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="/" />
-  <meta property="og:image" content="https://via.placeholder.com/1200x630?text=Afiliados+ML" />
+  <meta property="og:title" content="Afiliados | Crie sua pagina de afiliados" />
+  <meta
+    property="og:description"
+    content="Monte sua vitrine online personalizada e compartilhe seu link para ganhar comissoes."
+  />
+  <meta property="og:image" content="https://via.placeholder.com/1200x630?text=Afiliados" />
+  <meta property="og:url" content="https://afiliados-three.vercel.app/" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body class="page-resolving">
-  <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm sticky-top">
+  <nav class="navbar navbar-expand-lg landing-navbar sticky-top">
     <div class="container">
       <a class="navbar-brand fw-bold" href="index.html">Afiliados</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Alternar navegacao">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarMain">
-        <div class="ms-auto d-flex gap-2 mt-3 mt-lg-0 app-nav-actions">
-          <a href="cadastro.html" class="btn btn-primary btn-sm">Criar minha pagina</a>
-          <a id="navAdmin" class="btn btn-outline-primary btn-sm" href="login.html">Area administrativa</a>
-          <button id="navLogout" class="btn btn-outline-danger btn-sm d-none" type="button">Sair</button>
-        </div>
+      <div class="ms-auto d-flex align-items-center gap-2 app-nav-actions">
+        <a href="cadastro.html" class="btn btn-primary btn-sm">Criar minha pagina</a>
+        <a id="navAdmin" href="login.html" class="btn btn-outline-primary btn-sm">Entrar</a>
+        <button id="navLogout" class="btn btn-outline-danger btn-sm d-none" type="button">Sair</button>
       </div>
     </div>
   </nav>
 
-  <section id="storeBannerSection" class="store-banner-section d-none">
-    <img id="storeBannerImage" class="store-banner-full" alt="Banner da loja" />
-    <div class="store-banner-overlay"></div>
-  </section>
+  <main class="pb-5">
+    <section id="homeHeroSection" class="hero-section landing-hero">
+      <div class="container">
+        <div class="row align-items-center g-4 g-xl-5">
+          <div class="col-12 col-lg-6">
+            <span id="homeHeroBadge" class="landing-eyebrow">Seu proprio site de vendas em minutos</span>
+            <h1 id="homeHeroTitle" class="landing-display mt-3 mb-3">Crie sua pagina de afiliados e comece a vender hoje</h1>
+            <p id="homeHeroDescription" class="landing-subtitle mb-4">
+              Monte sua vitrine online personalizada, publique seus produtos e compartilhe um link unico para ganhar comissoes com mais confianca.
+            </p>
 
-  <section id="storeTopBar" class="store-topbar-section d-none">
-    <div class="container">
-      <div class="store-topbar-panel">
-        <div class="row g-3 align-items-center">
-          <div class="col-12 col-xl-7">
-            <div>
-              <h1 id="heroTitle" class="h3 fw-bold mb-0">Transforme seu link em uma pagina profissional de vendas</h1>
+            <div class="landing-actions d-flex flex-column flex-sm-row gap-3 mb-4">
+              <button type="button" class="btn btn-primary btn-lg" onclick="criarConta()">Criar minha pagina gratis</button>
+              <a href="#exemplo" class="btn btn-outline-primary btn-lg">Ver exemplo</a>
+            </div>
+
+            <div class="landing-url-pill mb-3">
+              <span class="landing-url-label">Diferencial</span>
+              <strong>Seu proprio site de vendas em minutos</strong>
+              <span class="text-secondary">com URL personalizada como</span>
+              <code>afiliados.com/seunome</code>
+            </div>
+
+            <div class="landing-proof-inline">
+              <span>Pagina personalizada</span>
+              <span>Sem programacao</span>
+              <span>Mobile first</span>
             </div>
           </div>
-          <div class="col-12 col-xl-5">
-            <div class="row g-2 align-items-end">
-              <div class="col-12 col-lg-4">
-                <label for="storeCategoryFilter" class="form-label small text-uppercase fw-semibold mb-2">Categoria</label>
-                <select id="storeCategoryFilter" class="form-select">
-                  <option value="all">Todas</option>
-                </select>
-              </div>
-              <div class="col-12 col-lg-4">
-                <label for="searchInput" class="form-label small text-uppercase fw-semibold mb-2">Buscar produto</label>
-                <div class="store-search-group">
-                  <input id="searchInput" type="search" class="form-control" placeholder="Digite nome ou descricao" />
+
+          <div class="col-12 col-lg-6">
+            <div id="marketingCardContent" class="hero-mockup">
+              <div class="hero-mockup-window">
+                <div class="hero-mockup-toolbar">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <div class="hero-mockup-layout">
+                  <aside class="hero-mockup-sidebar">
+                    <div class="hero-mockup-brand">Afiliados</div>
+                    <div class="hero-mockup-menu">
+                      <span>Painel</span>
+                      <span>Loja</span>
+                      <span>Produtos</span>
+                      <span>Perfil</span>
+                    </div>
+                  </aside>
+                  <div class="hero-mockup-body">
+                    <div class="hero-mockup-panel">
+                      <p class="hero-mockup-kicker">Dashboard</p>
+                      <h2>Loja pronta para divulgar</h2>
+                      <p>Gerencie produtos, organize categorias e publique sua pagina com visual profissional.</p>
+                    </div>
+                    <div class="hero-mockup-grid">
+                      <article class="hero-mockup-card">
+                        <p>URL publica</p>
+                        <strong>/joaodicas</strong>
+                      </article>
+                      <article class="hero-mockup-card">
+                        <p>Produtos</p>
+                        <strong>24 ativos</strong>
+                      </article>
+                      <article class="hero-mockup-card">
+                        <p>Categoria</p>
+                        <strong>Achadinhos</strong>
+                      </article>
+                    </div>
+                    <div class="hero-mockup-store">
+                      <div class="hero-mockup-store-banner"></div>
+                      <div class="hero-mockup-store-card">
+                        <div>
+                          <p class="mb-1 fw-semibold">afiliados.com/joao</p>
+                          <p class="mb-0 text-secondary small">Sua vitrine pronta para compartilhar.</p>
+                        </div>
+                        <span class="hero-mockup-cta">Ver produto</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="col-12 col-lg-4">
-                <label for="sortProducts" class="form-label small text-uppercase fw-semibold mb-2">Ordenar por</label>
-                <select id="sortProducts" class="form-select">
-                  <option value="category">Categorias da loja</option>
-                  <option value="recent">Mais recentes</option>
-                  <option value="title-asc">Nome de A a Z</option>
-                  <option value="title-desc">Nome de Z a A</option>
-                  <option value="price-asc">Menor preco</option>
-                  <option value="price-desc">Maior preco</option>
-                </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="homeMarketingSection" class="pb-5">
+      <div class="container">
+        <section class="section-shell">
+          <div class="row g-4 align-items-end">
+            <div class="col-12 col-lg-7">
+              <span class="section-kicker">Como funciona</span>
+              <h2 class="section-title">Comece rapido e compartilhe seu link no mesmo dia</h2>
+              <p class="section-copy">O fluxo foi pensado para qualquer afiliado montar uma vitrine profissional sem depender de time tecnico, layout pronto ou plugin complicado.</p>
+            </div>
+          </div>
+
+          <div class="row g-4 mt-1">
+            <div class="col-12 col-md-4">
+              <article class="card border-0 shadow-sm feature-card step-card h-100">
+                <div class="card-body p-4">
+                  <span class="feature-index">01</span>
+                  <h3 class="h5 mb-2">Crie sua conta</h3>
+                  <p class="text-secondary mb-0">Cadastre seus dados, reserve sua URL personalizada e ative sua conta por email.</p>
+                </div>
+              </article>
+            </div>
+            <div class="col-12 col-md-4">
+              <article class="card border-0 shadow-sm feature-card step-card h-100">
+                <div class="card-body p-4">
+                  <span class="feature-index">02</span>
+                  <h3 class="h5 mb-2">Cadastre seus produtos</h3>
+                  <p class="text-secondary mb-0">Organize produtos por categorias, personalize o tema da pagina e configure seus links de afiliado.</p>
+                </div>
+              </article>
+            </div>
+            <div class="col-12 col-md-4">
+              <article class="card border-0 shadow-sm feature-card step-card h-100">
+                <div class="card-body p-4">
+                  <span class="feature-index">03</span>
+                  <h3 class="h5 mb-2">Compartilhe seu link</h3>
+                  <p class="text-secondary mb-0">Envie sua pagina para WhatsApp, Instagram, TikTok ou qualquer canal com um endereco facil de lembrar.</p>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="section-shell">
+          <div class="row g-4">
+            <div class="col-12 col-lg-5">
+              <span class="section-kicker">Beneficios</span>
+              <h2 class="section-title">Tudo o que um afiliado precisa para vender com mais profissionalismo</h2>
+              <p class="section-copy">A estrutura ja prepara o crescimento da operacao e a futura integracao com Supabase, mantendo uma experiencia simples para o usuario final.</p>
+            </div>
+            <div class="col-12 col-lg-7">
+              <div class="row g-3">
+                <div class="col-12 col-md-6">
+                  <article class="card border-0 shadow-sm feature-card h-100">
+                    <div class="card-body p-4">
+                      <h3 class="h6 mb-2">Pagina personalizada</h3>
+                      <p class="text-secondary mb-0">Cada afiliado tem sua propria URL publica, como <code>/seunome</code>.</p>
+                    </div>
+                  </article>
+                </div>
+                <div class="col-12 col-md-6">
+                  <article class="card border-0 shadow-sm feature-card h-100">
+                    <div class="card-body p-4">
+                      <h3 class="h6 mb-2">Links de afiliado organizados</h3>
+                      <p class="text-secondary mb-0">Cadastre produtos com link direto, imagem, descricao e categoria.</p>
+                    </div>
+                  </article>
+                </div>
+                <div class="col-12 col-md-6">
+                  <article class="card border-0 shadow-sm feature-card h-100">
+                    <div class="card-body p-4">
+                      <h3 class="h6 mb-2">Facil de usar</h3>
+                      <p class="text-secondary mb-0">Painel limpo, fluxo guiado e personalizacao visual sem complexidade.</p>
+                    </div>
+                  </article>
+                </div>
+                <div class="col-12 col-md-6">
+                  <article class="card border-0 shadow-sm feature-card h-100">
+                    <div class="card-body p-4">
+                      <h3 class="h6 mb-2">Sem necessidade de programacao</h3>
+                      <p class="text-secondary mb-0">O usuario monta sua pagina sem mexer em codigo, deploy ou configuracao tecnica.</p>
+                    </div>
+                  </article>
+                </div>
+                <div class="col-12 col-md-6">
+                  <article class="card border-0 shadow-sm feature-card h-100">
+                    <div class="card-body p-4">
+                      <h3 class="h6 mb-2">Mobile otimizado</h3>
+                      <p class="text-secondary mb-0">A vitrine e o painel funcionam primeiro no celular e escalam bem no desktop.</p>
+                    </div>
+                  </article>
+                </div>
+                <div class="col-12 col-md-6">
+                  <article class="card border-0 shadow-sm feature-card h-100">
+                    <div class="card-body p-4">
+                      <h3 class="h6 mb-2">Estrutura pronta para crescer</h3>
+                      <p class="text-secondary mb-0">Categorias, perfil, autenticacao e dados ja preparados para evolucao do sistema.</p>
+                    </div>
+                  </article>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="exemplo" class="section-shell">
+          <div class="row g-4 align-items-center">
+            <div class="col-12 col-lg-6">
+              <span class="section-kicker">Exemplo real</span>
+              <h2 class="section-title">Visualize a experiencia que seu afiliado entrega ao publico</h2>
+              <p class="section-copy">A pagina publica foi pensada para valorizar o produto, reforcar a identidade da loja e facilitar o clique no link de afiliado.</p>
+              <div class="example-url-box">
+                <span class="example-url-label">Exemplo de pagina</span>
+                <strong>afiliados.com/joao</strong>
+              </div>
+            </div>
+            <div class="col-12 col-lg-6">
+              <div class="example-frame">
+                <div class="example-browser">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <div class="example-screen">
+                  <div class="example-screen-banner"></div>
+                  <div class="example-screen-top">
+                    <div>
+                      <p class="mb-1 fw-semibold">joao da silva</p>
+                      <p class="mb-0 text-secondary small">Achadinhos, ofertas e produtos para o dia a dia.</p>
+                    </div>
+                    <span class="example-screen-chip">/joao</span>
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-6">
+                      <div class="example-product-card">
+                        <div class="example-product-image"></div>
+                        <p class="mb-1 fw-semibold small">Kit casual premium</p>
+                        <p class="mb-2 text-secondary small">Categoria Geral</p>
+                        <span class="example-product-price">R$ 89,90</span>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="example-product-card">
+                        <div class="example-product-image is-secondary"></div>
+                        <p class="mb-1 fw-semibold small">Acessorio util</p>
+                        <p class="mb-2 text-secondary small">Categoria Casa</p>
+                        <span class="example-product-price">R$ 42,90</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section-shell pt-0">
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <article class="card border-0 shadow-sm proof-card h-100">
+                <div class="card-body p-4">
+                  <p class="proof-value">1.000+</p>
+                  <p class="proof-label mb-0">usuarios ja criaram sua pagina de afiliado</p>
+                </div>
+              </article>
+            </div>
+            <div class="col-12 col-md-6">
+              <article class="card border-0 shadow-sm proof-card h-100">
+                <div class="card-body p-4">
+                  <p class="proof-value">R$ 50.000+</p>
+                  <p class="proof-label mb-0">em vendas geradas pelas paginas compartilhadas</p>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="section-shell pt-0">
+          <div class="cta-band">
+            <div>
+              <span class="cta-band-kicker">Comecar agora</span>
+              <h2 class="h3 mb-2">Comecar agora gratis</h2>
+              <p class="mb-0 cta-band-copy">Crie sua conta, ative por email e publique sua vitrine com URL personalizada em poucos minutos.</p>
+            </div>
+            <div class="d-flex flex-column flex-sm-row gap-3">
+              <button type="button" class="btn btn-light btn-lg" onclick="criarConta()">Criar minha pagina gratis</button>
+              <a href="login.html" class="btn btn-outline-light btn-lg">Entrar no painel</a>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section id="storeBannerSection" class="store-banner-section d-none" aria-label="Banner da loja">
+      <img id="storeBannerImage" class="store-banner-image" alt="Banner da loja" />
+    </section>
+
+    <section id="storeTopBar" class="store-topbar-section d-none">
+      <div class="container">
+        <div class="store-topbar-card">
+          <div class="row g-4 align-items-end">
+            <div class="col-12 col-xl-4">
+              <p class="store-topbar-kicker mb-1">Loja publica</p>
+              <h1 id="heroTitle" class="h2 mb-0">Loja de afiliado</h1>
+            </div>
+            <div class="col-12 col-xl-8">
+              <div class="row g-3">
+                <div class="col-12 col-md-4">
+                  <label for="storeCategoryFilter" class="form-label">Categoria</label>
+                  <select id="storeCategoryFilter" class="form-select">
+                    <option value="all">Todas</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-4">
+                  <label for="searchInput" class="form-label">Buscar produto</label>
+                  <input id="searchInput" type="search" class="form-control" placeholder="Digite nome ou descricao" />
+                </div>
+                <div class="col-12 col-md-4">
+                  <label for="sortProducts" class="form-label">Ordenar por</label>
+                  <select id="sortProducts" class="form-select">
+                    <option value="recent">Mais recentes</option>
+                    <option value="category">Ordem da vitrine</option>
+                    <option value="price-asc">Menor preco</option>
+                    <option value="price-desc">Maior preco</option>
+                    <option value="title-asc">Nome A-Z</option>
+                    <option value="title-desc">Nome Z-A</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <header id="homeHeroSection" class="hero-section py-5 border-bottom">
     <div class="container">
-      <div class="row align-items-center g-4">
-        <div class="col-lg-7">
-          <span id="homeHeroBadge" class="badge text-bg-primary mb-3">Plataforma de afiliados</span>
-          <h1 id="homeHeroTitle" class="display-6 fw-bold mb-3">Transforme seu link em uma pagina profissional de vendas</h1>
-          <p id="homeHeroDescription" class="lead text-secondary mb-0">Crie sua loja personalizada, publique produtos, gerencie seu catalogo e compartilhe um link unico para vender com mais confianca.</p>
-        </div>
-        <div class="col-lg-5">
-          <div id="marketingCardContent" class="card shadow-sm border-0 p-4 hero-side-card">
-            <p class="small text-uppercase fw-semibold text-secondary mb-2">O que voce recebe</p>
-            <ul class="mb-4 text-secondary ps-3">
-              <li>Sua propria pagina publica em `/<slug>`</li>
-              <li>Painel para configurar loja e produtos</li>
-              <li>Banner, foto, cor e identidade visual propria</li>
-              <li>Cadastro simples pronto para compartilhar</li>
-            </ul>
-            <div class="d-grid gap-2">
-              <a href="cadastro.html" class="btn btn-primary">Comecar agora</a>
-              <a href="login.html" class="btn btn-outline-dark">Ja tenho conta</a>
-            </div>
-          </div>
-        </div>
+      <div id="statusMessage" class="alert d-none mt-4" role="alert"></div>
+      <div id="loading" class="store-feedback-card d-none mt-4" role="status">
+        <div class="spinner-border text-primary" aria-hidden="true"></div>
+        <span>Carregando pagina publica...</span>
+      </div>
+      <div id="notFoundState" class="store-feedback-card d-none mt-4">
+        <h2 class="h4 mb-2">Loja nao encontrada</h2>
+        <p class="text-secondary mb-0">Esse endereco nao existe ou nao esta disponivel no momento.</p>
+      </div>
+      <div id="emptyState" class="store-feedback-card d-none mt-4">
+        <h2 id="emptyStateTitle" class="h4 mb-2">Nenhum produto publicado ainda</h2>
+        <p id="emptyStateDescription" class="text-secondary mb-0">Esta loja ainda nao publicou produtos.</p>
       </div>
     </div>
-  </header>
 
-  <main class="py-3 py-lg-4">
-    <div class="container">
-      <div id="statusMessage" class="alert d-none" role="alert"></div>
-
-      <section id="homeMarketingSection" class="row g-4">
-        <div class="col-12 col-lg-4">
-          <article class="card border-0 shadow-sm h-100">
-            <div class="card-body p-4">
-              <p class="dashboard-link-label">Pagina propria</p>
-              <h2 class="h5">Seu endereco personalizado</h2>
-              <p class="text-secondary mb-0">Cada afiliado recebe uma pagina publica exclusiva para divulgar produtos com identidade propria.</p>
-            </div>
-          </article>
-        </div>
-        <div class="col-12 col-lg-4">
-          <article class="card border-0 shadow-sm h-100">
-            <div class="card-body p-4">
-              <p class="dashboard-link-label">Gestao simples</p>
-              <h2 class="h5">Painel rapido de atualizacao</h2>
-              <p class="text-secondary mb-0">Edite sua loja, publique novos produtos e acompanhe tudo em um painel administrativo direto.</p>
-            </div>
-          </article>
-        </div>
-        <div class="col-12 col-lg-4">
-          <article class="card border-0 shadow-sm h-100">
-            <div class="card-body p-4">
-              <p class="dashboard-link-label">Visual profissional</p>
-              <h2 class="h5">Mais confianca para vender</h2>
-              <p class="text-secondary mb-0">Use banner, foto, headline e cor da marca para transformar seu link de afiliado em uma vitrine mais forte.</p>
-            </div>
-          </article>
-        </div>
-        <div class="col-12">
-          <article class="card border-0 shadow-sm dashboard-link-card">
-            <div class="card-body p-4 p-lg-5 d-flex justify-content-between align-items-center flex-wrap gap-3">
-              <div>
-                <p class="dashboard-link-label">Pronto para comecar</p>
-                <h2 class="h4 mb-2">Crie sua conta e publique sua primeira pagina ainda hoje</h2>
-                <p class="text-secondary mb-0">A home apresenta o servico. Os produtos aparecem somente nas paginas personalizadas dos afiliados.</p>
-              </div>
-              <div class="d-flex gap-2 flex-wrap">
-                <a href="cadastro.html" class="btn btn-primary">Criar conta</a>
-                <a href="login.html" class="btn btn-outline-primary">Entrar no painel</a>
-              </div>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <div id="notFoundState" class="card border-0 shadow-sm d-none">
-        <div class="card-body text-center py-5">
-          <h2 class="h5">Loja nao encontrada</h2>
-          <p class="text-secondary mb-3">Esse endereco publico nao existe ou ainda nao foi configurado.</p>
-          <a href="index.html" class="btn btn-outline-primary">Voltar para a pagina inicial</a>
-        </div>
+    <section id="productsSection" class="py-4 py-lg-5 d-none">
+      <div class="container">
+        <div id="productsGrid" class="row g-4"></div>
       </div>
-
-      <div id="loading" class="text-center py-5 d-none">
-        <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
-        <p class="mt-3 mb-0 text-secondary">Carregando produtos...</p>
-      </div>
-
-      <div id="emptyState" class="card border-0 shadow-sm d-none">
-        <div class="card-body text-center py-5">
-          <h2 id="emptyStateTitle" class="h5">Nenhum produto cadastrado ainda</h2>
-          <p id="emptyStateDescription" class="text-secondary mb-0">Volte em breve para ver novas recomendacoes.</p>
-        </div>
-      </div>
-
-      <section id="productsSection" class="d-none">
-        <div id="productsGrid" class="row g-3"></div>
-      </section>
-    </div>
+    </section>
   </main>
 
-  <footer class="py-4 border-top bg-white">
-    <div class="container small text-secondary text-center">
-      Plataforma para paginas personalizadas de afiliados.
+  <footer class="site-footer">
+    <div class="container">
+      <div class="row g-4 align-items-center">
+        <div class="col-12 col-lg-6">
+          <a class="navbar-brand d-inline-flex mb-2" href="index.html">Afiliados</a>
+          <p class="site-footer-copy mb-0">Plataforma para criar paginas personalizadas de afiliados com visual profissional e link pronto para compartilhar.</p>
+        </div>
+        <div class="col-12 col-lg-6">
+          <div class="site-footer-links">
+            <a href="cadastro.html">Criar conta</a>
+            <a href="login.html">Entrar</a>
+            <a href="mailto:contato@afiliados.com">Contato</a>
+            <a href="#">Termos</a>
+          </div>
+        </div>
+      </div>
     </div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   <script src="assets/js/config.js"></script>
   <script src="assets/js/auth.js"></script>
   <script src="assets/js/store-utils.js"></script>
