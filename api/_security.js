@@ -104,6 +104,57 @@ function parseJsonSafely(rawText) {
   }
 }
 
+async function callSupabaseAuthAdminUserEndpoint({ userId, method, body } = {}) {
+  const { url, serviceRoleKey } = getSupabaseConfig({ requireServiceRoleKey: true });
+  const normalizedUserId = String(userId || '').trim();
+
+  if (!normalizedUserId) {
+    throw new Error('ID do usuario ausente para operacao no Auth.');
+  }
+
+  const endpointCandidates = [
+    `${url}/auth/v1/admin/user/${encodeURIComponent(normalizedUserId)}`,
+    `${url}/auth/v1/admin/users/${encodeURIComponent(normalizedUserId)}`
+  ];
+
+  let lastError = null;
+
+  for (const endpoint of endpointCandidates) {
+    const response = await fetch(endpoint, {
+      method,
+      headers: {
+        'content-type': body ? 'application/json' : undefined,
+        apikey: serviceRoleKey,
+        authorization: `Bearer ${serviceRoleKey}`
+      },
+      body: body ? JSON.stringify(body) : undefined
+    });
+
+    const rawText = await response.text().catch(() => '');
+    const payload = parseJsonSafely(rawText);
+
+    if (response.ok) {
+      return payload;
+    }
+
+    const message =
+      payload?.msg ||
+      payload?.message ||
+      payload?.error_description ||
+      payload?.error ||
+      rawText ||
+      `Falha ao acessar o Auth Admin (HTTP ${response.status}).`;
+
+    lastError = new Error(message);
+
+    if (response.status !== 404) {
+      throw lastError;
+    }
+  }
+
+  throw lastError || new Error('Falha ao acessar o Auth Admin.');
+}
+
 async function verifyRecaptchaToken({ token, req }) {
   const secret = String(
     process.env.RECAPTCHA_SECRET_KEY ||
@@ -259,71 +310,30 @@ async function createSupabaseAuthUser({ email, password, metadata = {}, emailCon
 }
 
 async function updateSupabaseAuthUserById(userId, attributes = {}) {
-  const { url, serviceRoleKey } = getSupabaseConfig({ requireServiceRoleKey: true });
   const normalizedUserId = String(userId || '').trim();
 
   if (!normalizedUserId) {
     throw new Error('ID do usuario ausente para atualizacao no Auth.');
   }
 
-  const response = await fetch(`${url}/auth/v1/admin/user/${encodeURIComponent(normalizedUserId)}`, {
+  return callSupabaseAuthAdminUserEndpoint({
+    userId: normalizedUserId,
     method: 'PUT',
-    headers: {
-      'content-type': 'application/json',
-      apikey: serviceRoleKey,
-      authorization: `Bearer ${serviceRoleKey}`
-    },
-    body: JSON.stringify(attributes)
+    body: attributes
   });
-
-  const rawText = await response.text().catch(() => '');
-  const payload = parseJsonSafely(rawText);
-
-  if (!response.ok) {
-    const message =
-      payload?.msg ||
-      payload?.message ||
-      payload?.error_description ||
-      payload?.error ||
-      rawText ||
-      `Falha ao atualizar usuario no Auth (HTTP ${response.status}).`;
-    throw new Error(message);
-  }
-
-  return payload;
 }
 
 async function deleteSupabaseAuthUserById(userId) {
-  const { url, serviceRoleKey } = getSupabaseConfig({ requireServiceRoleKey: true });
   const normalizedUserId = String(userId || '').trim();
 
   if (!normalizedUserId) {
     throw new Error('ID do usuario ausente para exclusao no Auth.');
   }
 
-  const response = await fetch(`${url}/auth/v1/admin/user/${encodeURIComponent(normalizedUserId)}`, {
-    method: 'DELETE',
-    headers: {
-      apikey: serviceRoleKey,
-      authorization: `Bearer ${serviceRoleKey}`
-    }
+  return callSupabaseAuthAdminUserEndpoint({
+    userId: normalizedUserId,
+    method: 'DELETE'
   });
-
-  const rawText = await response.text().catch(() => '');
-  const payload = parseJsonSafely(rawText);
-
-  if (!response.ok) {
-    const message =
-      payload?.msg ||
-      payload?.message ||
-      payload?.error_description ||
-      payload?.error ||
-      rawText ||
-      `Falha ao excluir usuario no Auth (HTTP ${response.status}).`;
-    throw new Error(message);
-  }
-
-  return payload;
 }
 
 async function deletePublicTableRows({ table, filters = [] }) {
