@@ -107,7 +107,17 @@ body.page-resolving footer {
 }
 
 .workspace-menu {
+  position: relative;
+  z-index: 3;
   margin-bottom: 1.25rem;
+}
+
+.admin-hero-panel + .workspace-menu {
+  margin-top: -2rem;
+}
+
+.page-header-row + .workspace-menu {
+  margin-top: -0.85rem;
 }
 
 .workspace-menu-shell {
@@ -120,6 +130,13 @@ body.page-resolving footer {
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 0.85rem 1.8rem rgba(15, 23, 42, 0.06);
   scrollbar-width: thin;
+  backdrop-filter: blur(10px);
+}
+
+.admin-hero-panel + .workspace-menu .workspace-menu-shell,
+.page-header-row + .workspace-menu .workspace-menu-shell {
+  max-width: calc(100% - 2rem);
+  margin: 0 auto;
 }
 
 .workspace-menu-link {
@@ -1621,6 +1638,16 @@ body.bg-light {
 
   .workspace-menu-link {
     flex: 0 0 auto;
+  }
+
+  .admin-hero-panel + .workspace-menu,
+  .page-header-row + .workspace-menu {
+    margin-top: -0.5rem;
+  }
+
+  .admin-hero-panel + .workspace-menu .workspace-menu-shell,
+  .page-header-row + .workspace-menu .workspace-menu-shell {
+    max-width: 100%;
   }
 
   .products-form-header,
