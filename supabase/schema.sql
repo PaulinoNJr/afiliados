@@ -931,11 +931,23 @@ $$;
 create or replace function public.prevent_invalid_category_delete()
 returns trigger
 language plpgsql
-set search_path = public
+set search_path = public, auth
 as $$
 declare
   remaining_count integer;
+  auth_user_exists boolean;
 begin
+  select exists (
+    select 1
+    from auth.users auth_user
+    where auth_user.id = old.profile_id
+  )
+  into auth_user_exists;
+
+  if not auth_user_exists then
+    return old;
+  end if;
+
   select count(*)
   into remaining_count
   from public.product_categories category_item

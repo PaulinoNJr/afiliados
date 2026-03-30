@@ -77,7 +77,12 @@
             <div class="card-body p-4">
               <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                 <h2 class="h5 mb-0">Usuarios e perfis</h2>
-                <button id="reloadUsersBtn" class="btn btn-outline-primary btn-sm" type="button">Atualizar lista</button>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <span id="selectedUsersCount" class="small text-secondary">Nenhum usuario selecionado.</span>
+                  <button id="bulkDisableUsersBtn" class="btn btn-outline-warning btn-sm" type="button" disabled>Desativar selecionados</button>
+                  <button id="bulkDeleteUsersBtn" class="btn btn-outline-danger btn-sm" type="button" disabled>Excluir selecionados</button>
+                  <button id="reloadUsersBtn" class="btn btn-outline-primary btn-sm" type="button">Atualizar lista</button>
+                </div>
               </div>
 
               <div id="usersLoading" class="text-center py-4 d-none">
@@ -89,6 +94,9 @@
                 <table class="table admin-table align-middle">
                   <thead>
                     <tr>
+                      <th class="text-center" style="width: 44px;">
+                        <input id="selectAllUsers" type="checkbox" class="form-check-input" aria-label="Selecionar todos os usuarios" />
+                      </th>
                       <th>Email</th>
                       <th>Loja</th>
                       <th>Perfil</th>

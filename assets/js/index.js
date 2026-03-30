@@ -89,13 +89,27 @@
     if (tag) tag.setAttribute(attribute, value);
   }
 
+  function updateCanonical(url) {
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) canonical.setAttribute('href', url);
+  }
+
+  function updateStructuredData(payload) {
+    const script = document.getElementById('structuredData');
+    if (!script) return;
+    script.textContent = JSON.stringify(payload, null, 2);
+  }
+
   function updateSeo({ title, description, image, url }) {
     document.title = title;
     setMetaTag('meta[name="description"]', 'content', description);
+    setMetaTag('meta[name="twitter:title"]', 'content', title);
+    setMetaTag('meta[name="twitter:description"]', 'content', description);
     setMetaTag('meta[property="og:title"]', 'content', title);
     setMetaTag('meta[property="og:description"]', 'content', description);
     setMetaTag('meta[property="og:image"]', 'content', image || defaultImage());
     setMetaTag('meta[property="og:url"]', 'content', url);
+    updateCanonical(url);
   }
 
   function updateSearchSummary(total, filtered) {
@@ -186,18 +200,33 @@
     document.body.style.removeProperty('--store-accent-color');
     document.body.style.removeProperty('--store-button-text-color');
 
-    refs.homeHeroBadge.textContent = 'Seu proprio site de vendas em minutos';
-    refs.homeHeroTitle.textContent = 'Crie sua pagina de afiliados e comece a vender hoje';
-    refs.homeHeroDescription.textContent = 'Monte sua vitrine online personalizada e compartilhe seu link para ganhar comissoes com uma pagina mais profissional.';
+    refs.homeHeroBadge.textContent = 'Pagina de afiliados profissional com URL propria';
+    refs.homeHeroTitle.textContent = 'Crie sua loja de afiliados, publique seus produtos e venda com mais autoridade';
+    refs.homeHeroDescription.textContent = 'Monte uma vitrine online otimizada para afiliados, organize seus links em uma pagina clara e compartilhe um endereco profissional para gerar mais cliques e mais confianca.';
     refs.marketingCardContent.classList.remove('d-none');
     refs.homeMarketingSection.classList.remove('d-none');
     resetStoreUi();
     finishResolvingPage();
 
     updateSeo({
-      title: 'Afiliados | Crie sua pagina de afiliados',
-      description: 'Monte sua vitrine online personalizada, publique produtos e compartilhe seu link para ganhar comissoes.',
+      title: 'Pagina de Afiliados Profissional | Crie sua Loja de Afiliados',
+      description: 'Crie uma pagina de afiliados profissional, organize seus links, publique sua loja online e apareca com mais autoridade no Google e nas redes sociais.',
       image: defaultImage(),
+      url: `${window.location.origin}/`
+    });
+
+    updateStructuredData({
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: 'Afiliados',
+      applicationCategory: 'BusinessApplication',
+      operatingSystem: 'Web',
+      description: 'Plataforma para criar pagina de afiliados, loja de afiliados e vitrine online com URL personalizada.',
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'BRL'
+      },
       url: `${window.location.origin}/`
     });
   }
@@ -245,7 +274,16 @@
     }
 
     updateSeo({
-      title: `Loja de ${store.store_name}`,
+      title: `${store.store_name} | Loja de Afiliados`,
+      description,
+      image: store.banner_url || store.photo_url || defaultImage(),
+      url: window.StoreUtils.getStoreUrl(store.slug)
+    });
+
+    updateStructuredData({
+      '@context': 'https://schema.org',
+      '@type': 'Store',
+      name: store.store_name || 'Loja de afiliados',
       description,
       image: store.banner_url || store.photo_url || defaultImage(),
       url: window.StoreUtils.getStoreUrl(store.slug)
@@ -278,6 +316,14 @@
       title: 'Loja nao encontrada | Afiliados',
       description: 'Essa loja publica nao foi encontrada.',
       image: defaultImage(),
+      url: window.location.href
+    });
+
+    updateStructuredData({
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      name: 'Loja nao encontrada | Afiliados',
+      description: 'Essa loja publica nao foi encontrada.',
       url: window.location.href
     });
   }

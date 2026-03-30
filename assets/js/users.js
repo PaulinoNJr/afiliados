@@ -7,7 +7,9 @@
     profile: null,
     users: [],
     selectedUser: null,
-    slugCheckNonce: 0
+    slugCheckNonce: 0,
+    selectedUserIds: [],
+    managementActionLoading: ''
   };
 
   const refs = {
@@ -25,6 +27,10 @@
     newUserPasswordMatchFeedback: document.getElementById('newUserPasswordMatchFeedback'),
 
     usersLoading: document.getElementById('usersLoading'),
+    selectAllUsers: document.getElementById('selectAllUsers'),
+    selectedUsersCount: document.getElementById('selectedUsersCount'),
+    bulkDisableUsersBtn: document.getElementById('bulkDisableUsersBtn'),
+    bulkDeleteUsersBtn: document.getElementById('bulkDeleteUsersBtn'),
     reloadUsersBtn: document.getElementById('reloadUsersBtn'),
     usersTableBody: document.getElementById('usersTableBody'),
     emptyUsersState: document.getElementById('emptyUsersState'),
@@ -78,14 +84,6 @@
     refs.usersLoading.classList.toggle('d-none', !isLoading);
   }
 
-  function setAccountActionsLoading(action = '', isLoading = false) {
-    refs.disableUserBtn.disabled = isLoading || !state.selectedUser || state.selectedUser.user_id === state.session?.user?.id;
-    refs.deleteUserBtn.disabled = isLoading || !state.selectedUser || state.selectedUser.user_id === state.session?.user?.id;
-
-    refs.disableUserBtn.textContent = isLoading && action === 'disable' ? 'Desativando...' : 'Desativar conta';
-    refs.deleteUserBtn.textContent = isLoading && action === 'delete' ? 'Excluindo...' : 'Excluir conta';
-  }
-
   function formatDate(value) {
     if (!value) return '-';
     return new Date(value).toLocaleString('pt-BR');
@@ -108,6 +106,89 @@
   function setSlugFeedback(message, tone = 'secondary') {
     refs.editStoreSlugFeedback.className = `d-block mt-2 text-${tone}`;
     refs.editStoreSlugFeedback.textContent = message;
+  }
+
+  function getManageableUsers() {
+    return state.users.filter((user) => user.user_id !== state.session?.user?.id);
+  }
+
+  function getSelectedUserIds() {
+    return state.selectedUserIds.filter((userId) => state.users.some((user) => user.user_id === userId));
+  }
+
+  function syncBulkSelectionState() {
+    state.selectedUserIds = getSelectedUserIds();
+
+    const selectedCount = state.selectedUserIds.length;
+    const totalManageable = getManageableUsers().length;
+    const isBusy = Boolean(state.managementActionLoading);
+
+    refs.selectedUsersCount.textContent = selectedCount
+      ? `${selectedCount} usuario(s) selecionado(s).`
+      : 'Nenhum usuario selecionado.';
+
+    refs.bulkDisableUsersBtn.disabled = isBusy || selectedCount === 0;
+    refs.bulkDeleteUsersBtn.disabled = isBusy || selectedCount === 0;
+    refs.bulkDisableUsersBtn.textContent = isBusy && state.managementActionLoading === 'disable'
+      ? 'Desativando...'
+      : 'Desativar selecionados';
+    refs.bulkDeleteUsersBtn.textContent = isBusy && state.managementActionLoading === 'delete'
+      ? 'Excluindo...'
+      : 'Excluir selecionados';
+
+    refs.selectAllUsers.checked = totalManageable > 0 && selectedCount === totalManageable;
+    refs.selectAllUsers.indeterminate = selectedCount > 0 && selectedCount < totalManageable;
+    refs.selectAllUsers.disabled = isBusy || totalManageable === 0;
+  }
+
+  function setAccountActionsLoading(action = '', isLoading = false) {
+    if (isLoading) {
+      state.managementActionLoading = action;
+    } else if (!action || state.managementActionLoading === action) {
+      state.managementActionLoading = '';
+    }
+
+    const isBusy = Boolean(state.managementActionLoading);
+
+    refs.disableUserBtn.disabled = isBusy || !state.selectedUser || state.selectedUser.user_id === state.session?.user?.id;
+    refs.deleteUserBtn.disabled = isBusy || !state.selectedUser || state.selectedUser.user_id === state.session?.user?.id;
+
+    refs.disableUserBtn.textContent = isBusy && state.managementActionLoading === 'disable' ? 'Desativando...' : 'Desativar conta';
+    refs.deleteUserBtn.textContent = isBusy && state.managementActionLoading === 'delete' ? 'Excluindo...' : 'Excluir conta';
+
+    if (state.users.length) {
+      renderUsers();
+      return;
+    }
+
+    syncBulkSelectionState();
+  }
+
+  function isUserSelected(userId) {
+    return state.selectedUserIds.includes(userId);
+  }
+
+  function setUserSelection(userId, selected) {
+    const nextSelection = new Set(state.selectedUserIds);
+
+    if (selected) {
+      nextSelection.add(userId);
+    } else {
+      nextSelection.delete(userId);
+    }
+
+    state.selectedUserIds = Array.from(nextSelection);
+    renderUsers();
+    syncBulkSelectionState();
+  }
+
+  function setAllUsersSelection(selected) {
+    state.selectedUserIds = selected
+      ? getManageableUsers().map((user) => user.user_id)
+      : [];
+
+    renderUsers();
+    syncBulkSelectionState();
   }
 
   function updatePasswordValidation() {
@@ -203,6 +284,7 @@
     if (!state.users.length) {
       refs.emptyUsersState.classList.remove('d-none');
       clearEditor();
+      syncBulkSelectionState();
       return;
     }
 
@@ -210,12 +292,27 @@
 
     state.users.forEach((user) => {
       const tr = document.createElement('tr');
-      const isSelected = state.selectedUser?.user_id === user.user_id;
+      const isEditorSelected = state.selectedUser?.user_id === user.user_id;
+      const isOwnAccount = user.user_id === state.session?.user?.id;
+
+      const tdSelect = document.createElement('td');
+      tdSelect.className = 'text-center';
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'form-check-input';
+      checkbox.checked = isUserSelected(user.user_id);
+      checkbox.disabled = isOwnAccount || Boolean(state.managementActionLoading);
+      checkbox.setAttribute('aria-label', `Selecionar ${user.user_email || user.user_id}`);
+      checkbox.addEventListener('change', () => {
+        setUserSelection(user.user_id, checkbox.checked);
+      });
+      tdSelect.appendChild(checkbox);
 
       const tdEmail = document.createElement('td');
       tdEmail.innerHTML = `
         <div class="fw-semibold">${user.user_email || `Sem email (${user.user_id.slice(0, 8)}...)`}</div>
-        <div class="small text-secondary">${[user.first_name, user.last_name].filter(Boolean).join(' ') || 'Sem nome informado'}</div>
+        <div class="small text-secondary">${[user.first_name, user.last_name].filter(Boolean).join(' ') || 'Sem nome informado'}${isOwnAccount ? ' · sua conta' : ''}</div>
       `;
 
       const tdStore = document.createElement('td');
@@ -246,14 +343,17 @@
 
       const editBtn = document.createElement('button');
       editBtn.type = 'button';
-      editBtn.className = isSelected ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline-primary';
-      editBtn.textContent = isSelected ? 'Editando' : 'Editar';
+      editBtn.className = isEditorSelected ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline-primary';
+      editBtn.textContent = isEditorSelected ? 'Editando' : 'Editar';
+      editBtn.disabled = Boolean(state.managementActionLoading);
       editBtn.addEventListener('click', () => populateEditor(user));
 
       tdActions.appendChild(editBtn);
-      tr.append(tdEmail, tdStore, tdRole, tdUpdated, tdActions);
+      tr.append(tdSelect, tdEmail, tdStore, tdRole, tdUpdated, tdActions);
       refs.usersTableBody.appendChild(tr);
     });
+
+    syncBulkSelectionState();
   }
 
   async function loadUsers() {
@@ -403,7 +503,10 @@
 
       if (error) throw error;
 
-      state.selectedUser = data;
+      state.selectedUser = {
+        ...state.selectedUser,
+        ...data
+      };
 
       if (data.user_id === state.session.user.id) {
         state.profile = data;
@@ -475,28 +578,47 @@
     }
   }
 
-  async function manageSelectedUser(action) {
+  async function manageUsers(action, userIds) {
     hideStatus();
 
-    if (!state.selectedUser) {
-      showStatus('Selecione um usuario para gerenciar a conta.', 'warning');
+    const normalizedIds = Array.from(new Set(
+      (Array.isArray(userIds) ? userIds : [])
+        .map((userId) => String(userId || '').trim())
+        .filter(Boolean)
+    ));
+
+    if (!normalizedIds.length) {
+      showStatus('Selecione pelo menos um usuario para gerenciar a conta.', 'warning');
       return;
     }
 
-    if (state.selectedUser.user_id === state.session.user.id) {
-      showStatus('Por seguranca, voce nao pode desativar ou excluir a propria conta por esta tela.', 'warning');
+    const selectedUsers = normalizedIds
+      .map((userId) => state.users.find((user) => user.user_id === userId))
+      .filter(Boolean);
+
+    const manageableUsers = selectedUsers.filter((user) => user.user_id !== state.session.user.id);
+    if (!manageableUsers.length) {
+      showStatus('Sua propria conta nao pode ser gerenciada por essa acao.', 'warning');
       return;
     }
 
-    const userLabel = state.selectedUser.user_email || state.selectedUser.user_id;
-    const confirmMessage = action === 'delete'
-      ? `Deseja excluir permanentemente a conta de ${userLabel}? Essa acao remove o acesso no Auth e apaga o perfil e registros relacionados conforme as regras do banco.`
-      : `Deseja desativar a conta de ${userLabel}? O usuario perdera o acesso ao sistema ate ser reativado manualmente no Supabase Auth.`;
+    const confirmMessage = manageableUsers.length === 1
+      ? (
+          action === 'delete'
+            ? `Deseja excluir permanentemente a conta de ${manageableUsers[0].user_email || manageableUsers[0].user_id}? Essa acao remove o acesso no Auth e apaga o perfil e registros relacionados conforme as regras do banco.`
+            : `Deseja desativar a conta de ${manageableUsers[0].user_email || manageableUsers[0].user_id}? O usuario perdera o acesso ao sistema ate ser reativado manualmente no Supabase Auth.`
+        )
+      : (
+          action === 'delete'
+            ? `Deseja excluir permanentemente ${manageableUsers.length} contas selecionadas? Essa acao remove o acesso no Auth e apaga os registros relacionados de forma irreversivel.`
+            : `Deseja desativar ${manageableUsers.length} contas selecionadas? Os usuarios perderao o acesso ao sistema.`
+        );
 
     if (!window.confirm(confirmMessage)) {
       return;
     }
 
+    state.selectedUserIds = manageableUsers.map((user) => user.user_id);
     setAccountActionsLoading(action, true);
 
     try {
@@ -507,34 +629,57 @@
           authorization: `Bearer ${state.session.access_token}`
         },
         body: JSON.stringify({
-          userId: state.selectedUser.user_id,
-          action
+          action,
+          userIds: manageableUsers.map((user) => user.user_id)
         })
       });
 
       const payload = await response.json().catch(() => ({}));
-      if (!response.ok || !payload.ok) {
+      if (!response.ok) {
         throw new Error(payload.error || 'Nao foi possivel concluir o gerenciamento da conta.');
       }
 
       if (action === 'disable') {
-        state.selectedUser = {
-          ...state.selectedUser,
-          authDisabled: true
-        };
+        const successIds = new Set(
+          payload.results?.length
+            ? payload.results.map((item) => item.userId)
+            : (payload.userId ? [payload.userId] : [])
+        );
 
         state.users = state.users.map((user) => (
-          user.user_id === state.selectedUser.user_id
+          successIds.has(user.user_id)
             ? { ...user, authDisabled: true }
             : user
         ));
 
-        populateEditor(state.selectedUser);
-      } else {
+        if (state.selectedUser && successIds.has(state.selectedUser.user_id)) {
+          populateEditor({
+            ...state.selectedUser,
+            authDisabled: true
+          });
+        }
+      } else if (manageableUsers.some((user) => user.user_id === state.selectedUser?.user_id)) {
         clearEditor();
       }
 
-      showStatus(payload.message || 'Conta atualizada com sucesso.', 'success');
+      state.selectedUserIds = [];
+
+      if (payload.ok) {
+        showStatus(payload.message || 'Conta atualizada com sucesso.', 'success');
+      } else if (payload.partial) {
+        const details = (payload.errors || [])
+          .map((item) => item.error)
+          .filter(Boolean)
+          .join(' | ');
+        showStatus(`${payload.message}${details ? ` Detalhes: ${details}` : ''}`, 'warning');
+      } else {
+        const details = (payload.errors || [])
+          .map((item) => item.error)
+          .filter(Boolean)
+          .join(' | ');
+        throw new Error(details || payload.message || 'Nao foi possivel concluir o gerenciamento da conta.');
+      }
+
       await loadUsers();
     } catch (err) {
       showStatus(`Erro ao gerenciar conta: ${err.message}`, 'danger');
@@ -575,10 +720,19 @@
       refs.newUserPasswordConfirm.addEventListener('input', updatePasswordValidation);
       refs.createUserForm.addEventListener('submit', createUser);
       refs.reloadUsersBtn.addEventListener('click', loadUsers);
+      refs.selectAllUsers.addEventListener('change', () => {
+        setAllUsersSelection(refs.selectAllUsers.checked);
+      });
+      refs.bulkDisableUsersBtn.addEventListener('click', () => {
+        manageUsers('disable', state.selectedUserIds);
+      });
+      refs.bulkDeleteUsersBtn.addEventListener('click', () => {
+        manageUsers('delete', state.selectedUserIds);
+      });
       refs.clearEditorBtn.addEventListener('click', clearEditor);
       refs.editUserForm.addEventListener('submit', updateSelectedUser);
-      refs.disableUserBtn.addEventListener('click', () => manageSelectedUser('disable'));
-      refs.deleteUserBtn.addEventListener('click', () => manageSelectedUser('delete'));
+      refs.disableUserBtn.addEventListener('click', () => manageUsers('disable', [state.selectedUser?.user_id]));
+      refs.deleteUserBtn.addEventListener('click', () => manageUsers('delete', [state.selectedUser?.user_id]));
 
       refs.editPhone.addEventListener('input', () => {
         refs.editPhone.value = window.StoreUtils.formatPhone(refs.editPhone.value);
@@ -596,6 +750,7 @@
       });
 
       updatePasswordValidation();
+      syncBulkSelectionState();
       await loadUsers();
     } catch (err) {
       showStatus(`Erro ao iniciar a gestao de usuarios: ${err.message}`, 'danger');

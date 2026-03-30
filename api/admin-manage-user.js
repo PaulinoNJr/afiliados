@@ -24,6 +24,69 @@ module.exports = async (req, res) => {
   const authorization = String(req.headers.authorization || '').trim();
   const accessToken = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
 
+  async function runAccountAction({ userId, action, currentUserId }) {
+    if (!userId) {
+      return {
+        ok: false,
+        userId,
+        error: 'Usuario alvo ausente.'
+      };
+    }
+
+    if (userId === currentUserId) {
+      return {
+        ok: false,
+        userId,
+        error: 'Por seguranca, voce nao pode desativar ou excluir a propria conta por esta tela.'
+      };
+    }
+
+    const targetRole = await getUserRole(userId);
+    if (!targetRole) {
+      return {
+        ok: false,
+        userId,
+        error: 'Usuario nao encontrado.'
+      };
+    }
+
+    if (action === 'disable') {
+      await updateSupabaseAuthUserById(userId, {
+        ban_duration: '876000h'
+      });
+
+      return {
+        ok: true,
+        userId,
+        action,
+        message: 'Conta desativada com sucesso.'
+      };
+    }
+
+    await deletePublicTableRows({
+      table: 'produtos',
+      filters: [
+        { column: 'profile_id', value: userId }
+      ]
+    });
+
+    await deletePublicTableRows({
+      table: 'produtos',
+      filters: [
+        { column: 'created_by', value: userId }
+      ]
+    });
+
+    await deleteSupabaseAuthUserById(userId);
+
+    return {
+      ok: true,
+      userId,
+      action,
+      message: 'Conta excluida com sucesso.'
+    };
+  }
+
   try {
     const currentUser = await getAuthenticatedSupabaseUser(accessToken);
     if (!currentUser?.id) {
@@ -41,10 +104,16 @@ module.exports = async (req, res) => {
       });
     }
 
-    const userId = String(req.body?.userId || '').trim();
     const action = String(req.body?.action || '').trim().toLowerCase();
+    const singleUserId = String(req.body?.userId || '').trim();
+    const batchUserIds = Array.isArray(req.body?.userIds) ? req.body.userIds : [];
+    const userIds = Array.from(new Set(
+      (batchUserIds.length ? batchUserIds : [singleUserId])
+        .map((value) => String(value || '').trim())
+        .filter(Boolean)
+    ));
 
-    if (!userId) {
+    if (!userIds.length) {
       return res.status(400).json({
         ok: false,
         error: 'Usuario alvo ausente.'
@@ -58,69 +127,64 @@ module.exports = async (req, res) => {
       });
     }
 
-    if (userId === currentUser.id) {
-      return res.status(400).json({
-        ok: false,
-        error: 'Por seguranca, voce nao pode desativar ou excluir a propria conta por esta tela.'
+    if (userIds.length === 1) {
+      const result = await runAccountAction({
+        userId: userIds[0],
+        action,
+        currentUserId: currentUser.id
       });
-    }
 
-    const targetRole = await getUserRole(userId);
-    if (!targetRole) {
-      return res.status(404).json({
-        ok: false,
-        error: 'Usuario nao encontrado.'
-      });
-    }
-
-    if (action === 'disable') {
-      await updateSupabaseAuthUserById(userId, {
-        ban_duration: '876000h'
-      });
+      if (!result.ok) {
+        return res.status(/propria conta/i.test(result.error) ? 400 : 404).json({
+          ok: false,
+          error: result.error
+        });
+      }
 
       return res.status(200).json({
         ok: true,
         action,
-        userId,
-        message: 'Conta desativada com sucesso. O usuario nao conseguira mais entrar no sistema.'
+        userId: result.userId,
+        message: action === 'disable'
+          ? 'Conta desativada com sucesso. O usuario nao conseguira mais entrar no sistema.'
+          : 'Conta excluida com sucesso. Os dados relacionados foram removidos conforme as regras de cascata do banco.'
       });
     }
 
-    await deletePublicTableRows({
-      table: 'produtos',
-      filters: [
-        { column: 'profile_id', value: userId }
-      ]
-    });
+    const results = [];
+    const errors = [];
 
-    await deletePublicTableRows({
-      table: 'produtos',
-      filters: [
-        { column: 'created_by', value: userId }
-      ]
-    });
+    for (const userId of userIds) {
+      try {
+        const result = await runAccountAction({
+          userId,
+          action,
+          currentUserId: currentUser.id
+        });
 
-    await deletePublicTableRows({
-      table: 'product_categories',
-      filters: [
-        { column: 'profile_id', value: userId }
-      ]
-    });
-
-    await deletePublicTableRows({
-      table: 'user_profiles',
-      filters: [
-        { column: 'user_id', value: userId }
-      ]
-    });
-
-    await deleteSupabaseAuthUserById(userId);
+        if (result.ok) {
+          results.push(result);
+        } else {
+          errors.push(result);
+        }
+      } catch (error) {
+        errors.push({
+          ok: false,
+          userId,
+          error: error.message
+        });
+      }
+    }
 
     return res.status(200).json({
-      ok: true,
+      ok: errors.length === 0,
+      partial: results.length > 0 && errors.length > 0,
       action,
-      userId,
-      message: 'Conta excluida com sucesso. Os dados relacionados foram removidos conforme as regras de cascata do banco.'
+      results,
+      errors,
+      message: errors.length === 0
+        ? `${results.length} conta(s) processada(s) com sucesso.`
+        : `${results.length} conta(s) processada(s) com sucesso e ${errors.length} com erro.`
     });
   } catch (error) {
     const message = /SUPABASE_SERVICE_ROLE_KEY/i.test(error.message)
