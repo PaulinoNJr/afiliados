@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ ok: false, error: 'Metodo nao permitido.' });
+    return res.status(405).json({ ok: false, error: 'Método não permitido.' });
   }
 
   try {

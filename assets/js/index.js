@@ -202,7 +202,7 @@
 
     refs.homeHeroBadge.textContent = 'Pagina de afiliados profissional com URL propria';
     refs.homeHeroTitle.textContent = 'Crie sua loja de afiliados, publique seus produtos e venda com mais autoridade';
-    refs.homeHeroDescription.textContent = 'Monte uma vitrine online otimizada para afiliados, organize seus links em uma pagina clara e compartilhe um endereco profissional para gerar mais cliques e mais confianca.';
+    refs.homeHeroDescription.textContent = 'Monte uma vitrine online otimizada para afiliados, organize seus links em uma página clara e compartilhe um endereço profissional para gerar mais cliques e mais confiança.';
     refs.marketingCardContent.classList.remove('d-none');
     refs.homeMarketingSection.classList.remove('d-none');
     resetStoreUi();
@@ -210,7 +210,7 @@
 
     updateSeo({
       title: 'Pagina de Afiliados Profissional | Crie sua Loja de Afiliados',
-      description: 'Crie uma pagina de afiliados profissional, organize seus links, publique sua loja online e apareca com mais autoridade no Google e nas redes sociais.',
+      description: 'Crie uma página de afiliados profissional, organize seus links, publique sua loja online e apareça com mais autoridade no Google e nas redes sociais.',
       image: defaultImage(),
       url: `${window.location.origin}/`
     });
@@ -221,7 +221,7 @@
       name: 'Afiliados',
       applicationCategory: 'BusinessApplication',
       operatingSystem: 'Web',
-      description: 'Plataforma para criar pagina de afiliados, loja de afiliados e vitrine online com URL personalizada.',
+      description: 'Plataforma para criar página de afiliados, loja de afiliados e vitrine online com URL personalizada.',
       offers: {
         '@type': 'Offer',
         price: '0',
@@ -244,7 +244,7 @@
 
     refs.heroTitle.textContent = store.store_name || 'Loja de afiliado';
     refs.emptyStateTitle.textContent = 'Nenhum produto publicado ainda';
-    refs.emptyStateDescription.textContent = 'Esta loja ainda nao publicou produtos.';
+    refs.emptyStateDescription.textContent = 'Esta loja ainda não publicou produtos.';
     refs.marketingCardContent.classList.add('d-none');
     refs.homeMarketingSection.classList.add('d-none');
     refs.storeTopBar.classList.remove('d-none');
@@ -313,8 +313,8 @@
     finishResolvingPage();
 
     updateSeo({
-      title: 'Loja nao encontrada | Afiliados',
-      description: 'Essa loja publica nao foi encontrada.',
+      title: 'Loja não encontrada | Afiliados',
+      description: 'Essa loja pública não foi encontrada.',
       image: defaultImage(),
       url: window.location.href
     });
@@ -322,8 +322,8 @@
     updateStructuredData({
       '@context': 'https://schema.org',
       '@type': 'WebPage',
-      name: 'Loja nao encontrada | Afiliados',
-      description: 'Essa loja publica nao foi encontrada.',
+      name: 'Loja não encontrada | Afiliados',
+      description: 'Essa loja pública não foi encontrada.',
       url: window.location.href
     });
   }
@@ -339,7 +339,7 @@
         refs.emptyStateDescription.textContent = 'Tente outro termo para encontrar itens desta lista.';
       } else {
         refs.emptyStateTitle.textContent = 'Nenhum produto publicado ainda';
-        refs.emptyStateDescription.textContent = 'Esta loja ainda nao publicou produtos.';
+        refs.emptyStateDescription.textContent = 'Esta loja ainda não publicou produtos.';
       }
 
       refs.emptyState.classList.remove('d-none');
@@ -383,7 +383,7 @@
       categoryBadge.className = 'store-category-pill mb-2';
       categoryBadge.textContent = item.category_name || 'Geral';
 
-      const descriptionText = item.descricao || 'Sem descricao.';
+      const descriptionText = item.descricao || 'Sem descrição.';
       const desc = document.createElement('p');
       desc.className = 'text-secondary small mb-1 product-desc is-collapsed';
       desc.textContent = descriptionText;
@@ -525,7 +525,7 @@
     if (window.AppConfig?.missingConfig) {
       applyNotFoundState();
       finishResolvingPage();
-      showStatus('Configure o Supabase em assets/js/config.js para carregar as lojas publicas.', 'warning');
+      showStatus('Configure o Supabase em assets/js/config.js para carregar as lojas públicas.', 'warning');
       return;
     }
 
@@ -534,7 +534,7 @@
     } catch (err) {
       refs.loading.classList.add('d-none');
       finishResolvingPage();
-      showStatus(`Erro ao carregar pagina publica: ${err.message}`, 'danger');
+      showStatus(`Erro ao carregar página pública: ${err.message}`, 'danger');
     }
   }
 

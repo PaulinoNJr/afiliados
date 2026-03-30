@@ -117,7 +117,7 @@
 
   async function uploadStoreAsset(file, { userId, assetType = 'asset' } = {}) {
     if (!window.db) {
-      throw new Error('Supabase nao configurado.');
+      throw new Error('Supabase não configurado.');
     }
 
     if (!(file instanceof File)) {
@@ -125,7 +125,7 @@
     }
 
     if (!userId) {
-      throw new Error('Usuario nao identificado para upload.');
+      throw new Error('Usuário não identificado para upload.');
     }
 
     if (!String(file.type || '').startsWith('image/')) {

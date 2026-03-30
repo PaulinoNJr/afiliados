@@ -5,7 +5,7 @@
   // 3) fallback para valores definidos abaixo
   const inlineConfig = window.SUPABASE_CONFIG || {};
 
-  // Como a anon key do Supabase e publica por design, este arquivo pode ficar no frontend.
+  // Como a anon key do Supabase é pública por design, este arquivo pode ficar no frontend.
   const SUPABASE_URL = String(
     window.SUPABASE_URL ||
     inlineConfig.url ||
@@ -31,23 +31,23 @@
   );
 
   const configIssues = [];
-  if (!isValidSupabaseUrl) configIssues.push('SUPABASE_URL invalida');
-  if (!isJwt) configIssues.push('SUPABASE_ANON_KEY invalida');
+  if (!isValidSupabaseUrl) configIssues.push('SUPABASE_URL inválida');
+  if (!isJwt) configIssues.push('SUPABASE_ANON_KEY inválida');
   if (hasPlaceholder) configIssues.push('valor de exemplo detectado');
 
   const missingConfig = configIssues.length > 0;
   const hasSdk = typeof window.supabase !== 'undefined';
 
   if (!hasSdk) {
-    console.error('Supabase SDK nao carregado. Verifique a tag <script> do CDN.');
+    console.error('Supabase SDK não carregado. Verifique a tag <script> do CDN.');
   }
 
   if (missingConfig) {
-    console.warn(`Config Supabase invalida: ${configIssues.join(', ')}.`);
+    console.warn(`Configuração do Supabase inválida: ${configIssues.join(', ')}.`);
   }
 
   if (!RECAPTCHA_SITE_KEY) {
-    console.warn('RECAPTCHA_SITE_KEY nao configurada. O cadastro anti-bot ficara indisponivel ate a chave ser informada.');
+    console.warn('RECAPTCHA_SITE_KEY não configurada. O cadastro anti-bot ficará indisponível até a chave ser informada.');
   }
 
   const client = !missingConfig && hasSdk

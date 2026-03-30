@@ -250,7 +250,7 @@
 
   function updatePreview() {
     const title = refs.titulo.value.trim() || 'Produto sem titulo';
-    const description = refs.descricao.value.trim() || 'Adicione uma descricao para melhorar a conversao.';
+    const description = refs.descricao.value.trim() || 'Adicione uma descrição para melhorar a conversão.';
     const image = refs.imagemUrl.value.trim();
     const price = parsePrice(refs.preco.value);
     const link = refs.linkAfiliado.value.trim();
@@ -504,7 +504,7 @@
       const tdProduct = document.createElement('td');
       tdProduct.innerHTML = `
         <div class="fw-semibold mb-1">${item.titulo || 'Produto sem titulo'}</div>
-        <div class="small text-secondary mb-1">${item.descricao ? `${item.descricao.slice(0, 88)}${item.descricao.length > 88 ? '...' : ''}` : 'Sem descricao.'}</div>
+        <div class="small text-secondary mb-1">${item.descricao ? `${item.descricao.slice(0, 88)}${item.descricao.length > 88 ? '...' : ''}` : 'Sem descrição.'}</div>
       `;
       const link = document.createElement('a');
       link.href = item.link_afiliado;
@@ -806,7 +806,7 @@
     }
 
     if (!isValidHttpUrl(linkAfiliado) || !titulo || Number.isNaN(preco) || preco <= 0) {
-      showStatus('Preencha link valido, nome e preco maior que zero.', 'warning');
+      showStatus('Preencha um link válido, nome e preço maior que zero.', 'warning');
       return;
     }
 
@@ -904,7 +904,7 @@
     anchor.click();
     anchor.remove();
     URL.revokeObjectURL(url);
-    showStatus('Exportacao CSV concluida.', 'success');
+    showStatus('Exportação CSV concluída.', 'success');
   }
 
   function bindEvents() {
@@ -976,7 +976,7 @@
       restoreDraft();
       await loadProducts();
     } catch (err) {
-      showStatus(`Erro ao iniciar a gestao de produtos: ${err.message}`, 'danger');
+      showStatus(`Erro ao iniciar a gestão de produtos: ${err.message}`, 'danger');
     }
   }
 

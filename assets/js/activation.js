@@ -55,14 +55,14 @@
       : 'dentro de 5 dias';
 
     const nextStep = awaitingExplicitConfirmation
-      ? 'Use o botao abaixo para validar o email e concluir a ativacao com seguranca.'
+      ? 'Use o botão abaixo para validar o email e concluir a ativação com segurança.'
       : awaitingEmailConfirmation
-        ? 'Abra o email recebido no cadastro e use o link mais recente para concluir a ativacao.'
-        : 'Depois da ativacao, o painel, a configuracao da loja e o cadastro de produtos ficam liberados normalmente.';
+        ? 'Abra o email recebido no cadastro e use o link mais recente para concluir a ativação.'
+        : 'Depois da ativação, o painel, a configuração da loja e o cadastro de produtos ficam liberados normalmente.';
 
     refs.activationInfo.innerHTML = `
-      <p class="small text-uppercase fw-semibold text-secondary mb-2">Status da ativacao</p>
-      <p class="small text-secondary mb-2">A sua conta fica pendente ate a confirmacao do email. O prazo limite para ativacao e <strong>${expiresAt}</strong>.</p>
+      <p class="small text-uppercase fw-semibold text-secondary mb-2">Status da ativação</p>
+      <p class="small text-secondary mb-2">A sua conta fica pendente até a confirmação do email. O prazo limite para ativação é <strong>${expiresAt}</strong>.</p>
       <p class="small text-secondary mb-0">${nextStep}</p>
     `;
   }
@@ -152,7 +152,7 @@
       disabled: true,
       text: 'Confirmando email...'
     });
-    showStatus('Validando o link de confirmacao e preparando a ativacao...', 'info');
+    showStatus('Validando o link de confirmação e preparando a ativação...', 'info');
 
     try {
       const { error } = await window.db.auth.verifyOtp({
@@ -166,7 +166,7 @@
 
       const session = await waitForSession();
       if (!session) {
-        throw new Error('O email foi confirmado, mas a sessao nao ficou disponivel. Abra novamente o link mais recente enviado para sua caixa de entrada.');
+        throw new Error('O email foi confirmado, mas a sessão não ficou disponível. Abra novamente o link mais recente enviado para sua caixa de entrada.');
       }
 
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -211,7 +211,7 @@
     if (status === 'pending') {
       showStatus('Sua conta ainda precisa ser confirmada pelo link enviado no email.', 'warning');
     } else if (status === 'expired') {
-      showStatus('O prazo para ativar sua conta expirou. Cadastre novamente ou solicite um novo email de ativacao.', 'danger');
+      showStatus('O prazo para ativar sua conta expirou. Cadastre novamente ou solicite um novo email de ativação.', 'danger');
     }
 
     try {
@@ -224,11 +224,11 @@
       const hasSessionPayload = ['access_token', 'refresh_token', 'code'].some((name) => Boolean(getParam(name)));
       if (hasSessionPayload) {
         renderInfo();
-        showStatus('Recebemos o retorno do email de confirmacao. Validando a sessao...', 'info');
+        showStatus('Recebemos o retorno do email de confirmação. Validando a sessão...', 'info');
         const session = await waitForSession();
         if (!session) {
           renderInfo(null, { awaitingEmailConfirmation: true });
-          showStatus('O link foi aberto, mas a sessao nao foi concluida automaticamente. Use o email mais recente ou atualize o template de confirmacao no Supabase.', 'warning');
+          showStatus('O link foi aberto, mas a sessão não foi concluída automaticamente. Use o email mais recente ou atualize o template de confirmação no Supabase.', 'warning');
           return;
         }
 
@@ -241,7 +241,7 @@
         setConfirmButton({ visible: false });
       }
     } catch (err) {
-      showStatus(err.message || 'Nao foi possivel concluir a ativacao da conta.', 'danger');
+      showStatus(err.message || 'Não foi possível concluir a ativação da conta.', 'danger');
     }
   }
 

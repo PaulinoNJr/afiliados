@@ -72,12 +72,12 @@
 
   function setCreateUserLoading(isLoading) {
     refs.createUserBtn.disabled = isLoading;
-    refs.createUserBtn.textContent = isLoading ? 'Criando...' : 'Criar usuario';
+    refs.createUserBtn.textContent = isLoading ? 'Criando...' : 'Criar usuário';
   }
 
   function setSaveUserLoading(isLoading) {
     refs.saveUserBtn.disabled = isLoading;
-    refs.saveUserBtn.textContent = isLoading ? 'Salvando...' : 'Salvar alteracoes';
+    refs.saveUserBtn.textContent = isLoading ? 'Salvando...' : 'Salvar alterações';
   }
 
   function setUsersLoading(isLoading) {
@@ -124,8 +124,8 @@
     const isBusy = Boolean(state.managementActionLoading);
 
     refs.selectedUsersCount.textContent = selectedCount
-      ? `${selectedCount} usuario(s) selecionado(s).`
-      : 'Nenhum usuario selecionado.';
+      ? `${selectedCount} usuário(s) selecionado(s).`
+      : 'Nenhum usuário selecionado.';
 
     refs.bulkDisableUsersBtn.disabled = isBusy || selectedCount === 0;
     refs.bulkDeleteUsersBtn.disabled = isBusy || selectedCount === 0;
@@ -208,13 +208,13 @@
 
     if (!refs.newUserPasswordConfirm.value.length) {
       refs.newUserPasswordMatchFeedback.className = 'd-block mt-2 text-secondary';
-      refs.newUserPasswordMatchFeedback.textContent = 'Use a confirmacao para repetir exatamente a senha digitada.';
+      refs.newUserPasswordMatchFeedback.textContent = 'Use a confirmação para repetir exatamente a senha digitada.';
     } else if (matches) {
       refs.newUserPasswordMatchFeedback.className = 'd-block mt-2 text-success';
       refs.newUserPasswordMatchFeedback.textContent = 'As senhas coincidem.';
     } else {
       refs.newUserPasswordMatchFeedback.className = 'd-block mt-2 text-danger';
-      refs.newUserPasswordMatchFeedback.textContent = 'As senhas nao coincidem.';
+      refs.newUserPasswordMatchFeedback.textContent = 'As senhas não coincidem.';
     }
 
     return {
@@ -237,7 +237,7 @@
     refs.selectedUserStoreLink.classList.add('d-none');
     refs.selectedUserAccountHint.textContent = 'Desativar bloqueia novos logins. Excluir remove a conta, o perfil e os registros associados.';
     setAccountActionsLoading();
-    setSlugFeedback('Use letras minusculas, numeros e hifens.', 'secondary');
+    setSlugFeedback('Use letras minúsculas, números e hifens.', 'secondary');
   }
 
   function populateEditor(user) {
@@ -256,7 +256,7 @@
     refs.editBio.value = user.bio || '';
     refs.editPhotoUrl.value = user.photo_url || '';
     refs.editBannerUrl.value = user.banner_url || '';
-    refs.editorIntro.textContent = `Editando ${user.user_email || 'usuario sem email'}.`;
+    refs.editorIntro.textContent = `Editando ${user.user_email || 'usuário sem email'}.`;
     refs.userEditorCard.classList.remove('d-none');
 
     if (user.slug) {
@@ -267,7 +267,7 @@
     }
 
     if (user.user_id === state.session?.user?.id) {
-      refs.selectedUserAccountHint.textContent = 'Seu proprio usuario nao pode ser desativado ou excluido por esta tela.';
+      refs.selectedUserAccountHint.textContent = 'Seu próprio usuário não pode ser desativado ou excluído por esta tela.';
     } else if (user.authDisabled) {
       refs.selectedUserAccountHint.textContent = 'Esta conta ja foi desativada no Auth. Excluir remove a conta e os registros associados.';
     } else {
@@ -275,7 +275,7 @@
     }
 
     setAccountActionsLoading();
-    setSlugFeedback('Use letras minusculas, numeros e hifens.', 'secondary');
+    setSlugFeedback('Use letras minúsculas, números e hifens.', 'secondary');
   }
 
   function renderUsers() {
@@ -318,7 +318,7 @@
       const tdStore = document.createElement('td');
       tdStore.innerHTML = `
         <div class="fw-semibold">${user.store_name || 'Sem loja'}</div>
-        <div class="small text-secondary">${user.slug ? `/${user.slug}` : 'Slug nao definido'}</div>
+        <div class="small text-secondary">${user.slug ? `/${user.slug}` : 'Slug não definido'}</div>
       `;
 
       const tdRole = document.createElement('td');
@@ -387,7 +387,7 @@
 
       renderUsers();
     } catch (err) {
-      showStatus(`Erro ao carregar usuarios: ${err.message}`, 'danger');
+      showStatus(`Erro ao carregar usuários: ${err.message}`, 'danger');
     } finally {
       setUsersLoading(false);
     }
@@ -429,7 +429,7 @@
     hideStatus();
 
     if (!state.selectedUser) {
-      showStatus('Selecione um usuario para editar.', 'warning');
+      showStatus('Selecione um usuário para editar.', 'warning');
       return;
     }
 
@@ -446,7 +446,7 @@
     const role = refs.editRole.value;
 
     if (!firstName) {
-      showStatus('Informe o nome do usuario.', 'warning');
+      showStatus('Informe o nome do usuário.', 'warning');
       return;
     }
 
@@ -456,12 +456,12 @@
     }
 
     if (!['admin', 'produtor'].includes(role)) {
-      showStatus('Perfil invalido.', 'warning');
+      showStatus('Perfil inválido.', 'warning');
       return;
     }
 
     if (state.selectedUser.user_id === state.session.user.id && role !== 'admin') {
-      showStatus('Para evitar bloqueio do painel, seu proprio usuario precisa continuar como admin aqui.', 'warning');
+      showStatus('Para evitar bloqueio do painel, seu próprio usuário precisa continuar como admin aqui.', 'warning');
       return;
     }
 
@@ -516,7 +516,7 @@
       showStatus('Usuario atualizado com sucesso.', 'success');
       await loadUsers();
     } catch (err) {
-      showStatus(`Erro ao atualizar usuario: ${err.message}`, 'danger');
+      showStatus(`Erro ao atualizar usuário: ${err.message}`, 'danger');
     } finally {
       setSaveUserLoading(false);
     }
@@ -531,18 +531,18 @@
     const confirmPassword = refs.newUserPasswordConfirm.value;
 
     if (!email || !password || !confirmPassword) {
-      showStatus('Preencha email, senha e confirmacao de senha.', 'warning');
+      showStatus('Preencha email, senha e confirmação de senha.', 'warning');
       return;
     }
 
     const passwordValidation = updatePasswordValidation();
     if (!passwordValidation.ok) {
-      showStatus('A senha precisa ter pelo menos 8 caracteres, com maiusculas, minusculas, numeros e caractere especial.', 'warning');
+      showStatus('A senha precisa ter pelo menos 8 caracteres, com maiúsculas, minúsculas, números e caractere especial.', 'warning');
       return;
     }
 
     if (!passwordValidation.matches) {
-      showStatus('As senhas nao coincidem.', 'warning');
+      showStatus('As senhas não coincidem.', 'warning');
       return;
     }
 
@@ -563,7 +563,7 @@
 
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || !payload.ok) {
-        throw new Error(payload.error || 'Nao foi possivel criar o usuario com seguranca.');
+        throw new Error(payload.error || 'Não foi possível criar o usuário com segurança.');
       }
 
       refs.createUserForm.reset();
@@ -572,7 +572,7 @@
 
       await loadUsers();
     } catch (err) {
-      showStatus(`Erro ao criar usuario: ${err.message}`, 'danger');
+      showStatus(`Erro ao criar usuário: ${err.message}`, 'danger');
     } finally {
       setCreateUserLoading(false);
     }
@@ -588,7 +588,7 @@
     ));
 
     if (!normalizedIds.length) {
-      showStatus('Selecione pelo menos um usuario para gerenciar a conta.', 'warning');
+      showStatus('Selecione pelo menos um usuário para gerenciar a conta.', 'warning');
       return;
     }
 
@@ -598,7 +598,7 @@
 
     const manageableUsers = selectedUsers.filter((user) => user.user_id !== state.session.user.id);
     if (!manageableUsers.length) {
-      showStatus('Sua propria conta nao pode ser gerenciada por essa acao.', 'warning');
+      showStatus('Sua própria conta não pode ser gerenciada por essa ação.', 'warning');
       return;
     }
 
@@ -606,12 +606,12 @@
       ? (
           action === 'delete'
             ? `Deseja excluir permanentemente a conta de ${manageableUsers[0].user_email || manageableUsers[0].user_id}? Essa acao remove o acesso no Auth e apaga o perfil e registros relacionados conforme as regras do banco.`
-            : `Deseja desativar a conta de ${manageableUsers[0].user_email || manageableUsers[0].user_id}? O usuario perdera o acesso ao sistema ate ser reativado manualmente no Supabase Auth.`
+            : `Deseja desativar a conta de ${manageableUsers[0].user_email || manageableUsers[0].user_id}? O usuário perderá o acesso ao sistema até ser reativado manualmente no Supabase Auth.`
         )
       : (
           action === 'delete'
             ? `Deseja excluir permanentemente ${manageableUsers.length} contas selecionadas? Essa acao remove o acesso no Auth e apaga os registros relacionados de forma irreversivel.`
-            : `Deseja desativar ${manageableUsers.length} contas selecionadas? Os usuarios perderao o acesso ao sistema.`
+            : `Deseja desativar ${manageableUsers.length} contas selecionadas? Os usuários perderão o acesso ao sistema.`
         );
 
     if (!window.confirm(confirmMessage)) {
@@ -703,7 +703,7 @@
       const isAdmin = state.profile?.role === 'admin';
 
       if (!isAdmin) {
-        showStatus('Acesso restrito: somente admin pode gerenciar usuarios.', 'danger');
+        showStatus('Acesso restrito: somente admin pode gerenciar usuários.', 'danger');
         setTimeout(() => {
           window.location.href = 'admin.html';
         }, 1200);
@@ -753,7 +753,7 @@
       syncBulkSelectionState();
       await loadUsers();
     } catch (err) {
-      showStatus(`Erro ao iniciar a gestao de usuarios: ${err.message}`, 'danger');
+      showStatus(`Erro ao iniciar a gestão de usuários: ${err.message}`, 'danger');
     }
   }
 

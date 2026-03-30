@@ -69,7 +69,7 @@
   function updatePreview() {
     const photoUrl = refs.photoUrl.value.trim();
     refs.profileNamePreview.textContent = getFullName();
-    refs.profilePhonePreview.textContent = refs.phone.value.trim() || 'Telefone nao informado';
+    refs.profilePhonePreview.textContent = refs.phone.value.trim() || 'Telefone não informado';
 
     if (isValidHttpUrl(photoUrl)) {
       refs.photoPreview.src = photoUrl;
@@ -101,7 +101,7 @@
       });
 
       if (!upload?.publicUrl) {
-        throw new Error('Nao foi possivel obter a URL publica da foto.');
+        throw new Error('Não foi possível obter a URL pública da foto.');
       }
 
       refs.photoUrl.value = upload.publicUrl;

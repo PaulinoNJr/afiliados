@@ -109,7 +109,7 @@ async function callSupabaseAuthAdminUserEndpoint({ userId, method, body } = {}) 
   const normalizedUserId = String(userId || '').trim();
 
   if (!normalizedUserId) {
-    throw new Error('ID do usuario ausente para operacao no Auth.');
+    throw new Error('ID do usuário ausente para operação no Auth.');
   }
 
   const endpointCandidates = [
@@ -163,7 +163,7 @@ async function verifyRecaptchaToken({ token, req }) {
   ).trim();
 
   if (!secret) {
-    throw new Error('RECAPTCHA_SECRET_KEY nao configurada no backend.');
+    throw new Error('RECAPTCHA_SECRET_KEY não configurada no backend.');
   }
 
   const normalizedToken = String(token || '').trim();
@@ -204,7 +204,7 @@ async function verifyRecaptchaToken({ token, req }) {
   const allowedHostnames = getAllowedRecaptchaHostnames(req);
 
   if (allowedHostnames.length && (!responseHostname || !allowedHostnames.includes(responseHostname))) {
-    throw new Error('Verificacao reCAPTCHA recusada: dominio invalido.');
+    throw new Error('Verificação reCAPTCHA recusada: domínio inválido.');
   }
 
   return payload;
@@ -216,7 +216,7 @@ function validateRecaptchaV3Payload({ payload, expectedAction, minScore = 0.5 })
   const normalizedExpectedAction = String(expectedAction || '').trim();
 
   if (normalizedExpectedAction && action !== normalizedExpectedAction) {
-    throw new Error('Verificacao reCAPTCHA recusada: acao invalida.');
+    throw new Error('Verificação reCAPTCHA recusada: ação inválida.');
   }
 
   if (!Number.isFinite(score)) {
@@ -274,7 +274,7 @@ async function getUserRole(userId) {
   });
 
   if (!response.ok) {
-    throw new Error('Nao foi possivel consultar o papel do usuario.');
+    throw new Error('Não foi possível consultar o papel do usuário.');
   }
 
   const rows = await response.json();
@@ -302,7 +302,7 @@ async function createSupabaseAuthUser({ email, password, metadata = {}, emailCon
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const message = payload?.msg || payload?.message || payload?.error_description || payload?.error || 'Falha ao criar usuario no Auth.';
+    const message = payload?.msg || payload?.message || payload?.error_description || payload?.error || 'Falha ao criar usuário no Auth.';
     throw new Error(message);
   }
 
@@ -313,7 +313,7 @@ async function updateSupabaseAuthUserById(userId, attributes = {}) {
   const normalizedUserId = String(userId || '').trim();
 
   if (!normalizedUserId) {
-    throw new Error('ID do usuario ausente para atualizacao no Auth.');
+    throw new Error('ID do usuário ausente para atualização no Auth.');
   }
 
   return callSupabaseAuthAdminUserEndpoint({
@@ -327,7 +327,7 @@ async function deleteSupabaseAuthUserById(userId) {
   const normalizedUserId = String(userId || '').trim();
 
   if (!normalizedUserId) {
-    throw new Error('ID do usuario ausente para exclusao no Auth.');
+    throw new Error('ID do usuário ausente para exclusão no Auth.');
   }
 
   return callSupabaseAuthAdminUserEndpoint({
@@ -393,7 +393,7 @@ async function createSupabasePendingSignup({ email, password, metadata = {}, ema
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const message = payload?.msg || payload?.message || payload?.error_description || payload?.error || 'Falha ao iniciar o cadastro com confirmacao por email.';
+    const message = payload?.msg || payload?.message || payload?.error_description || payload?.error || 'Falha ao iniciar o cadastro com confirmação por email.';
     throw new Error(message);
   }
 

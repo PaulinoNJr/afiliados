@@ -118,7 +118,7 @@
     const lockedUntil = getSlugLockedUntil();
 
     if (!lockedUntil) {
-      refs.storeSlugSchedule.textContent = 'Verifique o slug antes de salvar. Se voce trocar agora, outra troca so sera liberada daqui a 7 dias.';
+      refs.storeSlugSchedule.textContent = 'Verifique o slug antes de salvar. Se você trocar agora, outra alteração só será liberada daqui a 7 dias.';
       refs.storeSlugSchedule.className = 'd-block mt-2 text-secondary';
       return;
     }
@@ -137,7 +137,7 @@
 
   function setStoreSaveLoading(isLoading) {
     refs.saveStoreBtn.disabled = isLoading;
-    refs.saveStoreBtn.textContent = isLoading ? 'Salvando...' : 'Salvar alteracoes';
+    refs.saveStoreBtn.textContent = isLoading ? 'Salvando...' : 'Salvar alterações';
   }
 
   function setSlugCheckLoading(isLoading) {
@@ -212,7 +212,7 @@
     const theme = getCurrentStoreTheme();
 
     refs.profileNamePreview.textContent = getFullName();
-    refs.profilePhonePreview.textContent = String(state.profile?.phone || '').trim() || 'Telefone nao informado';
+    refs.profilePhonePreview.textContent = String(state.profile?.phone || '').trim() || 'Telefone não informado';
     refs.storeNamePreview.textContent = refs.storeName.value.trim() || 'Sua loja';
     refs.headlinePreview.textContent = headline || 'Adicione uma headline para destacar sua proposta.';
     refs.storeBioPreview.textContent = bio || 'Adicione uma bio para apresentar sua loja.';
@@ -227,7 +227,7 @@
       refs.storePublicUrlLink.classList.remove('disabled', 'text-secondary');
       refs.headerStorePublicLink.classList.remove('disabled');
     } else {
-      refs.storePublicUrl.textContent = 'Pagina publica indisponivel.';
+      refs.storePublicUrl.textContent = 'Página pública indisponível.';
       refs.storePublicUrlLink.href = 'index.html';
       refs.headerStorePublicLink.href = 'index.html';
       refs.storePublicUrlLink.classList.add('text-secondary');
@@ -271,7 +271,7 @@
     state.slugAvailable = true;
 
     setUploadStatus(refs.bannerUploadStatus, 'Tamanho recomendado do banner: 1600 x 400 px. Use imagem horizontal para melhor encaixe. Envie JPG, PNG, WEBP ou GIF com ate 5 MB.', 'secondary');
-    setSlugFeedback(state.originalSlug ? 'Slug atual da sua loja.' : 'Use letras minusculas, numeros e hifens.', state.originalSlug ? 'success' : 'secondary');
+    setSlugFeedback(state.originalSlug ? 'Slug atual da sua loja.' : 'Use letras minúsculas, números e hifens.', state.originalSlug ? 'success' : 'secondary');
     updatePreview();
   }
 
@@ -306,7 +306,7 @@
     }
 
     if (!forceCheck && state.slugCheckedValue === validation.slug && state.slugAvailable) {
-      setSlugFeedback('Slug disponivel para uso.', 'success');
+      setSlugFeedback('Slug disponível para uso.', 'success');
       return { ok: true, slug: validation.slug };
     }
 
@@ -355,7 +355,7 @@
       });
 
       if (!upload?.publicUrl) {
-        throw new Error('Nao foi possivel obter a URL publica da imagem.');
+        throw new Error('Não foi possível obter a URL pública da imagem.');
       }
 
       urlRef.value = upload.publicUrl;
@@ -494,7 +494,7 @@
         window.location.href = 'login.html';
       });
     } catch (err) {
-      showStatus(`Erro ao iniciar a pagina da loja: ${err.message}`, 'danger');
+      showStatus(`Erro ao iniciar a página da loja: ${err.message}`, 'danger');
     }
   }
 

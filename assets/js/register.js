@@ -102,13 +102,13 @@
 
     if (!hasConfirm) {
       refs.passwordMatchFeedback.className = 'd-block mt-2 text-secondary';
-      refs.passwordMatchFeedback.textContent = 'Repita a mesma senha no campo de confirmacao.';
+      refs.passwordMatchFeedback.textContent = 'Repita a mesma senha no campo de confirmação.';
     } else if (matches) {
       refs.passwordMatchFeedback.className = 'd-block mt-2 text-success';
       refs.passwordMatchFeedback.textContent = 'As senhas coincidem.';
     } else {
       refs.passwordMatchFeedback.className = 'd-block mt-2 text-danger';
-      refs.passwordMatchFeedback.textContent = 'As senhas nao coincidem.';
+      refs.passwordMatchFeedback.textContent = 'As senhas não coincidem.';
     }
 
     return {
@@ -137,17 +137,17 @@
     if (!refs.activationHelp) return;
 
     const details = expiresAt
-      ? `O link enviado para o seu email ficara disponivel ate ${formatActivationDate(expiresAt)}.`
-      : 'O link enviado para o seu email ficara disponivel por ate 5 dias.';
+      ? `O link enviado para o seu email ficará disponível até ${formatActivationDate(expiresAt)}.`
+      : 'O link enviado para o seu email ficará disponível por até 5 dias.';
 
     refs.activationHelp.innerHTML = `
       <p class="small text-uppercase fw-semibold text-secondary mb-2">Como ativar sua conta</p>
       <ol class="small text-secondary mb-2 ps-3">
         <li>Finalize o cadastro.</li>
-        <li>Abra o email de confirmacao enviado para o endereco informado.</li>
-        <li>Clique no link de ativacao dentro de ate 5 dias.</li>
-        <li>Na pagina de ativacao, confirme o email para liberar o painel.</li>
-        <li>Apos a confirmacao, sua conta passa a ficar ativa e o painel sera liberado.</li>
+        <li>Abra o email de confirmação enviado para o endereço informado.</li>
+        <li>Clique no link de ativação em até 5 dias.</li>
+        <li>Na página de ativação, confirme o email para liberar o painel.</li>
+        <li>Após a confirmação, sua conta ficará ativa e o painel será liberado.</li>
       </ol>
       <p class="small text-secondary mb-0">${details}</p>
     `;
@@ -170,7 +170,7 @@
 
     const payload = await response.json().catch(() => ({}));
     if (!response.ok || !payload.ok) {
-      throw new Error(payload.error || 'Nao foi possivel criar a conta com seguranca.');
+      throw new Error(payload.error || 'Não foi possível criar a conta com segurança.');
     }
 
     return payload;
@@ -179,12 +179,12 @@
   function markRecaptchaLoaded() {
     if (!window.AppConfig?.recaptchaConfigured) {
       refs.registerBtn.disabled = true;
-      setRecaptchaStatus('Configure RECAPTCHA_SITE_KEY na Vercel ou no frontend para ativar a protecao automatica do Google reCAPTCHA v3.', 'warning');
+      setRecaptchaStatus('Configure RECAPTCHA_SITE_KEY na Vercel ou no frontend para ativar a proteção automática do Google reCAPTCHA v3.', 'warning');
       return;
     }
 
     refs.registerBtn.disabled = false;
-    setRecaptchaStatus('Protecao automatica Google reCAPTCHA v3 ativa. Nao existe caixa para marcar: a validacao acontece ao enviar o cadastro.', 'success');
+    setRecaptchaStatus('Proteção automática Google reCAPTCHA v3 ativa. Não existe caixa para marcar: a validação acontece ao enviar o cadastro.', 'success');
   }
 
   function loadRecaptchaScript() {
@@ -195,7 +195,7 @@
     state.recaptchaScriptPromise = ensureRecaptchaSiteKey().then((siteKey) => {
       if (!siteKey) {
         refs.registerBtn.disabled = true;
-        setRecaptchaStatus('Configure RECAPTCHA_SITE_KEY na Vercel ou no frontend para ativar a protecao automatica do Google reCAPTCHA v3.', 'warning');
+        setRecaptchaStatus('Configure RECAPTCHA_SITE_KEY na Vercel ou no frontend para ativar a proteção automática do Google reCAPTCHA v3.', 'warning');
         return false;
       }
 
@@ -212,7 +212,7 @@
         script.defer = true;
         script.onload = () => {
           if (!window.grecaptcha?.ready) {
-            reject(new Error('Google reCAPTCHA v3 nao ficou disponivel apos o carregamento do script.'));
+            reject(new Error('O Google reCAPTCHA v3 não ficou disponível após o carregamento do script.'));
             return;
           }
 
@@ -234,14 +234,14 @@
   async function getRecaptchaToken() {
     const siteKey = await ensureRecaptchaSiteKey();
     if (!siteKey) {
-      throw new Error('RECAPTCHA_SITE_KEY nao configurada na Vercel ou no frontend.');
+      throw new Error('RECAPTCHA_SITE_KEY não configurada na Vercel ou no frontend.');
     }
 
     if (!state.recaptchaLoaded || !window.grecaptcha) {
-      throw new Error('Google reCAPTCHA v3 ainda nao foi carregado.');
+      throw new Error('O Google reCAPTCHA v3 ainda não foi carregado.');
     }
 
-    setRecaptchaStatus('Validando o risco da solicitacao com Google reCAPTCHA v3...', 'secondary');
+    setRecaptchaStatus('Validando o risco da solicitação com Google reCAPTCHA v3...', 'secondary');
 
     const token = await new Promise((resolve, reject) => {
       window.grecaptcha.ready(() => {
@@ -252,7 +252,7 @@
     });
 
     if (!token) {
-      throw new Error('Nao foi possivel gerar o token de seguranca do Google reCAPTCHA v3.');
+      throw new Error('Não foi possível gerar o token de segurança do Google reCAPTCHA v3.');
     }
 
     setRecaptchaStatus('Token do Google reCAPTCHA v3 gerado com sucesso.', 'success');
@@ -282,7 +282,7 @@
         return { ok: false, slug: availability.slug };
       }
 
-      setSlugFeedback('Slug disponivel para cadastro.', 'success');
+      setSlugFeedback('Slug disponível para cadastro.', 'success');
       return { ok: true, slug: availability.slug };
     } catch (err) {
       setSlugFeedback(`Erro ao verificar slug: ${err.message}`, 'danger');
@@ -310,12 +310,12 @@
     const passwordValidation = updatePasswordValidation();
 
     if (!passwordValidation.ok) {
-      showStatus('Escolha uma senha com pelo menos 8 caracteres, letras maiusculas, minusculas, numeros e caractere especial.', 'warning');
+      showStatus('Escolha uma senha com pelo menos 8 caracteres, letras maiúsculas, minúsculas, números e caractere especial.', 'warning');
       return;
     }
 
     if (!passwordValidation.matches) {
-      showStatus('As senhas nao coincidem.', 'warning');
+      showStatus('As senhas não coincidem.', 'warning');
       return;
     }
 
@@ -351,11 +351,11 @@
       updatePublicUrlPreview();
       updatePasswordValidation();
       updateActivationHelp(registerPayload?.activation?.expiresAt || null);
-      setSlugFeedback('Esse endereco sera usado na sua pagina publica.', 'secondary');
-      setRecaptchaStatus('Cadastro validado com Google reCAPTCHA v3. A protecao permanece ativa para a proxima tentativa.', 'secondary');
-      showStatus(`Cadastro realizado. Enviamos um email de ativacao para ${email}. Confirme sua conta em ate 5 dias para liberar o painel.`, 'success');
+      setSlugFeedback('Esse endereço será usado na sua página pública.', 'secondary');
+      setRecaptchaStatus('Cadastro validado com Google reCAPTCHA v3. A proteção permanece ativa para a próxima tentativa.', 'secondary');
+      showStatus(`Cadastro realizado. Enviamos um email de ativação para ${email}. Confirme sua conta em até 5 dias para liberar o painel.`, 'success');
     } catch (err) {
-      setRecaptchaStatus('A validacao com Google reCAPTCHA v3 falhou. Tente novamente em instantes.', 'warning');
+      setRecaptchaStatus('A validação com Google reCAPTCHA v3 falhou. Tente novamente em instantes.', 'warning');
       showStatus(`Erro ao criar conta: ${err.message}`, 'danger');
     } finally {
       setLoading(false);

@@ -17,7 +17,7 @@ module.exports = async (req, res) => {
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ ok: false, error: 'Metodo nao permitido.' });
+    return res.status(405).json({ ok: false, error: 'Método não permitido.' });
   }
 
   const authorization = String(req.headers.authorization || '').trim();
@@ -27,7 +27,7 @@ module.exports = async (req, res) => {
   if (!currentUser?.id) {
     return res.status(401).json({
       ok: false,
-      error: 'Sessao invalida para criar usuarios.'
+      error: 'Sessão inválida para criar usuários.'
     });
   }
 
@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
   if (role !== 'admin') {
     return res.status(403).json({
       ok: false,
-      error: 'Apenas administradores podem criar usuarios.'
+      error: 'Apenas administradores podem criar usuários.'
     });
   }
 
@@ -53,7 +53,7 @@ module.exports = async (req, res) => {
   if (!passwordValidation.ok) {
     return res.status(400).json({
       ok: false,
-      error: 'A senha nao atende aos requisitos minimos de seguranca.'
+      error: 'A senha não atende aos requisitos mínimos de segurança.'
     });
   }
 

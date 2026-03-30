@@ -18,7 +18,7 @@ module.exports = async (req, res) => {
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ ok: false, error: 'Metodo nao permitido.' });
+    return res.status(405).json({ ok: false, error: 'Método não permitido.' });
   }
 
   const email = String(req.body?.email || '').trim().toLowerCase();
@@ -39,7 +39,7 @@ module.exports = async (req, res) => {
   if (!passwordValidation.ok) {
     return res.status(400).json({
       ok: false,
-      error: 'A senha nao atende aos requisitos minimos de seguranca.'
+      error: 'A senha não atende aos requisitos mínimos de segurança.'
     });
   }
 

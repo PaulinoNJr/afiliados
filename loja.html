@@ -24,14 +24,14 @@
     <div class="container">
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 page-header-row">
         <div>
-          <h1 class="h3 mb-1">Configuracoes da loja</h1>
-          <p class="text-secondary mb-0">Organize a identidade visual e os elementos publicos da sua vitrine em um unico lugar.</p>
+          <h1 class="h3 mb-1">Configurações da loja</h1>
+          <p class="text-secondary mb-0">Organize a identidade visual e os elementos públicos da sua vitrine em um único lugar.</p>
         </div>
         <div class="d-flex flex-wrap gap-2 page-header-actions">
-          <a id="headerStorePublicLink" href="index.html" class="btn btn-outline-dark" target="_blank" rel="noopener noreferrer">Ver pagina publica</a>
+          <a id="headerStorePublicLink" href="index.html" class="btn btn-outline-dark" target="_blank" rel="noopener noreferrer">Ver página pública</a>
           <a href="perfil.html" class="btn btn-outline-secondary">Dados pessoais</a>
           <a href="admin.html" class="btn btn-outline-primary">Voltar ao painel</a>
-          <button id="saveStoreBtn" type="submit" form="storeProfileForm" class="btn btn-primary">Salvar alteracoes</button>
+          <button id="saveStoreBtn" type="submit" form="storeProfileForm" class="btn btn-primary">Salvar alterações</button>
         </div>
       </div>
 
@@ -45,10 +45,10 @@
                 <div class="store-settings-section-head">
                   <div>
                     <p class="store-settings-kicker mb-1">Identidade da loja</p>
-                    <h2 class="h5 mb-1">Informacoes publicas principais</h2>
-                    <p class="text-secondary small mb-0">As imagens enviadas ficam salvas no bucket <strong>store-assets</strong> do Supabase Storage, em uma pasta separada por usuario.</p>
+                    <h2 class="h5 mb-1">Informações públicas principais</h2>
+                    <p class="text-secondary small mb-0">As imagens enviadas ficam salvas no bucket <strong>store-assets</strong> do Supabase Storage, em uma pasta separada por usuário.</p>
                   </div>
-                  <span class="badge text-bg-light store-settings-badge">Publico</span>
+                  <span class="badge text-bg-light store-settings-badge">Público</span>
                 </div>
 
                 <div class="row g-3">
@@ -58,7 +58,7 @@
                   </div>
                   <div class="col-12">
                     <label for="headline" class="form-label">Headline da loja</label>
-                    <input id="headline" type="text" class="form-control" maxlength="120" placeholder="Ex.: Achados da semana com curadoria propria" />
+                    <input id="headline" type="text" class="form-control" maxlength="120" placeholder="Ex.: Achados da semana com curadoria própria" />
                   </div>
                   <div class="col-12">
                     <label for="storeBio" class="form-label">Bio</label>
@@ -67,7 +67,7 @@
                   <div class="col-12 col-lg-6">
                     <label for="bannerUpload" class="form-label">Banner da loja</label>
                     <input id="bannerUpload" type="file" class="form-control" accept="image/*" />
-                    <small id="bannerUploadStatus" class="d-block mt-2 text-secondary">Tamanho recomendado do banner: 1600 x 400 px. Use imagem horizontal para melhor encaixe. Envie JPG, PNG, WEBP ou GIF com ate 5 MB.</small>
+                    <small id="bannerUploadStatus" class="d-block mt-2 text-secondary">Tamanho recomendado do banner: 1600 x 400 px. Use imagem horizontal para melhor encaixe. Envie JPG, PNG, WEBP ou GIF com até 5 MB.</small>
                   </div>
                   <div class="col-12 col-lg-6">
                     <label for="storeBannerUrl" class="form-label">Banner por URL</label>
@@ -81,22 +81,22 @@
               <div class="card-body p-4 p-lg-4">
                 <div class="store-settings-section-head">
                   <div>
-                    <p class="store-settings-kicker mb-1">Slug da pagina</p>
-                    <h2 class="h5 mb-1">Endereco publico da sua vitrine</h2>
-                    <p class="text-secondary small mb-0">Confira disponibilidade antes de trocar. Por seguranca, a troca so pode ser feita uma vez a cada 7 dias.</p>
+                    <p class="store-settings-kicker mb-1">Slug da página</p>
+                    <h2 class="h5 mb-1">Endereço público da sua vitrine</h2>
+                    <p class="text-secondary small mb-0">Confira a disponibilidade antes de trocar. Por segurança, a alteração só pode ser feita uma vez a cada 7 dias.</p>
                   </div>
                   <span class="badge text-bg-light store-settings-badge">Controlado</span>
                 </div>
 
                 <div class="row g-3 align-items-end">
                   <div class="col-12 col-lg-8">
-                    <label for="storeSlug" class="form-label">Slug publico</label>
+                    <label for="storeSlug" class="form-label">Slug público</label>
                     <div class="input-group">
                       <span class="input-group-text">/</span>
                       <input id="storeSlug" type="text" class="form-control" maxlength="80" placeholder="minha-loja" required />
                     </div>
-                    <small id="storeSlugFeedback" class="d-block mt-2 text-secondary">Use letras minusculas, numeros e hifens.</small>
-                    <small id="storeSlugSchedule" class="d-block mt-2 text-secondary">Verifique o slug antes de salvar. Se voce trocar agora, outra troca so sera liberada daqui a 7 dias.</small>
+                    <small id="storeSlugFeedback" class="d-block mt-2 text-secondary">Use letras minúsculas, números e hifens.</small>
+                    <small id="storeSlugSchedule" class="d-block mt-2 text-secondary">Verifique o slug antes de salvar. Se você trocar agora, outra alteração só será liberada daqui a 7 dias.</small>
                   </div>
                   <div class="col-12 col-lg-4">
                     <button id="checkSlugBtn" type="button" class="btn btn-outline-primary w-100">Checar disponibilidade</button>
@@ -109,9 +109,9 @@
               <div class="card-body p-4 p-lg-4">
                 <div class="store-settings-section-head">
                   <div>
-                    <p class="store-settings-kicker mb-1">Aparencia da vitrine</p>
+                    <p class="store-settings-kicker mb-1">Aparência da vitrine</p>
                     <h2 class="h5 mb-1">Tema e elementos visuais</h2>
-                    <p class="text-secondary small mb-0">Cores, botao e estilo dos cards sao personalizacoes comuns em plataformas de criacao de loja. Aqui voce configura o essencial de forma simples.</p>
+                    <p class="text-secondary small mb-0">Cores, botão e estilo dos cards são personalizações comuns em plataformas de criação de loja. Aqui você configura o essencial de forma simples.</p>
                   </div>
                   <span class="badge text-bg-light store-settings-badge">Tema</span>
                 </div>
@@ -127,20 +127,20 @@
                   </div>
                   <div class="col-12 col-md-6 col-xl-4">
                     <label for="pageBackground" class="form-label">Cor de fundo</label>
-                    <input id="pageBackground" type="color" class="form-control form-control-color" value="#f3f6fb" title="Escolha a cor de fundo da pagina" />
+                    <input id="pageBackground" type="color" class="form-control form-control-color" value="#f3f6fb" title="Escolha a cor de fundo da página" />
                   </div>
                   <div class="col-12 col-md-6">
-                    <label for="buttonTextColor" class="form-label">Cor do texto do botao</label>
-                    <input id="buttonTextColor" type="color" class="form-control form-control-color" value="#ffffff" title="Escolha a cor do texto do botao" />
+                    <label for="buttonTextColor" class="form-label">Cor do texto do botão</label>
+                    <input id="buttonTextColor" type="color" class="form-control form-control-color" value="#ffffff" title="Escolha a cor do texto do botão" />
                   </div>
                   <div class="col-12 col-md-6">
-                    <label for="ctaLabel" class="form-label">Texto do botao</label>
+                    <label for="ctaLabel" class="form-label">Texto do botão</label>
                     <input id="ctaLabel" type="text" class="form-control" maxlength="40" placeholder="Ver produto" />
                   </div>
                   <div class="col-12 col-md-6">
-                    <label for="buttonStyle" class="form-label">Estilo do botao</label>
+                    <label for="buttonStyle" class="form-label">Estilo do botão</label>
                     <select id="buttonStyle" class="form-select">
-                      <option value="solid">Solido</option>
+                      <option value="solid">Sólido</option>
                       <option value="outline">Contornado</option>
                       <option value="pill">Pill arredondado</option>
                     </select>
@@ -164,9 +164,9 @@
                 <div class="card-body p-4 p-lg-4">
                   <div class="store-settings-section-head">
                     <div>
-                      <p class="store-settings-kicker mb-1">Acesso rapido</p>
+                      <p class="store-settings-kicker mb-1">Acesso rápido</p>
                       <h2 class="h5 mb-1">Dados pessoais separados</h2>
-                      <p class="text-secondary small mb-0">Seu cadastro pessoal agora fica em uma pagina propria, acessivel tambem pelo circulo no topo direito.</p>
+                      <p class="text-secondary small mb-0">Seu cadastro pessoal agora fica em uma página própria, acessível também pelo círculo no topo direito.</p>
                     </div>
                     <span class="badge text-bg-light store-settings-badge">Privado</span>
                   </div>
@@ -180,24 +180,24 @@
 
               <div class="card border-0 shadow-sm store-settings-card">
                 <div class="card-body p-4 p-lg-4">
-                  <p class="store-settings-kicker mb-1">Previa</p>
-                  <h2 class="h5 mb-3">Como sua pagina pode ficar</h2>
+                  <p class="store-settings-kicker mb-1">Prévia</p>
+                  <h2 class="h5 mb-3">Como sua página pode ficar</h2>
                   <div class="dashboard-profile-card mb-3">
                     <img id="photoPreview" class="dashboard-avatar d-none" alt="Foto do perfil" />
                     <div>
                       <p id="profileNamePreview" class="fw-semibold mb-1">Seu nome</p>
-                      <p id="profilePhonePreview" class="small text-secondary mb-0">Telefone nao informado</p>
+                      <p id="profilePhonePreview" class="small text-secondary mb-0">Telefone não informado</p>
                     </div>
                   </div>
-                  <img id="storeBannerPreview" class="store-banner-preview d-none mb-3" alt="Previa do banner da loja" />
+                  <img id="storeBannerPreview" class="store-banner-preview d-none mb-3" alt="Prévia do banner da loja" />
                   <div id="storePreviewCard" class="public-store-card">
                     <p id="storeNamePreview" class="fw-semibold mb-1">Sua loja</p>
                     <p id="headlinePreview" class="small mb-2 text-secondary">Adicione uma headline para destacar sua proposta.</p>
                     <p id="storeBioPreview" class="small text-secondary mb-3">Adicione uma bio para apresentar sua loja.</p>
-                    <p id="storePublicUrl" class="small mb-3 text-break">Pagina publica indisponivel.</p>
+                    <p id="storePublicUrl" class="small mb-3 text-break">Página pública indisponível.</p>
                     <div class="d-grid gap-2">
-                      <a id="storePublicUrlLink" href="index.html" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener noreferrer">Abrir pagina publica</a>
-                      <a href="produtos.html" class="btn btn-outline-dark btn-sm">Abrir pagina administrativa</a>
+                      <a id="storePublicUrlLink" href="index.html" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener noreferrer">Abrir página pública</a>
+                      <a href="produtos.html" class="btn btn-outline-dark btn-sm">Abrir página administrativa</a>
                       <button id="ctaPreviewBtn" type="button" class="btn btn-primary btn-sm" disabled>Ver produto</button>
                     </div>
                   </div>

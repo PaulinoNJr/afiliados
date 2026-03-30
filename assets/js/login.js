@@ -58,7 +58,7 @@
       const profile = await window.Auth.getProfile();
       if (!window.Auth.isAccountActive(profile)) {
         const status = profile?.activation_status || 'pending';
-        showStatus('Login realizado, mas a conta ainda precisa de ativacao por email. Redirecionando...', 'warning');
+        showStatus('Login realizado, mas a conta ainda precisa de ativação por email. Redirecionando...', 'warning');
         setTimeout(() => {
           window.location.href = `ativacao.html?status=${encodeURIComponent(status)}`;
         }, 500);
