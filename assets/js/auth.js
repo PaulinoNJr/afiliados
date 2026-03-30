@@ -1,4 +1,19 @@
 ﻿(() => {
+  function syncWorkspaceOffsets() {
+    const root = document.documentElement;
+    const topbar = document.querySelector('.navbar.sticky-top');
+    const menuShell = document.querySelector('.workspace-menu-shell');
+
+    if (topbar) {
+      root.style.setProperty('--app-topbar-height', `${Math.ceil(topbar.offsetHeight)}px`);
+    }
+
+    root.style.setProperty(
+      '--workspace-menu-height',
+      menuShell ? `${Math.ceil(menuShell.offsetHeight + 16)}px` : '0px'
+    );
+  }
+
   function ensureClient() {
     if (!window.db) {
       throw new Error('Supabase não configurado. Atualize assets/js/config.js.');
@@ -125,6 +140,8 @@
       fallback.classList.remove('d-none');
       fallback.textContent = getProfileInitials(profile);
     }
+
+    syncWorkspaceOffsets();
   }
 
   function isActivationExpired(profile) {
@@ -193,4 +210,8 @@
     requireAuth,
     redirectIfAuthenticated
   };
+
+  window.addEventListener('load', syncWorkspaceOffsets);
+  window.addEventListener('resize', syncWorkspaceOffsets);
+  syncWorkspaceOffsets();
 })();
