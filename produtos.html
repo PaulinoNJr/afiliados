@@ -26,16 +26,17 @@
         <div class="row g-4 align-items-center">
           <div class="col-12 col-xl-8">
             <p class="admin-eyebrow mb-2">Cadastro de produtos</p>
-            <h1 class="h2 mb-2">Cadastre, organize e publique seus produtos com mais agilidade</h1>
-            <p class="mb-0 text-secondary">Esta área foi pensada para acelerar o cadastro: primeiro você preenche o produto, depois revisa a prévia e, por fim, acompanha a lista completa logo abaixo.</p>
+            <h1 class="h2 mb-2">Cadastre, revise e publique seus produtos com mais rapidez</h1>
+            <p class="mb-0 text-secondary">Esta página agora é dedicada ao cadastro de produtos. Você preenche os dados, revisa a prévia e acompanha a lista cadastrada logo abaixo, sem misturar esse fluxo com a gestão de categorias.</p>
             <div class="products-hero-points mt-3">
               <span>1. Preencha o produto</span>
-              <span>2. Revise a prévia</span>
-              <span>3. Publique na vitrine</span>
+              <span>2. Escolha a categoria</span>
+              <span>3. Salve e publique</span>
             </div>
           </div>
           <div class="col-12 col-xl-4">
             <div class="d-grid gap-2 d-sm-flex justify-content-xl-end page-header-actions">
+              <a href="categorias.html" class="btn btn-outline-secondary">Gerenciar categorias</a>
               <a href="admin.html" class="btn btn-outline-dark">Voltar ao painel</a>
               <a id="viewPublicStoreLink" href="index.html" class="btn btn-outline-primary">Ver página pública</a>
             </div>
@@ -86,7 +87,7 @@
             <div class="card-body p-4 p-lg-4">
               <div class="products-form-header">
                 <div>
-                  <p class="store-settings-kicker mb-1">Etapa principal</p>
+                  <p class="store-settings-kicker mb-1">Produto</p>
                   <h2 id="formTitle" class="h4 mb-1">Novo produto</h2>
                   <p class="text-secondary small mb-0">Preencha os campos essenciais para deixar o produto pronto para publicação.</p>
                 </div>
@@ -118,6 +119,13 @@
                       <label for="categoriaId" class="form-label">Categoria</label>
                       <select id="categoriaId" class="form-select" required></select>
                       <small id="categoryRequirementHint" class="text-muted">Selecione a categoria principal deste produto.</small>
+                    </div>
+
+                    <div class="col-12">
+                      <div class="category-inline-shortcut">
+                        <span class="small text-secondary">Precisa criar, renomear ou ordenar categorias?</span>
+                        <a href="categorias.html" class="btn btn-outline-secondary btn-sm">Abrir página de categorias</a>
+                      </div>
                     </div>
 
                     <div class="col-12 col-lg-7">
@@ -172,52 +180,14 @@
               </div>
             </div>
 
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm categories-shortcut-card">
               <div class="card-body p-4">
-                <p class="store-settings-kicker mb-1">Boas práticas</p>
-                <h2 class="h5 mb-3">Cadastro mais rápido e mais claro</h2>
-                <div class="catalog-note mb-0">
-                  Use títulos objetivos, preço correto e uma descrição curta com benefício claro. Isso ajuda tanto a organização da vitrine quanto a conversão.
-                </div>
-              </div>
-            </div>
-
-            <div class="card border-0 shadow-sm">
-              <div class="card-body p-4">
-                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-                  <div>
-                    <p class="store-settings-kicker mb-1">Categorias</p>
-                    <h2 class="h5 mb-1">Organize antes de publicar</h2>
-                    <p class="text-secondary small mb-0">Crie, ordene e mantenha a vitrine organizada por temas.</p>
-                  </div>
-                  <button id="clearCategoryFormBtn" type="button" class="btn btn-sm btn-outline-secondary">Limpar</button>
-                </div>
-
-                <form id="categoryForm" novalidate>
-                  <div class="row g-2">
-                    <div class="col-12 col-md-8">
-                      <label for="categoryName" class="form-label">Nome da categoria</label>
-                      <input id="categoryName" type="text" class="form-control" placeholder="Ex.: Eletrônicos" required />
-                    </div>
-                    <div class="col-12 col-md-4">
-                      <label for="categorySortOrder" class="form-label">Ordem</label>
-                      <input id="categorySortOrder" type="number" class="form-control" min="0" step="1" placeholder="0" />
-                    </div>
-                  </div>
-
-                  <div class="d-flex gap-2 mt-3">
-                    <button id="saveCategoryBtn" type="submit" class="btn btn-primary flex-grow-1">Salvar categoria</button>
-                    <button id="cancelCategoryEditBtn" type="button" class="btn btn-outline-secondary d-none">Cancelar</button>
-                  </div>
-                </form>
-
-                <div class="catalog-note mt-4 mb-3">
-                  Pelo menos uma categoria deve existir. Os produtos antigos serão movidos automaticamente para <strong>Geral</strong>.
-                </div>
-
-                <div id="categoriesList" class="d-grid gap-2"></div>
-                <div id="categoriesEmptyState" class="text-secondary small d-none">
-                  Nenhuma categoria cadastrada ainda.
+                <p class="store-settings-kicker mb-1">Categorias</p>
+                <h2 class="h5 mb-2">Gerencie as categorias em uma página separada</h2>
+                <p class="text-secondary small mb-3">Crie, edite e ordene suas categorias sem interromper o cadastro de produtos. Depois, volte aqui para selecionar a categoria certa no produto.</p>
+                <div class="d-grid gap-2">
+                  <a href="categorias.html" class="btn btn-primary">Abrir categorias</a>
+                  <a href="admin.html" class="btn btn-outline-dark">Voltar ao painel</a>
                 </div>
               </div>
             </div>
@@ -230,7 +200,7 @@
           <div class="card-body p-4">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
               <div>
-                <p class="store-settings-kicker mb-1">Etapa final</p>
+                <p class="store-settings-kicker mb-1">Lista</p>
                 <h2 class="h5 mb-0">Produtos cadastrados</h2>
               </div>
               <div class="d-flex flex-wrap gap-2">

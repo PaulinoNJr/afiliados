@@ -10,9 +10,7 @@
     products: [],
     visibleProducts: [],
     editingId: null,
-    categoryEditingId: null,
     isSavingProduct: false,
-    isSavingCategory: false,
     lastAutoFillUrl: '',
     autoFillSourceLabel: null,
     autoFillDiagnostics: null,
@@ -57,15 +55,7 @@
     reloadBtn: document.getElementById('reloadBtn'),
     listLoading: document.getElementById('listLoading'),
     tableBody: document.getElementById('productsTableBody'),
-    emptyAdminState: document.getElementById('emptyAdminState'),
-    categoryForm: document.getElementById('categoryForm'),
-    categoryName: document.getElementById('categoryName'),
-    categorySortOrder: document.getElementById('categorySortOrder'),
-    saveCategoryBtn: document.getElementById('saveCategoryBtn'),
-    cancelCategoryEditBtn: document.getElementById('cancelCategoryEditBtn'),
-    clearCategoryFormBtn: document.getElementById('clearCategoryFormBtn'),
-    categoriesList: document.getElementById('categoriesList'),
-    categoriesEmptyState: document.getElementById('categoriesEmptyState')
+    emptyAdminState: document.getElementById('emptyAdminState')
   };
 
   function createEmptyProductMeta() {
@@ -167,12 +157,6 @@
     return parsed.toFixed(2).replace('.', ',');
   }
 
-  function parseSortOrder(value) {
-    if (!isFilled(value)) return null;
-    const parsed = Number.parseInt(String(value), 10);
-    return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
-  }
-
   function showStatus(message, type = 'warning') {
     refs.status.className = `alert alert-${type}`;
     refs.status.textContent = message;
@@ -217,13 +201,6 @@
 
   function updateFormHeader() {
     refs.formTitle.textContent = state.editingId ? 'Editar produto' : 'Novo produto';
-  }
-
-  function updateCategoryFormHeader() {
-    refs.saveCategoryBtn.textContent = state.isSavingCategory
-      ? (state.categoryEditingId ? 'Atualizando...' : 'Salvando...')
-      : (state.categoryEditingId ? 'Atualizar categoria' : 'Salvar categoria');
-    refs.cancelCategoryEditBtn.classList.toggle('d-none', !state.categoryEditingId);
   }
 
   function inferCaptureSourceLabel(data = {}) {
@@ -329,7 +306,7 @@
     refs.saveBtn.disabled = state.isSavingProduct || !hasCategories;
     refs.categoryRequirementHint.textContent = hasCategories
       ? 'Selecione a categoria principal deste produto.'
-      : 'Crie ao menos uma categoria antes de salvar produtos.';
+      : 'Você ainda não tem categorias. Abra a página de categorias para criar a primeira.';
   }
 
   function populateCategoryOptions(preferredId = null) {
@@ -340,7 +317,7 @@
     refs.categoryFilterSelect.innerHTML = '<option value="all">Todas as categorias</option>';
 
     if (!state.categories.length) {
-      refs.categoriaId.innerHTML = '<option value="">Crie a primeira categoria</option>';
+      refs.categoriaId.innerHTML = '<option value="">Crie a primeira categoria na página de categorias</option>';
       refs.categoriaId.value = '';
       updateProductFormAvailability();
       return;
@@ -365,73 +342,6 @@
 
     updateProductFormAvailability();
   }
-
-  function resetCategoryForm() {
-    refs.categoryForm.reset();
-    state.categoryEditingId = null;
-    state.isSavingCategory = false;
-    updateCategoryFormHeader();
-  }
-
-  function beginCategoryEdit(category) {
-    state.categoryEditingId = category.id;
-    refs.categoryName.value = category.name || '';
-    refs.categorySortOrder.value = Number.isFinite(Number(category.sort_order)) ? String(category.sort_order) : '';
-    updateCategoryFormHeader();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  function renderCategoriesList() {
-    refs.categoriesList.innerHTML = '';
-
-    if (!state.categories.length) {
-      refs.categoriesEmptyState.classList.remove('d-none');
-      return;
-    }
-
-    refs.categoriesEmptyState.classList.add('d-none');
-
-    state.categories.forEach((category) => {
-      const count = getProductCountByCategory(category.id);
-      const row = document.createElement('article');
-      row.className = 'category-admin-item';
-
-      const content = document.createElement('div');
-      content.className = 'category-admin-copy';
-      content.innerHTML = `
-        <div class="d-flex flex-wrap gap-2 align-items-center mb-1">
-          <strong>${category.name}</strong>
-          <span class="badge text-bg-light">ordem ${category.sort_order}</span>
-          <span class="badge text-bg-secondary">${count} produto(s)</span>
-        </div>
-        <div class="small text-secondary">slug interno: ${category.slug}</div>
-      `;
-
-      const actions = document.createElement('div');
-      actions.className = 'category-admin-actions';
-
-      const editBtn = document.createElement('button');
-      editBtn.type = 'button';
-      editBtn.className = 'btn btn-sm btn-outline-primary';
-      editBtn.textContent = 'Editar';
-      editBtn.addEventListener('click', () => beginCategoryEdit(category));
-
-      const deleteBtn = document.createElement('button');
-      deleteBtn.type = 'button';
-      deleteBtn.className = 'btn btn-sm btn-outline-danger';
-      deleteBtn.textContent = 'Excluir';
-      deleteBtn.disabled = state.categories.length <= 1 || count > 0;
-      deleteBtn.title = count > 0
-        ? 'Remova ou troque os produtos desta categoria antes de excluir.'
-        : (state.categories.length <= 1 ? 'Mantenha pelo menos uma categoria.' : '');
-      deleteBtn.addEventListener('click', () => deleteCategory(category.id));
-
-      actions.append(editBtn, deleteBtn);
-      row.append(content, actions);
-      refs.categoriesList.appendChild(row);
-    });
-  }
-
   function resetForm({ clearStoredDraft = true } = {}) {
     refs.form.reset();
     state.editingId = null;
@@ -614,7 +524,6 @@
 
     state.categories = data || [];
     populateCategoryOptions();
-    renderCategoriesList();
   }
 
   async function loadProducts() {
@@ -629,7 +538,6 @@
       if (error) throw error;
       state.products = hydrateProducts(data || []);
       renderMetrics();
-      renderCategoriesList();
       applyFiltersAndSort();
     } catch (err) {
       showStatus(`Erro ao carregar produtos: ${err.message}`, 'danger');
@@ -644,15 +552,6 @@
       ? (state.editingId ? 'Atualizando...' : 'Salvando...')
       : (state.editingId ? 'Atualizar produto' : 'Salvar produto');
     updateProductFormAvailability();
-  }
-
-  function setCategorySaveLoading(isLoading) {
-    state.isSavingCategory = isLoading;
-    refs.saveCategoryBtn.disabled = isLoading;
-    refs.categoryName.disabled = isLoading;
-    refs.categorySortOrder.disabled = isLoading;
-    refs.clearCategoryFormBtn.disabled = isLoading;
-    updateCategoryFormHeader();
   }
 
   function setAutoFillLoading(isLoading) {
@@ -700,87 +599,6 @@
       if (!silent) showStatus(`Falha na captura automatica: ${err.message}.`, 'warning');
     } finally {
       setAutoFillLoading(false);
-    }
-  }
-
-  async function saveCategory(event) {
-    event.preventDefault();
-    hideStatus();
-
-    const name = refs.categoryName.value.trim();
-    const sortOrder = parseSortOrder(refs.categorySortOrder.value);
-
-    if (!name) {
-      showStatus('Informe o nome da categoria.', 'warning');
-      return;
-    }
-
-    setCategorySaveLoading(true);
-    try {
-      const payload = {
-        profile_id: state.session.user.id,
-        name,
-        sort_order: sortOrder
-      };
-
-      if (state.categoryEditingId) {
-        const { error } = await window.db
-          .from('product_categories')
-          .update(payload)
-          .eq('id', state.categoryEditingId)
-          .eq('profile_id', state.session.user.id);
-        if (error) throw error;
-        showStatus('Categoria atualizada com sucesso.', 'success');
-      } else {
-        const { error } = await window.db
-          .from('product_categories')
-          .insert(payload);
-        if (error) throw error;
-        showStatus('Categoria cadastrada com sucesso.', 'success');
-      }
-
-      resetCategoryForm();
-      await loadCategories();
-      await loadProducts();
-    } catch (err) {
-      showStatus(`Erro ao salvar categoria: ${err.message}`, 'danger');
-    } finally {
-      setCategorySaveLoading(false);
-    }
-  }
-
-  async function deleteCategory(categoryId) {
-    const category = getCategoryById(categoryId);
-    if (!category) return;
-
-    const count = getProductCountByCategory(categoryId);
-    if (state.categories.length <= 1) {
-      showStatus('Mantenha pelo menos uma categoria cadastrada.', 'warning');
-      return;
-    }
-    if (count > 0) {
-      showStatus('Remova ou recategorize os produtos desta categoria antes de excluir.', 'warning');
-      return;
-    }
-
-    if (!window.confirm(`Deseja realmente excluir a categoria "${category.name}"?`)) return;
-
-    try {
-      const { error } = await window.db
-        .from('product_categories')
-        .delete()
-        .eq('id', categoryId)
-        .eq('profile_id', state.session.user.id);
-
-      if (error) throw error;
-
-      if (state.categoryEditingId === categoryId) resetCategoryForm();
-
-      showStatus('Categoria excluida com sucesso.', 'success');
-      await loadCategories();
-      await loadProducts();
-    } catch (err) {
-      showStatus(`Erro ao excluir categoria: ${err.message}`, 'danger');
     }
   }
 
@@ -931,12 +749,9 @@
     });
 
     refs.form.addEventListener('submit', saveProduct);
-    refs.categoryForm.addEventListener('submit', saveCategory);
     refs.autoFillBtn.addEventListener('click', () => fillFromLink({ silent: false, overwrite: true, force: true }));
     refs.cancelEditBtn.addEventListener('click', () => resetForm({ clearStoredDraft: false }));
     refs.clearFormBtn.addEventListener('click', () => resetForm({ clearStoredDraft: true }));
-    refs.cancelCategoryEditBtn.addEventListener('click', resetCategoryForm);
-    refs.clearCategoryFormBtn.addEventListener('click', resetCategoryForm);
     refs.adminSearchInput.addEventListener('input', applyFiltersAndSort);
     refs.adminFilterSelect.addEventListener('change', applyFiltersAndSort);
     refs.adminSortSelect.addEventListener('change', applyFiltersAndSort);
@@ -970,7 +785,6 @@
       });
 
       updateFormHeader();
-      updateCategoryFormHeader();
       updatePreview();
       await loadCategories();
       restoreDraft();

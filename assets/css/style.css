@@ -755,11 +755,33 @@ body.storefront-mode .price-tag {
   margin-top: 1rem;
 }
 
+.category-inline-shortcut {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px dashed #c9d8ee;
+  border-radius: 1rem;
+  background: rgba(248, 251, 255, 0.9);
+}
+
 .products-side-stack {
   display: grid;
   gap: 1rem;
   position: sticky;
   top: 88px;
+}
+
+.categories-shortcut-card {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(37, 99, 235, 0.08), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(244, 248, 255, 0.98) 100%);
+}
+
+.categories-page-stack {
+  position: static;
 }
 
 .store-category-pill {
@@ -1553,6 +1575,10 @@ body.bg-light {
   .products-form-header,
   .products-form-actions {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .category-inline-shortcut {
     align-items: stretch;
   }
 
