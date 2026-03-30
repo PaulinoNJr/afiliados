@@ -94,6 +94,16 @@ function validatePasswordStrength(password) {
   };
 }
 
+function parseJsonSafely(rawText) {
+  if (!rawText) return {};
+
+  try {
+    return JSON.parse(rawText);
+  } catch {
+    return {};
+  }
+}
+
 async function verifyRecaptchaToken({ token, req }) {
   const secret = String(
     process.env.RECAPTCHA_SECRET_KEY ||
@@ -266,10 +276,17 @@ async function updateSupabaseAuthUserById(userId, attributes = {}) {
     body: JSON.stringify(attributes)
   });
 
-  const payload = await response.json().catch(() => ({}));
+  const rawText = await response.text().catch(() => '');
+  const payload = parseJsonSafely(rawText);
 
   if (!response.ok) {
-    const message = payload?.msg || payload?.message || payload?.error_description || payload?.error || 'Falha ao atualizar usuario no Auth.';
+    const message =
+      payload?.msg ||
+      payload?.message ||
+      payload?.error_description ||
+      payload?.error ||
+      rawText ||
+      `Falha ao atualizar usuario no Auth (HTTP ${response.status}).`;
     throw new Error(message);
   }
 
@@ -292,10 +309,50 @@ async function deleteSupabaseAuthUserById(userId) {
     }
   });
 
-  const payload = await response.json().catch(() => ({}));
+  const rawText = await response.text().catch(() => '');
+  const payload = parseJsonSafely(rawText);
 
   if (!response.ok) {
-    const message = payload?.msg || payload?.message || payload?.error_description || payload?.error || 'Falha ao excluir usuario no Auth.';
+    const message =
+      payload?.msg ||
+      payload?.message ||
+      payload?.error_description ||
+      payload?.error ||
+      rawText ||
+      `Falha ao excluir usuario no Auth (HTTP ${response.status}).`;
+    throw new Error(message);
+  }
+
+  return payload;
+}
+
+async function deletePublicTableRows({ table, filters = [] }) {
+  const { url, serviceRoleKey } = getSupabaseConfig({ requireServiceRoleKey: true });
+  const endpoint = new URL(`${url}/rest/v1/${table}`);
+
+  filters.forEach(({ column, operator = 'eq', value }) => {
+    endpoint.searchParams.set(column, `${operator}.${value}`);
+  });
+
+  const response = await fetch(endpoint.toString(), {
+    method: 'DELETE',
+    headers: {
+      apikey: serviceRoleKey,
+      authorization: `Bearer ${serviceRoleKey}`
+    }
+  });
+
+  const rawText = await response.text().catch(() => '');
+  const payload = parseJsonSafely(rawText);
+
+  if (!response.ok) {
+    const message =
+      payload?.msg ||
+      payload?.message ||
+      payload?.error_description ||
+      payload?.error ||
+      rawText ||
+      `Falha ao remover registros de ${table} (HTTP ${response.status}).`;
     throw new Error(message);
   }
 
@@ -348,5 +405,6 @@ module.exports = {
   createSupabaseAuthUser,
   createSupabasePendingSignup,
   updateSupabaseAuthUserById,
-  deleteSupabaseAuthUserById
+  deleteSupabaseAuthUserById,
+  deletePublicTableRows
 };

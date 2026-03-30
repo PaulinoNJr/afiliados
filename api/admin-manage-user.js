@@ -3,7 +3,8 @@ const {
   getAuthenticatedSupabaseUser,
   getUserRole,
   updateSupabaseAuthUserById,
-  deleteSupabaseAuthUserById
+  deleteSupabaseAuthUserById,
+  deletePublicTableRows
 } = require('./_security');
 
 module.exports = async (req, res) => {
@@ -84,6 +85,34 @@ module.exports = async (req, res) => {
         message: 'Conta desativada com sucesso. O usuario nao conseguira mais entrar no sistema.'
       });
     }
+
+    await deletePublicTableRows({
+      table: 'produtos',
+      filters: [
+        { column: 'profile_id', value: userId }
+      ]
+    });
+
+    await deletePublicTableRows({
+      table: 'produtos',
+      filters: [
+        { column: 'created_by', value: userId }
+      ]
+    });
+
+    await deletePublicTableRows({
+      table: 'product_categories',
+      filters: [
+        { column: 'profile_id', value: userId }
+      ]
+    });
+
+    await deletePublicTableRows({
+      table: 'user_profiles',
+      filters: [
+        { column: 'user_id', value: userId }
+      ]
+    });
 
     await deleteSupabaseAuthUserById(userId);
 
