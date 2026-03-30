@@ -106,6 +106,49 @@ body.page-resolving footer {
   width: 100%;
 }
 
+.workspace-menu {
+  margin-bottom: 1.25rem;
+}
+
+.workspace-menu-shell {
+  display: flex;
+  gap: 0.55rem;
+  overflow-x: auto;
+  padding: 0.45rem;
+  border: 1px solid rgba(219, 229, 243, 0.92);
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0.85rem 1.8rem rgba(15, 23, 42, 0.06);
+  scrollbar-width: thin;
+}
+
+.workspace-menu-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0.7rem 1rem;
+  border-radius: 0.95rem;
+  color: #475569;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: transform 0.18s ease, background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.workspace-menu-link:hover,
+.workspace-menu-link:focus {
+  color: var(--accent);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.workspace-menu-link.is-active {
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--accent) 0%, #3b82f6 100%);
+  box-shadow: 0 0.75rem 1.45rem rgba(37, 99, 235, 0.18);
+}
+
 h1, h2, h3, h4, h5, h6, .navbar-brand {
   font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
 }
@@ -1570,6 +1613,14 @@ body.bg-light {
 
   .section-title {
     max-width: none;
+  }
+
+  .workspace-menu-shell {
+    padding: 0.4rem;
+  }
+
+  .workspace-menu-link {
+    flex: 0 0 auto;
   }
 
   .products-form-header,

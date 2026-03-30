@@ -77,6 +77,10 @@
 
   function applyProfileAccess(profile) {
     const actions = document.querySelector('.app-nav-actions');
+    document.querySelectorAll('[data-admin-only="true"]').forEach((element) => {
+      element.classList.toggle('d-none', profile?.role !== 'admin');
+    });
+
     if (!actions) return;
 
     let link = document.getElementById('profileAccessLink');

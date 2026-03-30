@@ -251,6 +251,18 @@
     updatePreviewSourceTag();
   }
 
+  function resetPreviewCard() {
+    refs.previewTitle.textContent = 'Produto sem titulo';
+    refs.previewDescription.textContent = 'Adicione uma descricao para melhorar a conversao.';
+    refs.previewPrice.textContent = 'R$ 0,00';
+    refs.previewImage.onerror = null;
+    refs.previewImage.src = defaultImage();
+    refs.previewLink.href = '#';
+    refs.previewLink.classList.add('disabled', 'text-secondary');
+    refs.previewSourceTag.classList.add('d-none');
+    refs.previewSourceTag.textContent = '';
+  }
+
   function clearDraft() {
     try {
       localStorage.removeItem(DRAFT_KEY);
@@ -354,7 +366,7 @@
     updateProductFormAvailability();
     if (state.categories.length) refs.categoriaId.value = getDefaultCategoryId();
     setSaveLoading(false);
-    updatePreview();
+    resetPreviewCard();
     if (clearStoredDraft) clearDraft();
   }
 
