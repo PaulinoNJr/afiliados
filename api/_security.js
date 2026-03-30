@@ -248,6 +248,60 @@ async function createSupabaseAuthUser({ email, password, metadata = {}, emailCon
   return payload;
 }
 
+async function updateSupabaseAuthUserById(userId, attributes = {}) {
+  const { url, serviceRoleKey } = getSupabaseConfig({ requireServiceRoleKey: true });
+  const normalizedUserId = String(userId || '').trim();
+
+  if (!normalizedUserId) {
+    throw new Error('ID do usuario ausente para atualizacao no Auth.');
+  }
+
+  const response = await fetch(`${url}/auth/v1/admin/user/${encodeURIComponent(normalizedUserId)}`, {
+    method: 'PUT',
+    headers: {
+      'content-type': 'application/json',
+      apikey: serviceRoleKey,
+      authorization: `Bearer ${serviceRoleKey}`
+    },
+    body: JSON.stringify(attributes)
+  });
+
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const message = payload?.msg || payload?.message || payload?.error_description || payload?.error || 'Falha ao atualizar usuario no Auth.';
+    throw new Error(message);
+  }
+
+  return payload;
+}
+
+async function deleteSupabaseAuthUserById(userId) {
+  const { url, serviceRoleKey } = getSupabaseConfig({ requireServiceRoleKey: true });
+  const normalizedUserId = String(userId || '').trim();
+
+  if (!normalizedUserId) {
+    throw new Error('ID do usuario ausente para exclusao no Auth.');
+  }
+
+  const response = await fetch(`${url}/auth/v1/admin/user/${encodeURIComponent(normalizedUserId)}`, {
+    method: 'DELETE',
+    headers: {
+      apikey: serviceRoleKey,
+      authorization: `Bearer ${serviceRoleKey}`
+    }
+  });
+
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const message = payload?.msg || payload?.message || payload?.error_description || payload?.error || 'Falha ao excluir usuario no Auth.';
+    throw new Error(message);
+  }
+
+  return payload;
+}
+
 async function createSupabasePendingSignup({ email, password, metadata = {}, emailRedirectTo = '' }) {
   const { url, anonKey } = getSupabaseConfig({ requireAnonKey: true });
   const endpoint = new URL(`${url}/auth/v1/signup`);
@@ -292,5 +346,7 @@ module.exports = {
   getAuthenticatedSupabaseUser,
   getUserRole,
   createSupabaseAuthUser,
-  createSupabasePendingSignup
+  createSupabasePendingSignup,
+  updateSupabaseAuthUserById,
+  deleteSupabaseAuthUserById
 };

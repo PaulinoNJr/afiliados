@@ -35,6 +35,7 @@
     clearEditorBtn: document.getElementById('clearEditorBtn'),
     editUserForm: document.getElementById('editUserForm'),
     selectedUserEmail: document.getElementById('selectedUserEmail'),
+    selectedUserAccountHint: document.getElementById('selectedUserAccountHint'),
     editRole: document.getElementById('editRole'),
     editFirstName: document.getElementById('editFirstName'),
     editLastName: document.getElementById('editLastName'),
@@ -48,7 +49,9 @@
     editBio: document.getElementById('editBio'),
     editPhotoUrl: document.getElementById('editPhotoUrl'),
     editBannerUrl: document.getElementById('editBannerUrl'),
-    saveUserBtn: document.getElementById('saveUserBtn')
+    saveUserBtn: document.getElementById('saveUserBtn'),
+    disableUserBtn: document.getElementById('disableUserBtn'),
+    deleteUserBtn: document.getElementById('deleteUserBtn')
   };
 
   function showStatus(message, type = 'warning') {
@@ -73,6 +76,14 @@
 
   function setUsersLoading(isLoading) {
     refs.usersLoading.classList.toggle('d-none', !isLoading);
+  }
+
+  function setAccountActionsLoading(action = '', isLoading = false) {
+    refs.disableUserBtn.disabled = isLoading || !state.selectedUser || state.selectedUser.user_id === state.session?.user?.id;
+    refs.deleteUserBtn.disabled = isLoading || !state.selectedUser || state.selectedUser.user_id === state.session?.user?.id;
+
+    refs.disableUserBtn.textContent = isLoading && action === 'disable' ? 'Desativando...' : 'Desativar conta';
+    refs.deleteUserBtn.textContent = isLoading && action === 'delete' ? 'Excluindo...' : 'Excluir conta';
   }
 
   function formatDate(value) {
@@ -143,6 +154,8 @@
     refs.editUserForm.reset();
     refs.userEditorCard.classList.add('d-none');
     refs.selectedUserStoreLink.classList.add('d-none');
+    refs.selectedUserAccountHint.textContent = 'Desativar bloqueia novos logins. Excluir remove a conta, o perfil e os registros associados.';
+    setAccountActionsLoading();
     setSlugFeedback('Use letras minusculas, numeros e hifens.', 'secondary');
   }
 
@@ -172,6 +185,15 @@
       refs.selectedUserStoreLink.classList.add('d-none');
     }
 
+    if (user.user_id === state.session?.user?.id) {
+      refs.selectedUserAccountHint.textContent = 'Seu proprio usuario nao pode ser desativado ou excluido por esta tela.';
+    } else if (user.authDisabled) {
+      refs.selectedUserAccountHint.textContent = 'Esta conta ja foi desativada no Auth. Excluir remove a conta e os registros associados.';
+    } else {
+      refs.selectedUserAccountHint.textContent = 'Desativar bloqueia novos logins. Excluir remove a conta, o perfil e os registros associados.';
+    }
+
+    setAccountActionsLoading();
     setSlugFeedback('Use letras minusculas, numeros e hifens.', 'secondary');
   }
 
@@ -208,6 +230,13 @@
       badge.textContent = user.role || 'produtor';
       tdRole.appendChild(badge);
 
+      if (user.authDisabled) {
+        const disabledBadge = document.createElement('span');
+        disabledBadge.className = 'badge text-bg-warning ms-2';
+        disabledBadge.textContent = 'desativado';
+        tdRole.appendChild(disabledBadge);
+      }
+
       const tdUpdated = document.createElement('td');
       tdUpdated.className = 'small text-secondary';
       tdUpdated.textContent = formatDate(user.updated_at || user.created_at);
@@ -231,6 +260,10 @@
     setUsersLoading(true);
 
     try {
+      const localFlags = new Map(
+        state.users.map((user) => [user.user_id, { authDisabled: Boolean(user.authDisabled) }])
+      );
+
       const { data, error } = await window.db
         .from('user_profiles')
         .select('user_id, user_email, role, first_name, last_name, phone, store_name, slug, headline, accent_color, cta_label, bio, photo_url, banner_url, created_at, updated_at')
@@ -238,7 +271,10 @@
 
       if (error) throw error;
 
-      state.users = data || [];
+      state.users = (data || []).map((user) => ({
+        ...user,
+        ...(localFlags.get(user.user_id) || {})
+      }));
 
       if (state.selectedUser) {
         const freshSelected = state.users.find((user) => user.user_id === state.selectedUser.user_id);
@@ -439,6 +475,74 @@
     }
   }
 
+  async function manageSelectedUser(action) {
+    hideStatus();
+
+    if (!state.selectedUser) {
+      showStatus('Selecione um usuario para gerenciar a conta.', 'warning');
+      return;
+    }
+
+    if (state.selectedUser.user_id === state.session.user.id) {
+      showStatus('Por seguranca, voce nao pode desativar ou excluir a propria conta por esta tela.', 'warning');
+      return;
+    }
+
+    const userLabel = state.selectedUser.user_email || state.selectedUser.user_id;
+    const confirmMessage = action === 'delete'
+      ? `Deseja excluir permanentemente a conta de ${userLabel}? Essa acao remove o acesso no Auth e apaga o perfil e registros relacionados conforme as regras do banco.`
+      : `Deseja desativar a conta de ${userLabel}? O usuario perdera o acesso ao sistema ate ser reativado manualmente no Supabase Auth.`;
+
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    setAccountActionsLoading(action, true);
+
+    try {
+      const response = await fetch('/api/admin-manage-user', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${state.session.access_token}`
+        },
+        body: JSON.stringify({
+          userId: state.selectedUser.user_id,
+          action
+        })
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.error || 'Nao foi possivel concluir o gerenciamento da conta.');
+      }
+
+      if (action === 'disable') {
+        state.selectedUser = {
+          ...state.selectedUser,
+          authDisabled: true
+        };
+
+        state.users = state.users.map((user) => (
+          user.user_id === state.selectedUser.user_id
+            ? { ...user, authDisabled: true }
+            : user
+        ));
+
+        populateEditor(state.selectedUser);
+      } else {
+        clearEditor();
+      }
+
+      showStatus(payload.message || 'Conta atualizada com sucesso.', 'success');
+      await loadUsers();
+    } catch (err) {
+      showStatus(`Erro ao gerenciar conta: ${err.message}`, 'danger');
+    } finally {
+      setAccountActionsLoading();
+    }
+  }
+
   async function init() {
     if (window.AppConfig?.missingConfig) {
       showStatus('Configure SUPABASE_URL e SUPABASE_ANON_KEY em assets/js/config.js.', 'warning');
@@ -473,6 +577,8 @@
       refs.reloadUsersBtn.addEventListener('click', loadUsers);
       refs.clearEditorBtn.addEventListener('click', clearEditor);
       refs.editUserForm.addEventListener('submit', updateSelectedUser);
+      refs.disableUserBtn.addEventListener('click', () => manageSelectedUser('disable'));
+      refs.deleteUserBtn.addEventListener('click', () => manageSelectedUser('delete'));
 
       refs.editPhone.addEventListener('input', () => {
         refs.editPhone.value = window.StoreUtils.formatPhone(refs.editPhone.value);
