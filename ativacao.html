@@ -18,7 +18,7 @@
               <div class="text-center mb-4">
                 <span class="badge text-bg-primary mb-3">Ativacao</span>
                 <h1 class="h4 mb-2">Ative sua conta</h1>
-                <p class="text-secondary mb-0">Quando voce clicar no link do email, esta pagina finaliza a ativacao e libera o painel.</p>
+                <p class="text-secondary mb-0">Esta pagina valida o email e conclui a ativacao da sua conta com mais seguranca.</p>
               </div>
 
               <div id="statusMessage" class="alert d-none" role="alert"></div>
@@ -28,12 +28,14 @@
                 <ol class="small text-secondary mb-0 ps-3">
                   <li>Abra o email de confirmacao enviado no cadastro.</li>
                   <li>Clique no link de ativacao.</li>
-                  <li>Esta pagina recebe a confirmacao e ativa sua conta no banco.</li>
+                  <li>Se solicitado, use o botao desta pagina para confirmar o email.</li>
+                  <li>Depois disso, a ativacao e concluida no banco e o painel e liberado.</li>
                   <li>Se o prazo de 5 dias expirar, sera necessario solicitar um novo email.</li>
                 </ol>
               </div>
 
               <div class="d-grid gap-2">
+                <button id="confirmEmailBtn" type="button" class="btn btn-primary d-none">Confirmar email e ativar conta</button>
                 <a id="goToLoginBtn" href="login.html" class="btn btn-primary">Ir para o login</a>
                 <a href="cadastro.html" class="btn btn-outline-primary">Voltar ao cadastro</a>
                 <a href="index.html" class="btn btn-outline-dark">Pagina inicial</a>

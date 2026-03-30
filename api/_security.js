@@ -250,8 +250,13 @@ async function createSupabaseAuthUser({ email, password, metadata = {}, emailCon
 
 async function createSupabasePendingSignup({ email, password, metadata = {}, emailRedirectTo = '' }) {
   const { url, anonKey } = getSupabaseConfig({ requireAnonKey: true });
+  const endpoint = new URL(`${url}/auth/v1/signup`);
 
-  const response = await fetch(`${url}/auth/v1/signup`, {
+  if (emailRedirectTo) {
+    endpoint.searchParams.set('redirect_to', emailRedirectTo);
+  }
+
+  const response = await fetch(endpoint.toString(), {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -260,11 +265,7 @@ async function createSupabasePendingSignup({ email, password, metadata = {}, ema
     body: JSON.stringify({
       email,
       password,
-      data: metadata,
-      options: {
-        data: metadata,
-        emailRedirectTo: emailRedirectTo || undefined
-      }
+      data: metadata
     })
   });
 

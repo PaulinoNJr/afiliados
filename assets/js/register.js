@@ -146,6 +146,7 @@
         <li>Finalize o cadastro.</li>
         <li>Abra o email de confirmacao enviado para o endereco informado.</li>
         <li>Clique no link de ativacao dentro de ate 5 dias.</li>
+        <li>Na pagina de ativacao, confirme o email para liberar o painel.</li>
         <li>Apos a confirmacao, sua conta passa a ficar ativa e o painel sera liberado.</li>
       </ol>
       <p class="small text-secondary mb-0">${details}</p>

@@ -40,8 +40,9 @@ Site completo para divulgar produtos de afiliado do Mercado Livre, com:
 3. No painel `Authentication > Providers`, deixe o provider de email/senha ativo.
 4. Em `Authentication > URL Configuration`, adicione:
 - `Site URL`: URL do seu domínio da Vercel (ou `http://localhost:3000` para teste)
-- `Redirect URLs`: inclua `https://SEU-DOMINIO.vercel.app/admin.html`
-5. O `schema.sql` já promove automaticamente `paulino.covabra@gmail.com` para perfil `admin`.
+- `Redirect URLs`: inclua `http://localhost:3000/ativacao`, `http://localhost:3000/ativacao.html`, `https://SEU-DOMINIO.vercel.app/ativacao` e `https://SEU-DOMINIO.vercel.app/ativacao.html`
+5. Em `Authentication > Email Templates > Confirm signup`, copie o conteudo de [`supabase/email-template-confirmation.html`](./supabase/email-template-confirmation.html) para que o Supabase use o template customizado do projeto.
+6. O `schema.sql` já promove automaticamente `paulino.covabra@gmail.com` para perfil `admin`.
 
 ## 2) Configurar variáveis do Supabase no frontend
 

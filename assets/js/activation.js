@@ -1,7 +1,14 @@
 (() => {
+  const state = {
+    tokenHash: '',
+    tokenType: 'email',
+    confirming: false
+  };
+
   const refs = {
     status: document.getElementById('statusMessage'),
     activationInfo: document.getElementById('activationInfo'),
+    confirmEmailBtn: document.getElementById('confirmEmailBtn'),
     goToLoginBtn: document.getElementById('goToLoginBtn')
   };
 
@@ -11,9 +18,15 @@
     refs.status.classList.remove('d-none');
   }
 
-  function getQueryParam(name) {
-    const params = new URLSearchParams(window.location.search);
-    return String(params.get(name) || '').trim();
+  function getParams() {
+    const query = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    return { query, hash };
+  }
+
+  function getParam(name) {
+    const { query, hash } = getParams();
+    return String(query.get(name) || hash.get(name) || '').trim();
   }
 
   function formatDateTime(value) {
@@ -24,15 +37,33 @@
     });
   }
 
-  function renderInfo(profile = null) {
+  function setConfirmButton({
+    visible = false,
+    disabled = false,
+    text = 'Confirmar email e ativar conta'
+  } = {}) {
+    if (!refs.confirmEmailBtn) return;
+
+    refs.confirmEmailBtn.textContent = text;
+    refs.confirmEmailBtn.disabled = disabled;
+    refs.confirmEmailBtn.classList.toggle('d-none', !visible);
+  }
+
+  function renderInfo(profile = null, { awaitingEmailConfirmation = false, awaitingExplicitConfirmation = false } = {}) {
     const expiresAt = profile?.activation_expires_at
       ? formatDateTime(profile.activation_expires_at)
       : 'dentro de 5 dias';
 
+    const nextStep = awaitingExplicitConfirmation
+      ? 'Use o botao abaixo para validar o email e concluir a ativacao com seguranca.'
+      : awaitingEmailConfirmation
+        ? 'Abra o email recebido no cadastro e use o link mais recente para concluir a ativacao.'
+        : 'Depois da ativacao, o painel, a configuracao da loja e o cadastro de produtos ficam liberados normalmente.';
+
     refs.activationInfo.innerHTML = `
       <p class="small text-uppercase fw-semibold text-secondary mb-2">Status da ativacao</p>
       <p class="small text-secondary mb-2">A sua conta fica pendente ate a confirmacao do email. O prazo limite para ativacao e <strong>${expiresAt}</strong>.</p>
-      <p class="small text-secondary mb-0">Depois da ativacao, o painel, a configuracao da loja e o cadastro de produtos ficam liberados normalmente.</p>
+      <p class="small text-secondary mb-0">${nextStep}</p>
     `;
   }
 
@@ -42,13 +73,141 @@
     return Array.isArray(data) ? (data[0] || null) : data;
   }
 
+  async function waitForSession(timeoutMs = 5000) {
+    const currentSession = await window.Auth.getSession();
+    if (currentSession) {
+      return currentSession;
+    }
+
+    return new Promise((resolve) => {
+      let resolved = false;
+      const startedAt = Date.now();
+      const { data: listener } = window.db.auth.onAuthStateChange((_event, session) => {
+        if (resolved || !session) return;
+        resolved = true;
+        listener?.subscription?.unsubscribe();
+        resolve(session);
+      });
+
+      async function poll() {
+        if (resolved) return;
+
+        const session = await window.Auth.getSession().catch(() => null);
+        if (session) {
+          resolved = true;
+          listener?.subscription?.unsubscribe();
+          resolve(session);
+          return;
+        }
+
+        if (Date.now() - startedAt >= timeoutMs) {
+          resolved = true;
+          listener?.subscription?.unsubscribe();
+          resolve(null);
+          return;
+        }
+
+        window.setTimeout(poll, 250);
+      }
+
+      poll();
+    });
+  }
+
+  function finishAsActive() {
+    refs.goToLoginBtn.href = 'admin.html';
+    refs.goToLoginBtn.textContent = 'Abrir painel';
+    setConfirmButton({ visible: false });
+  }
+
+  async function ensureActivationFromSession() {
+    const session = await window.Auth.getSession();
+    if (!session) {
+      renderInfo(null, { awaitingEmailConfirmation: true });
+      return false;
+    }
+
+    let profile = await window.Auth.getProfile();
+    renderInfo(profile);
+
+    if (window.Auth.isAccountActive(profile)) {
+      showStatus('Sua conta ja esta ativa. Voce pode acessar o painel normalmente.', 'success');
+      finishAsActive();
+      return true;
+    }
+
+    profile = await finalizeActivation();
+    renderInfo(profile);
+    showStatus('Conta ativada com sucesso. O painel ja pode ser acessado.', 'success');
+    finishAsActive();
+    return true;
+  }
+
+  async function confirmEmailAndActivate() {
+    if (!state.tokenHash || state.confirming) return;
+
+    state.confirming = true;
+    setConfirmButton({
+      visible: true,
+      disabled: true,
+      text: 'Confirmando email...'
+    });
+    showStatus('Validando o link de confirmacao e preparando a ativacao...', 'info');
+
+    try {
+      const { error } = await window.db.auth.verifyOtp({
+        token_hash: state.tokenHash,
+        type: state.tokenType || 'email'
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      const session = await waitForSession();
+      if (!session) {
+        throw new Error('O email foi confirmado, mas a sessao nao ficou disponivel. Abra novamente o link mais recente enviado para sua caixa de entrada.');
+      }
+
+      window.history.replaceState({}, document.title, window.location.pathname);
+      await ensureActivationFromSession();
+    } catch (err) {
+      showStatus(err.message || 'Nao foi possivel confirmar o email.', 'danger');
+      renderInfo(null, { awaitingExplicitConfirmation: true });
+      setConfirmButton({
+        visible: true,
+        disabled: false,
+        text: 'Tentar novamente'
+      });
+    } finally {
+      state.confirming = false;
+    }
+  }
+
   async function init() {
     if (window.AppConfig?.missingConfig) {
       showStatus('Configure SUPABASE_URL e SUPABASE_ANON_KEY em assets/js/config.js.', 'warning');
       return;
     }
 
-    const status = getQueryParam('status');
+    refs.confirmEmailBtn?.addEventListener('click', confirmEmailAndActivate);
+
+    const status = getParam('status');
+    const errorDescription = getParam('error_description');
+    const errorCode = getParam('error_code');
+
+    state.tokenHash = getParam('token_hash');
+    state.tokenType = getParam('type') || 'email';
+
+    if (errorDescription) {
+      showStatus(
+        errorCode
+          ? `${errorDescription} (codigo ${errorCode})`
+          : errorDescription,
+        'danger'
+      );
+    }
+
     if (status === 'pending') {
       showStatus('Sua conta ainda precisa ser confirmada pelo link enviado no email.', 'warning');
     } else if (status === 'expired') {
@@ -56,27 +215,31 @@
     }
 
     try {
-      const session = await window.Auth.getSession();
-      if (!session) {
+      if (state.tokenHash) {
+        renderInfo(null, { awaitingExplicitConfirmation: true });
+        setConfirmButton({ visible: true });
+        return;
+      }
+
+      const hasSessionPayload = ['access_token', 'refresh_token', 'code'].some((name) => Boolean(getParam(name)));
+      if (hasSessionPayload) {
         renderInfo();
+        showStatus('Recebemos o retorno do email de confirmacao. Validando a sessao...', 'info');
+        const session = await waitForSession();
+        if (!session) {
+          renderInfo(null, { awaitingEmailConfirmation: true });
+          showStatus('O link foi aberto, mas a sessao nao foi concluida automaticamente. Use o email mais recente ou atualize o template de confirmacao no Supabase.', 'warning');
+          return;
+        }
+
+        await ensureActivationFromSession();
         return;
       }
 
-      let profile = await window.Auth.getProfile();
-      renderInfo(profile);
-
-      if (window.Auth.isAccountActive(profile)) {
-        showStatus('Sua conta ja esta ativa. Voce pode acessar o painel normalmente.', 'success');
-        refs.goToLoginBtn.href = 'admin.html';
-        refs.goToLoginBtn.textContent = 'Ir para o painel';
-        return;
+      const activated = await ensureActivationFromSession();
+      if (!activated) {
+        setConfirmButton({ visible: false });
       }
-
-      profile = await finalizeActivation();
-      renderInfo(profile);
-      showStatus('Conta ativada com sucesso. O painel ja pode ser acessado.', 'success');
-      refs.goToLoginBtn.href = 'admin.html';
-      refs.goToLoginBtn.textContent = 'Abrir painel';
     } catch (err) {
       showStatus(err.message || 'Nao foi possivel concluir a ativacao da conta.', 'danger');
     }
