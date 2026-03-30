@@ -94,9 +94,13 @@ module.exports = async (req, res) => {
       message: 'Conta excluida com sucesso. Os dados relacionados foram removidos conforme as regras de cascata do banco.'
     });
   } catch (error) {
+    const message = /SUPABASE_SERVICE_ROLE_KEY/i.test(error.message)
+      ? 'SUPABASE_SERVICE_ROLE_KEY nao esta configurada no backend. Adicione essa chave nas variaveis de ambiente da Vercel ou no .env.local do vercel dev para permitir desativar ou excluir contas pelo admin.'
+      : error.message;
+
     return res.status(500).json({
       ok: false,
-      error: error.message
+      error: message
     });
   }
 };

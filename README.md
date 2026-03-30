@@ -53,6 +53,20 @@ Edite [`assets/js/config.js`](./assets/js/config.js):
 
 Observação: a `anon key` é pública por natureza em apps frontend; a segurança real está nas políticas RLS.
 
+## 2.1) Configurar variaveis do Supabase no backend
+
+As funcoes serverless em `api/` precisam destas variaveis de ambiente:
+
+- `SUPABASE_URL`: URL do projeto Supabase
+- `SUPABASE_ANON_KEY`: chave anon usada em fluxos publicos protegidos no backend
+- `SUPABASE_SERVICE_ROLE_KEY`: chave privada do backend, obrigatoria para criar, desativar e excluir usuarios pelo painel admin
+
+Importante:
+
+- Configure essas variaveis em `Project Settings > Environment Variables` na Vercel.
+- Em ambiente local com `vercel dev`, coloque os valores em `.env.local`.
+- A `SUPABASE_SERVICE_ROLE_KEY` nunca deve ir para `assets/js/config.js` nem para o frontend.
+
 ## 3) Rodar localmente
 
 Opção simples com Vercel CLI (recomendado para testar `/api/preview`):
