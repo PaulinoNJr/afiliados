@@ -127,11 +127,42 @@ alter table public.user_profiles
   add column if not exists created_at timestamptz not null default now(),
   add column if not exists updated_at timestamptz not null default now();
 
+drop trigger if exists trg_user_profiles_role_guard on public.user_profiles;
+
+do $$
+begin
+  if exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.user_profiles'::regclass
+      and conname = 'user_profiles_role_check'
+  ) then
+    alter table public.user_profiles
+      drop constraint user_profiles_role_check;
+  end if;
+end;
+$$;
+
+create or replace function public.prevent_unauthorized_role_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.role is distinct from old.role
+     and auth.uid() is not null
+     and not public.is_admin() then
+    raise exception 'Somente administradores podem alterar o perfil de acesso.';
+  end if;
+
+  return new;
+end;
+$$;
+
 alter table public.user_profiles
   alter column role set default 'advertiser',
-  alter column role set not null,
   alter column account_type set default 'advertiser',
-  alter column account_type set not null,
   alter column activation_status set default 'pending',
   alter column activation_requested_at set default now(),
   alter column activation_email_sent_at set default now(),
@@ -179,6 +210,10 @@ update public.user_profiles
 set activation_confirmed_at = coalesce(activation_confirmed_at, activation_requested_at)
 where activation_status = 'active'
   and activation_confirmed_at is null;
+
+alter table public.user_profiles
+  alter column role set not null,
+  alter column account_type set not null;
 
 create index if not exists idx_user_profiles_user_email on public.user_profiles (lower(user_email));
 
@@ -638,6 +673,39 @@ begin
       add constraint ck_user_profiles_account_type_valid
       check (account_type in ('advertiser', 'affiliate'));
   end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'ck_campaigns_status_valid'
+      and conrelid = 'public.campaigns'::regclass
+  ) then
+    alter table public.campaigns
+      add constraint ck_campaigns_status_valid
+      check (status in ('draft', 'active', 'paused', 'closed'));
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'ck_campaigns_commission_type_valid'
+      and conrelid = 'public.campaigns'::regclass
+  ) then
+    alter table public.campaigns
+      add constraint ck_campaigns_commission_type_valid
+      check (commission_type in ('percent', 'fixed'));
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'ck_affiliate_links_status_valid'
+      and conrelid = 'public.affiliate_links'::regclass
+  ) then
+    alter table public.affiliate_links
+      add constraint ck_affiliate_links_status_valid
+      check (status in ('active', 'disabled'));
+  end if;
 end;
 $$;
 
@@ -679,7 +747,9 @@ security definer
 set search_path = public
 as $$
 begin
-  if new.role is distinct from old.role and not public.is_admin() then
+  if new.role is distinct from old.role
+     and auth.uid() is not null
+     and not public.is_admin() then
     raise exception 'Somente administradores podem alterar o perfil de acesso.';
   end if;
 
@@ -1114,6 +1184,457 @@ create index if not exists idx_produtos_created_by on public.produtos (created_b
 create index if not exists idx_produtos_profile_id on public.produtos (profile_id);
 create index if not exists idx_produtos_category_id on public.produtos (category_id);
 
+create table if not exists public.campaigns (
+  id uuid primary key default gen_random_uuid(),
+  advertiser_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  description text,
+  status text not null default 'draft',
+  commission_type text not null default 'percent',
+  commission_value numeric(12,2) not null default 10 check (commission_value >= 0),
+  starts_at timestamptz,
+  ends_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.campaigns
+  add column if not exists advertiser_id uuid references auth.users(id) on delete cascade,
+  add column if not exists name text,
+  add column if not exists description text,
+  add column if not exists status text,
+  add column if not exists commission_type text,
+  add column if not exists commission_value numeric(12,2) default 10,
+  add column if not exists starts_at timestamptz,
+  add column if not exists ends_at timestamptz,
+  add column if not exists created_at timestamptz not null default now(),
+  add column if not exists updated_at timestamptz not null default now();
+
+update public.campaigns
+set status = 'draft'
+where status is null
+   or trim(status) = '';
+
+update public.campaigns
+set commission_type = 'percent'
+where commission_type is null
+   or trim(commission_type) = '';
+
+update public.campaigns
+set commission_value = 10
+where commission_value is null;
+
+alter table public.campaigns
+  alter column advertiser_id set not null,
+  alter column name set not null,
+  alter column status set default 'draft',
+  alter column status set not null,
+  alter column commission_type set default 'percent',
+  alter column commission_type set not null,
+  alter column commission_value set default 10,
+  alter column commission_value set not null;
+
+create index if not exists idx_campaigns_advertiser_id on public.campaigns (advertiser_id);
+create index if not exists idx_campaigns_status on public.campaigns (advertiser_id, status, created_at desc);
+
+create table if not exists public.campaign_products (
+  campaign_id uuid not null references public.campaigns(id) on delete cascade,
+  product_id uuid not null references public.produtos(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (campaign_id, product_id)
+);
+
+alter table public.campaign_products
+  add column if not exists created_at timestamptz not null default now();
+
+create index if not exists idx_campaign_products_product_id on public.campaign_products (product_id);
+
+create table if not exists public.affiliate_links (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  affiliate_id uuid not null references auth.users(id) on delete cascade,
+  campaign_id uuid not null references public.campaigns(id) on delete cascade,
+  product_id uuid not null references public.produtos(id) on delete cascade,
+  destination_url text not null,
+  status text not null default 'active',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.affiliate_links
+  add column if not exists code text,
+  add column if not exists affiliate_id uuid references auth.users(id) on delete cascade,
+  add column if not exists campaign_id uuid references public.campaigns(id) on delete cascade,
+  add column if not exists product_id uuid references public.produtos(id) on delete cascade,
+  add column if not exists destination_url text,
+  add column if not exists status text,
+  add column if not exists created_at timestamptz not null default now(),
+  add column if not exists updated_at timestamptz not null default now();
+
+update public.affiliate_links
+set status = 'active'
+where status is null
+   or trim(status) = '';
+
+alter table public.affiliate_links
+  alter column code set not null,
+  alter column affiliate_id set not null,
+  alter column campaign_id set not null,
+  alter column product_id set not null,
+  alter column destination_url set not null,
+  alter column status set default 'active',
+  alter column status set not null;
+
+create unique index if not exists idx_affiliate_links_code on public.affiliate_links (code);
+create index if not exists idx_affiliate_links_affiliate_id on public.affiliate_links (affiliate_id, created_at desc);
+create index if not exists idx_affiliate_links_campaign_product on public.affiliate_links (campaign_id, product_id);
+
+create table if not exists public.clicks (
+  id uuid primary key default gen_random_uuid(),
+  affiliate_link_id uuid not null references public.affiliate_links(id) on delete cascade,
+  affiliate_id uuid not null references auth.users(id) on delete cascade,
+  campaign_id uuid not null references public.campaigns(id) on delete cascade,
+  product_id uuid not null references public.produtos(id) on delete cascade,
+  session_id text,
+  referrer text,
+  user_agent text,
+  ip_hash text,
+  occurred_at timestamptz not null default now()
+);
+
+alter table public.clicks
+  add column if not exists affiliate_link_id uuid references public.affiliate_links(id) on delete cascade,
+  add column if not exists affiliate_id uuid references auth.users(id) on delete cascade,
+  add column if not exists campaign_id uuid references public.campaigns(id) on delete cascade,
+  add column if not exists product_id uuid references public.produtos(id) on delete cascade,
+  add column if not exists session_id text,
+  add column if not exists referrer text,
+  add column if not exists user_agent text,
+  add column if not exists ip_hash text,
+  add column if not exists occurred_at timestamptz not null default now();
+
+alter table public.clicks
+  alter column affiliate_link_id set not null,
+  alter column affiliate_id set not null,
+  alter column campaign_id set not null,
+  alter column product_id set not null;
+
+create index if not exists idx_clicks_link_id on public.clicks (affiliate_link_id, occurred_at desc);
+create index if not exists idx_clicks_affiliate_id on public.clicks (affiliate_id, occurred_at desc);
+create index if not exists idx_clicks_campaign_id on public.clicks (campaign_id, occurred_at desc);
+create index if not exists idx_clicks_product_id on public.clicks (product_id, occurred_at desc);
+
+create or replace function public.generate_affiliate_link_code()
+returns text
+language plpgsql
+set search_path = public
+as $$
+declare
+  generated_code text;
+begin
+  loop
+    generated_code := lower(encode(gen_random_bytes(6), 'hex'));
+    exit when not exists (
+      select 1
+      from public.affiliate_links affiliate_link
+      where affiliate_link.code = generated_code
+    );
+  end loop;
+
+  return generated_code;
+end;
+$$;
+
+create or replace function public.prepare_campaign()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  new.name := nullif(trim(coalesce(new.name, '')), '');
+  new.description := nullif(trim(coalesce(new.description, '')), '');
+  new.status := lower(nullif(trim(coalesce(new.status, '')), ''));
+  new.commission_type := lower(nullif(trim(coalesce(new.commission_type, '')), ''));
+
+  if new.advertiser_id is null then
+    raise exception 'Anunciante da campanha nao informado.';
+  end if;
+
+  if new.name is null then
+    raise exception 'Informe o nome da campanha.';
+  end if;
+
+  if new.status is null then
+    new.status := 'draft';
+  elsif new.status not in ('draft', 'active', 'paused', 'closed') then
+    raise exception 'Status da campanha invalido.';
+  end if;
+
+  if new.commission_type is null then
+    new.commission_type := 'percent';
+  elsif new.commission_type not in ('percent', 'fixed') then
+    raise exception 'Tipo de comissao invalido.';
+  end if;
+
+  if new.commission_value is null or new.commission_value < 0 then
+    raise exception 'Valor de comissao invalido.';
+  end if;
+
+  if new.ends_at is not null and new.starts_at is not null and new.ends_at < new.starts_at then
+    raise exception 'A data final da campanha deve ser posterior ao inicio.';
+  end if;
+
+  return new;
+end;
+$$;
+
+create or replace function public.validate_campaign_product()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+declare
+  campaign_owner_id uuid;
+  product_owner_id uuid;
+begin
+  select campaign.advertiser_id
+  into campaign_owner_id
+  from public.campaigns campaign
+  where campaign.id = new.campaign_id;
+
+  if campaign_owner_id is null then
+    raise exception 'Campanha nao encontrada.';
+  end if;
+
+  select product.profile_id
+  into product_owner_id
+  from public.produtos product
+  where product.id = new.product_id;
+
+  if product_owner_id is null then
+    raise exception 'Produto nao encontrado.';
+  end if;
+
+  if campaign_owner_id <> product_owner_id then
+    raise exception 'O produto deve pertencer ao mesmo anunciante da campanha.';
+  end if;
+
+  return new;
+end;
+$$;
+
+create or replace function public.prepare_affiliate_link()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+declare
+  campaign_row public.campaigns;
+  product_row public.produtos;
+begin
+  if new.code is null or trim(new.code) = '' then
+    new.code := public.generate_affiliate_link_code();
+  else
+    new.code := lower(trim(new.code));
+  end if;
+
+  if new.code !~ '^[a-z0-9]{8,32}$' then
+    raise exception 'Codigo do link rastreavel invalido.';
+  end if;
+
+  if new.affiliate_id is null then
+    new.affiliate_id := auth.uid();
+  end if;
+
+  select *
+  into campaign_row
+  from public.campaigns campaign
+  where campaign.id = new.campaign_id;
+
+  if campaign_row.id is null then
+    raise exception 'Campanha nao encontrada.';
+  end if;
+
+  if campaign_row.status <> 'active' then
+    raise exception 'A campanha precisa estar ativa para gerar links.';
+  end if;
+
+  if campaign_row.starts_at is not null and campaign_row.starts_at > now() then
+    raise exception 'A campanha ainda nao iniciou.';
+  end if;
+
+  if campaign_row.ends_at is not null and campaign_row.ends_at < now() then
+    raise exception 'A campanha ja foi encerrada.';
+  end if;
+
+  if not exists (
+    select 1
+    from public.campaign_products campaign_product
+    where campaign_product.campaign_id = new.campaign_id
+      and campaign_product.product_id = new.product_id
+  ) then
+    raise exception 'O produto nao esta vinculado a campanha.';
+  end if;
+
+  select *
+  into product_row
+  from public.produtos product
+  where product.id = new.product_id;
+
+  if product_row.id is null then
+    raise exception 'Produto nao encontrado.';
+  end if;
+
+  new.destination_url := nullif(trim(coalesce(new.destination_url, product_row.link_afiliado)), '');
+  if new.destination_url is null then
+    raise exception 'URL de destino do link nao informada.';
+  end if;
+
+  new.status := lower(nullif(trim(coalesce(new.status, '')), ''));
+  if new.status is null then
+    new.status := 'active';
+  elsif new.status not in ('active', 'disabled') then
+    raise exception 'Status do link invalido.';
+  end if;
+
+  return new;
+end;
+$$;
+
+create or replace function public.get_affiliate_campaign_catalog()
+returns table (
+  campaign_id uuid,
+  campaign_name text,
+  campaign_description text,
+  commission_type text,
+  commission_value numeric,
+  advertiser_id uuid,
+  advertiser_name text,
+  product_id uuid,
+  product_title text,
+  product_price numeric,
+  product_image_url text,
+  destination_url text
+)
+language sql
+stable
+security definer
+set search_path = pg_catalog, public
+as $$
+  select
+    campaign.id as campaign_id,
+    campaign.name as campaign_name,
+    campaign.description as campaign_description,
+    campaign.commission_type,
+    campaign.commission_value,
+    campaign.advertiser_id,
+    coalesce(profile.company_name, profile.store_name, profile.user_email, 'Anunciante') as advertiser_name,
+    product.id as product_id,
+    product.titulo as product_title,
+    product.preco as product_price,
+    product.imagem_url as product_image_url,
+    product.link_afiliado as destination_url
+  from public.campaigns campaign
+  join public.campaign_products campaign_product
+    on campaign_product.campaign_id = campaign.id
+  join public.produtos product
+    on product.id = campaign_product.product_id
+  left join public.user_profiles profile
+    on profile.user_id = campaign.advertiser_id
+  where campaign.status = 'active'
+    and (campaign.starts_at is null or campaign.starts_at <= now())
+    and (campaign.ends_at is null or campaign.ends_at >= now())
+  order by campaign.created_at desc, product.created_at desc;
+$$;
+
+create or replace function public.create_affiliate_link(target_campaign_id uuid, target_product_id uuid)
+returns table (
+  id uuid,
+  code text,
+  affiliate_id uuid,
+  campaign_id uuid,
+  product_id uuid,
+  destination_url text,
+  status text,
+  created_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  current_profile public.user_profiles;
+  created_link public.affiliate_links;
+begin
+  select *
+  into current_profile
+  from public.user_profiles profile
+  where profile.user_id = auth.uid();
+
+  if current_profile.user_id is null then
+    raise exception 'Perfil autenticado nao encontrado.';
+  end if;
+
+  if current_profile.role not in ('affiliate', 'admin') then
+    raise exception 'Somente afiliados podem gerar links rastreaveis.';
+  end if;
+
+  insert into public.affiliate_links (
+    affiliate_id,
+    campaign_id,
+    product_id
+  )
+  values (
+    auth.uid(),
+    target_campaign_id,
+    target_product_id
+  )
+  returning *
+  into created_link;
+
+  return query
+  select
+    created_link.id,
+    created_link.code,
+    created_link.affiliate_id,
+    created_link.campaign_id,
+    created_link.product_id,
+    created_link.destination_url,
+    created_link.status,
+    created_link.created_at;
+end;
+$$;
+
+drop trigger if exists trg_campaigns_prepare on public.campaigns;
+create trigger trg_campaigns_prepare
+before insert or update on public.campaigns
+for each row
+execute function public.prepare_campaign();
+
+drop trigger if exists trg_campaigns_updated_at on public.campaigns;
+create trigger trg_campaigns_updated_at
+before update on public.campaigns
+for each row
+execute function public.set_updated_at();
+
+drop trigger if exists trg_campaign_products_validate on public.campaign_products;
+create trigger trg_campaign_products_validate
+before insert or update on public.campaign_products
+for each row
+execute function public.validate_campaign_product();
+
+drop trigger if exists trg_affiliate_links_prepare on public.affiliate_links;
+create trigger trg_affiliate_links_prepare
+before insert or update on public.affiliate_links
+for each row
+execute function public.prepare_affiliate_link();
+
+drop trigger if exists trg_affiliate_links_updated_at on public.affiliate_links;
+create trigger trg_affiliate_links_updated_at
+before update on public.affiliate_links
+for each row
+execute function public.set_updated_at();
+
 drop view if exists public.public_store_products;
 create view public.public_store_products
 with (security_invoker = true) as
@@ -1255,6 +1776,10 @@ $$;
 alter table public.user_profiles enable row level security;
 alter table public.product_categories enable row level security;
 alter table public.produtos enable row level security;
+alter table public.campaigns enable row level security;
+alter table public.campaign_products enable row level security;
+alter table public.affiliate_links enable row level security;
+alter table public.clicks enable row level security;
 
 drop policy if exists "Perfil proprio ou admin pode ler" on public.user_profiles;
 create policy "Perfil proprio ou admin pode ler"
@@ -1341,15 +1866,121 @@ create policy "Exclusao por dono ou admin"
   to authenticated
   using (public.is_advertiser_or_admin(profile_id) or public.is_admin());
 
+drop policy if exists "Leitura de campanhas por dono ou admin" on public.campaigns;
+create policy "Leitura de campanhas por dono ou admin"
+  on public.campaigns
+  for select
+  to authenticated
+  using (public.is_advertiser_or_admin(advertiser_id) or public.is_admin());
+
+drop policy if exists "Insercao de campanhas por dono ou admin" on public.campaigns;
+create policy "Insercao de campanhas por dono ou admin"
+  on public.campaigns
+  for insert
+  to authenticated
+  with check (public.is_advertiser_or_admin(advertiser_id) or public.is_admin());
+
+drop policy if exists "Atualizacao de campanhas por dono ou admin" on public.campaigns;
+create policy "Atualizacao de campanhas por dono ou admin"
+  on public.campaigns
+  for update
+  to authenticated
+  using (public.is_advertiser_or_admin(advertiser_id) or public.is_admin())
+  with check (public.is_advertiser_or_admin(advertiser_id) or public.is_admin());
+
+drop policy if exists "Exclusao de campanhas por dono ou admin" on public.campaigns;
+create policy "Exclusao de campanhas por dono ou admin"
+  on public.campaigns
+  for delete
+  to authenticated
+  using (public.is_advertiser_or_admin(advertiser_id) or public.is_admin());
+
+drop policy if exists "Leitura de campaign_products por dono ou admin" on public.campaign_products;
+create policy "Leitura de campaign_products por dono ou admin"
+  on public.campaign_products
+  for select
+  to authenticated
+  using (
+    exists (
+      select 1
+      from public.campaigns campaign
+      where campaign.id = campaign_products.campaign_id
+        and (public.is_advertiser_or_admin(campaign.advertiser_id) or public.is_admin())
+    )
+  );
+
+drop policy if exists "Insercao de campaign_products por dono ou admin" on public.campaign_products;
+create policy "Insercao de campaign_products por dono ou admin"
+  on public.campaign_products
+  for insert
+  to authenticated
+  with check (
+    exists (
+      select 1
+      from public.campaigns campaign
+      where campaign.id = campaign_products.campaign_id
+        and (public.is_advertiser_or_admin(campaign.advertiser_id) or public.is_admin())
+    )
+  );
+
+drop policy if exists "Exclusao de campaign_products por dono ou admin" on public.campaign_products;
+create policy "Exclusao de campaign_products por dono ou admin"
+  on public.campaign_products
+  for delete
+  to authenticated
+  using (
+    exists (
+      select 1
+      from public.campaigns campaign
+      where campaign.id = campaign_products.campaign_id
+        and (public.is_advertiser_or_admin(campaign.advertiser_id) or public.is_admin())
+    )
+  );
+
+drop policy if exists "Leitura de affiliate_links por dono ou admin" on public.affiliate_links;
+create policy "Leitura de affiliate_links por dono ou admin"
+  on public.affiliate_links
+  for select
+  to authenticated
+  using (affiliate_id = auth.uid() or public.is_admin());
+
+drop policy if exists "Insercao de affiliate_links pelo proprio afiliado ou admin" on public.affiliate_links;
+create policy "Insercao de affiliate_links pelo proprio afiliado ou admin"
+  on public.affiliate_links
+  for insert
+  to authenticated
+  with check (affiliate_id = auth.uid() or public.is_admin());
+
+drop policy if exists "Atualizacao de affiliate_links por dono ou admin" on public.affiliate_links;
+create policy "Atualizacao de affiliate_links por dono ou admin"
+  on public.affiliate_links
+  for update
+  to authenticated
+  using (affiliate_id = auth.uid() or public.is_admin())
+  with check (affiliate_id = auth.uid() or public.is_admin());
+
+drop policy if exists "Leitura de clicks por dono ou admin" on public.clicks;
+create policy "Leitura de clicks por dono ou admin"
+  on public.clicks
+  for select
+  to authenticated
+  using (affiliate_id = auth.uid() or public.is_admin());
+
 grant usage on schema public to anon, authenticated;
 grant execute on function public.is_admin() to authenticated;
 grant execute on function public.is_advertiser_or_admin(uuid) to authenticated;
 grant execute on function public.finalize_account_activation() to authenticated;
+grant execute on function public.get_affiliate_campaign_catalog() to authenticated;
+grant execute on function public.create_affiliate_link(uuid, uuid) to authenticated;
 grant execute on function public.get_public_store_by_slug(text) to anon, authenticated;
 grant execute on function public.get_public_products_by_profile(uuid) to anon, authenticated;
 grant execute on function public.check_public_slug_availability(text, uuid) to anon, authenticated;
 grant select on public.public_store_profiles to anon, authenticated;
 grant select on public.public_store_products to anon, authenticated;
+grant select, insert, update, delete on public.campaigns to authenticated;
+grant select, insert, delete on public.campaign_products to authenticated;
+grant select, insert, update on public.affiliate_links to authenticated;
+grant select on public.clicks to authenticated;
 grant select, insert, update, delete on public.product_categories to authenticated;
 grant select, insert, update on public.user_profiles to authenticated;
 grant select, insert, update, delete on public.produtos to authenticated;

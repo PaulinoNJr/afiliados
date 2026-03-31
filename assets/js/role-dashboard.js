@@ -81,7 +81,7 @@
   }
 
   function applyHeader(profile) {
-    refs.userEmail.textContent = state.session.user.email || 'Usuário autenticado';
+    refs.userEmail.textContent = state.session.user.email || 'Usuario autenticado';
     refs.userRoleBadge.textContent = window.Auth.getRoleLabel(profile?.role);
     refs.userRoleBadge.className = profile?.role === 'admin' ? 'badge text-bg-primary' : 'badge text-bg-secondary';
     window.Auth.applyProfileAccess(profile);
@@ -100,61 +100,90 @@
     }
   }
 
+  function getStatusBadge(status) {
+    if (status === 'active') return 'text-bg-success';
+    if (status === 'paused') return 'text-bg-warning';
+    if (status === 'closed') return 'text-bg-dark';
+    return 'text-bg-secondary';
+  }
+
   async function loadAdvertiserDashboard() {
-    const [productsResult, categoriesResult] = await Promise.all([
+    const [
+      productsResult,
+      categoriesResult,
+      campaignsResult,
+      campaignProductsResult
+    ] = await Promise.all([
       window.db
         .from('produtos')
-        .select('id, titulo, preco, descricao, category_id, created_at, updated_at')
+        .select('id, titulo, preco, created_at, updated_at')
         .eq('profile_id', state.session.user.id)
         .order('updated_at', { ascending: false }),
       window.db
         .from('product_categories')
-        .select('id, name, sort_order, created_at, updated_at')
+        .select('id, name, created_at, updated_at')
         .eq('profile_id', state.session.user.id)
-        .order('sort_order', { ascending: true })
+        .order('sort_order', { ascending: true }),
+      window.db
+        .from('campaigns')
+        .select('id, name, status, commission_type, commission_value, starts_at, ends_at, created_at, updated_at')
+        .eq('advertiser_id', state.session.user.id)
+        .order('updated_at', { ascending: false }),
+      window.db
+        .from('campaign_products')
+        .select('campaign_id, product_id')
     ]);
 
     if (productsResult.error) throw productsResult.error;
     if (categoriesResult.error) throw categoriesResult.error;
+    if (campaignsResult.error) throw campaignsResult.error;
+    if (campaignProductsResult.error) throw campaignProductsResult.error;
 
     const products = productsResult.data || [];
     const categories = categoriesResult.data || [];
-    const withDescription = products.filter((item) => String(item.descricao || '').trim()).length;
-    const latestItem = [...products, ...categories].sort((a, b) => {
+    const campaigns = campaignsResult.data || [];
+    const campaignProducts = campaignProductsResult.data || [];
+    const activeCampaigns = campaigns.filter((campaign) => campaign.status === 'active').length;
+    const linkedProducts = new Set(campaignProducts.map((item) => item.product_id).filter(Boolean)).size;
+    const latestItem = [...products, ...categories, ...campaigns].sort((a, b) => {
       return new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime();
     })[0];
 
-    refs.dashboardDescription.textContent = 'Organize catálogo, identidade e base operacional enquanto a camada de campanhas, tracking e comissões entra na próxima etapa.';
+    refs.dashboardDescription.textContent = 'Seu workspace ja conecta catalogo e campanhas, deixando a base pronta para operacao de afiliados, tracking e comissoes.';
     refs.metricOneValue.textContent = String(products.length);
-    refs.metricTwoValue.textContent = String(categories.length);
-    refs.metricThreeValue.textContent = products.length ? `${Math.round((withDescription / products.length) * 100)}%` : '0%';
+    refs.metricTwoValue.textContent = String(activeCampaigns);
+    refs.metricThreeValue.textContent = String(linkedProducts);
     refs.metricFourValue.textContent = formatDate(latestItem?.updated_at || latestItem?.created_at);
 
     renderTable(
-      ['Produto', 'Categoria', 'Preço', 'Atualizado'],
-      products.slice(0, 5).map((item) => {
-        const category = categories.find((categoryItem) => categoryItem.id === item.category_id);
+      ['Campanha', 'Status', 'Produtos', 'Atualizada'],
+      campaigns.slice(0, 5).map((campaign) => {
+        const productCount = campaignProducts.filter((item) => item.campaign_id === campaign.id).length;
+        const commissionLabel = campaign.commission_type === 'fixed'
+          ? formatCurrency(campaign.commission_value)
+          : `${Number(campaign.commission_value || 0).toFixed(2)}%`;
+
         return [
-          `<div class="fw-semibold">${item.titulo || 'Produto sem título'}</div>`,
-          `<span class="badge text-bg-light">${category?.name || 'Sem categoria'}</span>`,
-          `<span class="fw-semibold">${formatCurrency(item.preco)}</span>`,
-          `<span class="small text-secondary">${formatDate(item.updated_at || item.created_at)}</span>`
+          `<div class="fw-semibold">${campaign.name || 'Campanha sem nome'}</div><div class="small text-secondary">Comissao ${commissionLabel}</div>`,
+          `<span class="badge ${getStatusBadge(campaign.status)}">${campaign.status || 'draft'}</span>`,
+          `<span class="fw-semibold">${productCount}</span>`,
+          `<span class="small text-secondary">${formatDate(campaign.updated_at || campaign.created_at)}</span>`
         ];
       })
     );
 
     renderActivities([
       {
-        title: 'Consolidar catálogo base',
-        description: products.length ? 'Seu catálogo já tem base para evoluir para campanhas e tracking.' : 'Cadastre produtos antes de abrir a operação para afiliados.'
+        title: 'Campanhas em operacao',
+        description: campaigns.length ? `${campaigns.length} campanha(s) estruturadas para distribuir aos afiliados.` : 'Crie a primeira campanha para transformar o catalogo em oferta distribuivel.'
       },
       {
-        title: 'Estruturar campanhas',
-        description: 'O próximo módulo vai conectar comissão, vigência, materiais e regras por oferta.'
+        title: 'Base comercial pronta',
+        description: products.length ? `${products.length} produto(s) cadastrados e ${categories.length} categoria(s) organizadas no workspace.` : 'Cadastre produtos e categorias antes de abrir a operacao para afiliados.'
       },
       {
-        title: 'Ativar links rastreáveis',
-        description: 'A arquitetura agora já separa anunciante e afiliado para suportar atribuição e antifraude.'
+        title: 'Tracking preparado',
+        description: activeCampaigns ? 'Com campanhas ativas, o modulo de links rastreaveis ja consegue apoiar a distribuicao das ofertas.' : 'Ative pelo menos uma campanha para destravar o uso pelos afiliados.'
       }
     ]);
   }
@@ -182,7 +211,7 @@
     const affiliates = profiles.filter((item) => item.role === 'affiliate').length;
     const pendingActivation = profiles.filter((item) => item.activation_status !== 'active').length;
 
-    refs.dashboardDescription.textContent = 'Use o backoffice para governar papéis, acompanhar qualidade da base e reduzir atritos antes da camada de tracking e payouts.';
+    refs.dashboardDescription.textContent = 'Use o backoffice para governar papeis, acompanhar qualidade da base e reduzir atritos antes da camada completa de conversoes e payouts.';
     refs.metricOneValue.textContent = String(profiles.length);
     refs.metricTwoValue.textContent = String(advertisers);
     refs.metricThreeValue.textContent = String(affiliates);
@@ -200,48 +229,80 @@
 
     renderActivities([
       {
-        title: 'Ativações pendentes',
-        description: pendingActivation ? `${pendingActivation} conta(s) ainda não concluíram ativação por email.` : 'Nenhuma ativação pendente no momento.'
+        title: 'Ativacoes pendentes',
+        description: pendingActivation ? `${pendingActivation} conta(s) ainda nao concluiram ativacao por email.` : 'Nenhuma ativacao pendente no momento.'
       },
       {
-        title: 'Separação de perfis concluída',
-        description: 'A base já diferencia admin, anunciante e afiliado, o que simplifica RBAC e future white label.'
+        title: 'Separacao de perfis concluida',
+        description: 'A base ja diferencia admin, anunciante e afiliado, o que simplifica RBAC e futura expansao white label.'
       },
       {
-        title: 'Próxima camada',
-        description: 'Entram agora campaigns, affiliate links, clicks, conversions, commissions e payout requests.'
+        title: 'Proxima camada',
+        description: 'Entram agora conversions, commissions, payout requests, antifraude e observabilidade.'
       }
     ]);
   }
 
   async function loadAffiliateDashboard() {
-    refs.dashboardDescription.textContent = 'Seu workspace já está preparado para receber campanhas aprovadas, links rastreáveis, materiais e acompanhamento de comissão.';
-    refs.metricOneValue.textContent = '0';
-    refs.metricTwoValue.textContent = '0';
-    refs.metricThreeValue.textContent = '0';
+    const [catalogResult, linksResult, clicksResult] = await Promise.all([
+      window.db.rpc('get_affiliate_campaign_catalog'),
+      window.db
+        .from('affiliate_links')
+        .select('id, code, campaign_id, product_id, created_at')
+        .eq('affiliate_id', state.session.user.id)
+        .order('created_at', { ascending: false }),
+      window.db
+        .from('clicks')
+        .select('affiliate_link_id')
+        .eq('affiliate_id', state.session.user.id)
+    ]);
+
+    if (catalogResult.error) throw catalogResult.error;
+    if (linksResult.error) throw linksResult.error;
+    if (clicksResult.error) throw clicksResult.error;
+
+    const catalog = Array.isArray(catalogResult.data) ? catalogResult.data : [];
+    const links = linksResult.data || [];
+    const clicks = clicksResult.data || [];
+    const uniqueCampaigns = new Set(catalog.map((item) => item.campaign_id).filter(Boolean)).size;
+    const clickCountByLink = clicks.reduce((acc, item) => {
+      acc[item.affiliate_link_id] = (acc[item.affiliate_link_id] || 0) + 1;
+      return acc;
+    }, {});
+    const totalClicks = Object.values(clickCountByLink).reduce((sum, value) => sum + value, 0);
+
+    refs.dashboardDescription.textContent = 'Seu workspace ja recebe campanhas liberadas, gera links rastreaveis e acompanha cliques reais por oferta.';
+    refs.metricOneValue.textContent = String(uniqueCampaigns);
+    refs.metricTwoValue.textContent = String(links.length);
+    refs.metricThreeValue.textContent = String(totalClicks);
     refs.metricFourValue.textContent = formatCurrency(0);
 
     renderTable(
-      ['Módulo', 'Status', 'O que vai liberar', 'Prioridade'],
-      [
-        ['Biblioteca de campanhas', '<span class="badge text-bg-warning">em implantação</span>', 'Ofertas liberadas por anunciante', 'Alta'],
-        ['Links rastreáveis', '<span class="badge text-bg-warning">em implantação</span>', 'UTM, cookies e histórico de cliques', 'Alta'],
-        ['Comissões e saques', '<span class="badge text-bg-light">planejado</span>', 'Saldo pendente, disponível e payout', 'Média']
-      ]
+      ['Oferta', 'Link', 'Cliques', 'Criado em'],
+      links.slice(0, 5).map((link) => {
+        const offer = catalog.find((item) => item.campaign_id === link.campaign_id && item.product_id === link.product_id);
+        const trackingUrl = window.StoreUtils.getTrackingUrl(link.code);
+        return [
+          `<div class="fw-semibold">${offer ? `${offer.product_title} · ${offer.campaign_name}` : 'Oferta vinculada'}</div>`,
+          `<a href="${trackingUrl}" target="_blank" rel="noopener noreferrer" class="small text-decoration-none">${trackingUrl}</a>`,
+          `<span class="fw-semibold">${clickCountByLink[link.id] || 0}</span>`,
+          `<span class="small text-secondary">${formatDate(link.created_at)}</span>`
+        ];
+      })
     );
 
     renderActivities([
       {
-        title: 'Complete o perfil',
-        description: 'Mantenha nome, telefone e foto atualizados para facilitar aprovação e operação.'
+        title: 'Catalogo liberado',
+        description: catalog.length ? `${catalog.length} oferta(s) prontas para gerar link e distribuir.` : 'Nenhuma oferta liberada ainda. Assim que o anunciante ativar campanhas, elas aparecerao aqui.'
       },
       {
-        title: 'Aguarde campanhas liberadas',
-        description: 'A próxima entrega adiciona aprovação de afiliados e biblioteca com materiais.'
+        title: 'Links em operacao',
+        description: links.length ? `${links.length} link(s) rastreaveis ja foram gerados na sua conta.` : 'Gere seu primeiro link rastreavel para iniciar historico de cliques.'
       },
       {
-        title: 'Inicie links e tracking',
-        description: 'Quando o módulo entrar, o painel já estará pronto para cliques, conversões e comissão.'
+        title: 'Comissao e saque',
+        description: 'A proxima entrega conecta conversoes, aprovacao de comissao e solicitacao de payout no mesmo fluxo.'
       }
     ]);
   }

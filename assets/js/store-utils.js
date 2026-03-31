@@ -1,5 +1,5 @@
 (() => {
-  const RESERVED_SLUGS = ['login', 'dashboard', 'admin', 'api', 'users', 'cadastro', 'ativacao', 'recuperar-senha', 'loja', 'produtos'];
+  const RESERVED_SLUGS = ['login', 'dashboard', 'admin', 'api', 'users', 'cadastro', 'ativacao', 'recuperar-senha', 'loja', 'produtos', 'campanhas', 'links', 'r'];
 
   function normalizeStoreSlug(value) {
     return String(value || '')
@@ -75,6 +75,11 @@
   function getStoreUrl(slug) {
     const normalized = normalizeStoreSlug(slug);
     return normalized ? `${window.location.origin}/${normalized}` : `${window.location.origin}/`;
+  }
+
+  function getTrackingUrl(code) {
+    const normalized = String(code || '').trim().toLowerCase();
+    return normalized ? `${window.location.origin}/r/${normalized}` : `${window.location.origin}/r/`;
   }
 
   function validatePasswordRules(password) {
@@ -235,6 +240,7 @@
     isReservedSlug,
     getStoreSlugFromPath,
     getStoreUrl,
+    getTrackingUrl,
     formatPhone,
     validatePasswordRules,
     checkSlugAvailability,
