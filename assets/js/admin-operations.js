@@ -3,6 +3,8 @@
     session: null,
     profile: null,
     payoutMinimum: 100,
+    conversionFilter: 'pending',
+    payoutFilter: 'open',
     conversions: [],
     payouts: [],
     auditLogs: [],
@@ -22,6 +24,8 @@
     payoutMinimumForm: document.getElementById('payoutMinimumForm'),
     payoutMinimumAmount: document.getElementById('payoutMinimumAmount'),
     savePayoutMinimumBtn: document.getElementById('savePayoutMinimumBtn'),
+    conversionFilterButtons: document.querySelectorAll('[data-conversions-filter]'),
+    payoutFilterButtons: document.querySelectorAll('[data-payouts-filter]'),
     statPendingConversions: document.getElementById('statPendingConversions'),
     statOpenPayouts: document.getElementById('statOpenPayouts'),
     statQueuedAmount: document.getElementById('statQueuedAmount'),
@@ -144,6 +148,37 @@
     refs.payoutMinimumHint.textContent = `Regra atual exibida aos afiliados: saque minimo de ${formatCurrency(state.payoutMinimum)}.`;
   }
 
+  function updateFilterButtons(buttons, activeValue) {
+    buttons.forEach((button) => {
+      const isActive = button.dataset.conversionsFilter === activeValue || button.dataset.payoutsFilter === activeValue;
+      button.className = isActive ? 'btn btn-primary' : 'btn btn-outline-secondary';
+    });
+  }
+
+  function getFilteredConversions() {
+    if (state.conversionFilter === 'reviewed') {
+      return state.conversions.filter((item) => item.status !== 'pending');
+    }
+
+    if (state.conversionFilter === 'all') {
+      return state.conversions;
+    }
+
+    return state.conversions.filter((item) => item.status === 'pending');
+  }
+
+  function getFilteredPayouts() {
+    if (state.payoutFilter === 'finalized') {
+      return state.payouts.filter((item) => ['paid', 'rejected'].includes(item.status));
+    }
+
+    if (state.payoutFilter === 'all') {
+      return state.payouts;
+    }
+
+    return state.payouts.filter((item) => ['requested', 'approved', 'processing'].includes(item.status));
+  }
+
   function getConversionActions(conversion) {
     if (conversion.status === 'pending') {
       return `
@@ -166,16 +201,19 @@
   }
 
   function renderConversions() {
+    const filteredConversions = getFilteredConversions();
     refs.conversionsTableBody.innerHTML = '';
+    updateFilterButtons(refs.conversionFilterButtons, state.conversionFilter);
 
-    if (!state.conversions.length) {
+    if (!filteredConversions.length) {
       refs.conversionsEmptyState.classList.remove('d-none');
+      refs.conversionsEmptyState.textContent = 'Nenhuma conversao encontrada para este filtro.';
       return;
     }
 
     refs.conversionsEmptyState.classList.add('d-none');
 
-    state.conversions.forEach((conversion) => {
+    filteredConversions.forEach((conversion) => {
       const commission = state.commissionsByConversionId[conversion.id];
       const tr = document.createElement('tr');
       tr.innerHTML = `
@@ -236,16 +274,19 @@
   }
 
   function renderPayouts() {
+    const filteredPayouts = getFilteredPayouts();
     refs.payoutsTableBody.innerHTML = '';
+    updateFilterButtons(refs.payoutFilterButtons, state.payoutFilter);
 
-    if (!state.payouts.length) {
+    if (!filteredPayouts.length) {
       refs.payoutsEmptyState.classList.remove('d-none');
+      refs.payoutsEmptyState.textContent = 'Nenhuma solicitacao de saque encontrada para este filtro.';
       return;
     }
 
     refs.payoutsEmptyState.classList.add('d-none');
 
-    state.payouts.forEach((payout) => {
+    filteredPayouts.forEach((payout) => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>
@@ -390,7 +431,7 @@
       if (error) throw error;
 
       state.payoutMinimum = amount;
-      renderSettings();
+      await loadData();
       showStatus('Minimo de saque atualizado com sucesso.', 'success');
     } catch (err) {
       showStatus(`Erro ao salvar regra de saque: ${err.message}`, 'danger');
@@ -402,11 +443,14 @@
   async function handleConversionAction(conversionId, status) {
     const confirmed = window.confirm(`Deseja ${getActionLabel(status)} esta conversao?`);
     if (!confirmed) return;
+    const actionNote = window.prompt(`Observacao opcional para ${getActionLabel(status)} esta conversao:`, '');
+    if (actionNote === null) return;
 
     try {
       const { error } = await window.db.rpc('review_conversion', {
         target_conversion_id: conversionId,
-        target_status: status
+        target_status: status,
+        action_note: actionNote.trim() || null
       });
       if (error) throw error;
 
@@ -445,6 +489,18 @@
 
     refs.reloadOperationsBtn.addEventListener('click', loadData);
     refs.payoutMinimumForm.addEventListener('submit', handlePayoutMinimumSubmit);
+    refs.conversionFilterButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        state.conversionFilter = button.dataset.conversionsFilter || 'pending';
+        renderConversions();
+      });
+    });
+    refs.payoutFilterButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        state.payoutFilter = button.dataset.payoutsFilter || 'open';
+        renderPayouts();
+      });
+    });
 
     refs.conversionsTableBody.addEventListener('click', (event) => {
       const button = event.target.closest('button[data-conversion-action]');

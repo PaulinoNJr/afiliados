@@ -2267,9 +2267,12 @@ begin
 end;
 $$;
 
-create or replace function public.review_conversion(
+drop function if exists public.review_conversion(uuid, text);
+drop function if exists public.review_conversion(uuid, text, text);
+create function public.review_conversion(
   target_conversion_id uuid,
-  target_status text
+  target_status text,
+  action_note text default null
 )
 returns public.conversions
 language plpgsql
@@ -2279,6 +2282,7 @@ as $$
 declare
   current_profile public.user_profiles;
   normalized_status text := lower(nullif(trim(coalesce(target_status, '')), ''));
+  normalized_note text := nullif(trim(coalesce(action_note, '')), '');
   current_conversion public.conversions;
   current_commission public.commissions;
   updated_conversion public.conversions;
@@ -2344,7 +2348,8 @@ begin
       'campaign_id', updated_conversion.campaign_id,
       'product_id', updated_conversion.product_id,
       'commission_status', current_commission.status,
-      'commission_id', current_commission.id
+      'commission_id', current_commission.id,
+      'note', normalized_note
     )
   );
 
@@ -3078,7 +3083,7 @@ grant execute on function public.set_payout_minimum_amount(numeric) to authentic
 grant execute on function public.get_affiliate_available_balance(uuid) to authenticated;
 grant execute on function public.get_affiliate_financial_summary(uuid) to authenticated;
 grant execute on function public.request_payout(numeric) to authenticated;
-grant execute on function public.review_conversion(uuid, text) to authenticated;
+grant execute on function public.review_conversion(uuid, text, text) to authenticated;
 grant execute on function public.review_payout_request(uuid, text, text) to authenticated;
 grant execute on function public.register_manual_conversion(uuid, numeric, numeric, text, boolean) to authenticated;
 grant execute on function public.get_public_store_by_slug(text) to anon, authenticated;

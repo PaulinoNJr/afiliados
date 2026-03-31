@@ -110,7 +110,14 @@
                   <h2 class="h5 mb-1">Fila de aprovacao</h2>
                   <p class="text-secondary small mb-0">Aprovando a conversao, a comissao e recalculada automaticamente no financeiro do afiliado.</p>
                 </div>
-                <button id="reloadOperationsBtn" type="button" class="btn btn-sm btn-outline-primary">Atualizar</button>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <div class="btn-group btn-group-sm" role="group" aria-label="Filtro de conversoes">
+                    <button type="button" class="btn btn-primary" data-conversions-filter="pending">Pendentes</button>
+                    <button type="button" class="btn btn-outline-secondary" data-conversions-filter="all">Todas</button>
+                    <button type="button" class="btn btn-outline-secondary" data-conversions-filter="reviewed">Revisadas</button>
+                  </div>
+                  <button id="reloadOperationsBtn" type="button" class="btn btn-sm btn-outline-primary">Atualizar</button>
+                </div>
               </div>
               <div class="table-responsive">
                 <table class="table admin-table align-middle">
@@ -133,6 +140,11 @@
                   <p class="store-settings-kicker mb-1">Saques</p>
                   <h2 class="h5 mb-1">Payout requests</h2>
                   <p class="text-secondary small mb-0">Aprove, mova para processamento, marque como pago ou rejeite com registro automatico nas observacoes.</p>
+                </div>
+                <div class="btn-group btn-group-sm" role="group" aria-label="Filtro de saques">
+                  <button type="button" class="btn btn-primary" data-payouts-filter="open">Abertos</button>
+                  <button type="button" class="btn btn-outline-secondary" data-payouts-filter="all">Todos</button>
+                  <button type="button" class="btn btn-outline-secondary" data-payouts-filter="finalized">Finalizados</button>
                 </div>
               </div>
               <div class="table-responsive">

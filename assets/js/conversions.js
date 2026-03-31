@@ -4,6 +4,7 @@
     profile: null,
     isAdmin: false,
     clicks: [],
+    profilesById: {},
     campaignsById: {},
     productsById: {},
     conversions: [],
@@ -64,6 +65,12 @@
     return 'text-bg-secondary';
   }
 
+  function getProfileLabel(userId) {
+    const profile = state.profilesById[userId];
+    if (!profile) return userId || 'Perfil';
+    return window.Auth.getProfileDisplayName(profile) || profile.user_email || userId;
+  }
+
   function applyHeader() {
     refs.userEmail.textContent = state.session.user.email || 'Usuario autenticado';
     refs.userRoleBadge.textContent = window.Auth.getRoleLabel(state.profile?.role);
@@ -78,7 +85,7 @@
   function getOfferLabel(click) {
     const campaign = state.campaignsById[click.campaign_id];
     const product = state.productsById[click.product_id];
-    return `${product?.titulo || 'Produto'} · ${campaign?.name || 'Campanha'}`;
+    return `${product?.titulo || 'Produto'} - ${campaign?.name || 'Campanha'}`;
   }
 
   function populateClickSelect() {
@@ -93,7 +100,7 @@
     state.clicks.forEach((click) => {
       const option = document.createElement('option');
       option.value = click.id;
-      option.textContent = `${getOfferLabel(click)} · ${formatDate(click.occurred_at)}`;
+      option.textContent = `${getOfferLabel(click)} - ${formatDate(click.occurred_at)}`;
       refs.conversionClickId.appendChild(option);
     });
   }
@@ -122,7 +129,7 @@
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><div class="fw-semibold">${getOfferLabel(click)}</div><div class="small text-secondary">${click.id}</div></td>
-        <td><span class="small text-secondary">${click.affiliate_id}</span></td>
+        <td><div class="fw-semibold">${getProfileLabel(click.affiliate_id)}</div><div class="small text-secondary">${click.affiliate_id}</div></td>
         <td><span class="small text-secondary">${formatDate(click.occurred_at)}</span></td>
         <td class="text-end"><button type="button" class="btn btn-sm btn-outline-primary" data-use-click="${click.id}">Usar clique</button></td>
       `;
@@ -147,7 +154,7 @@
       tr.innerHTML = `
         <td><div class="fw-semibold">${formatCurrency(conversion.gross_amount)}</div><div class="small text-secondary">${conversion.external_order_id || conversion.id}</div></td>
         <td><span class="badge ${getStatusBadge(conversion.status)}">${conversion.status}</span></td>
-        <td><div class="fw-semibold">${campaign?.name || 'Campanha'}</div><div class="small text-secondary">${formatDate(conversion.occurred_at)}</div></td>
+        <td><div class="fw-semibold">${campaign?.name || 'Campanha'}</div><div class="small text-secondary">${getProfileLabel(conversion.affiliate_id)} - ${formatDate(conversion.occurred_at)}</div></td>
         <td><div class="fw-semibold">${commission ? formatCurrency(commission.amount) : formatCurrency(0)}</div><div class="small text-secondary">${commission?.status || 'pendente'}</div></td>
         <td><span class="small text-secondary">${formatDate(conversion.approved_at || conversion.created_at)}</span></td>
       `;
@@ -190,7 +197,6 @@
     if (productsError) throw productsError;
 
     const campaignIds = (campaigns || []).map((item) => item.id);
-    const productIds = (products || []).map((item) => item.id);
 
     state.campaignsById = Object.fromEntries((campaigns || []).map((item) => [item.id, item]));
     state.productsById = Object.fromEntries((products || []).map((item) => [item.id, item]));
@@ -198,6 +204,7 @@
     let clicks = [];
     let conversions = [];
     let commissions = [];
+    let profiles = [];
 
     if (campaignIds.length) {
       const [{ data: clicksData, error: clicksError }, { data: conversionsData, error: conversionsError }] = await Promise.all([
@@ -228,8 +235,19 @@
       conversions = conversionsData || [];
     }
 
-    if (productIds.length && !Object.keys(state.productsById).length) {
-      state.productsById = Object.fromEntries((products || []).map((item) => [item.id, item]));
+    const affiliateIds = Array.from(new Set([
+      ...clicks.map((item) => item.affiliate_id),
+      ...conversions.map((item) => item.affiliate_id)
+    ].filter(Boolean)));
+
+    if (affiliateIds.length) {
+      const { data: profilesData, error: profilesError } = await window.db
+        .from('user_profiles')
+        .select('user_id, user_email, first_name, last_name, company_name, store_name, role')
+        .in('user_id', affiliateIds);
+
+      if (profilesError) throw profilesError;
+      profiles = profilesData || [];
     }
 
     if (conversions.length) {
@@ -244,6 +262,7 @@
 
     state.clicks = clicks.filter((click) => !conversions.some((conversion) => conversion.click_id === click.id));
     state.conversions = conversions;
+    state.profilesById = Object.fromEntries(profiles.map((item) => [item.user_id, item]));
     state.commissionsByConversionId = Object.fromEntries(commissions.map((item) => [item.conversion_id, item]));
 
     populateClickSelect();

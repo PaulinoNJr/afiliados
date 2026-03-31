@@ -66,8 +66,9 @@
               <form id="payoutRequestForm" novalidate>
                 <div class="mb-3">
                   <label for="payoutAmount" class="form-label">Valor do saque</label>
-                  <input id="payoutAmount" type="number" class="form-control" min="0" step="0.01" />
+                  <input id="payoutAmount" type="number" class="form-control" min="0" step="0.01" readonly />
                 </div>
+                <p class="text-secondary small mb-3">O valor e preenchido automaticamente com todo o saldo disponivel nesta fase inicial.</p>
                 <button id="requestPayoutBtn" type="submit" class="btn btn-primary w-100">Solicitar saque</button>
               </form>
             </div>
