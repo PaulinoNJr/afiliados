@@ -60,11 +60,25 @@
         ? 'Abra o email recebido no cadastro e use o link mais recente para concluir a ativação.'
         : 'Depois da ativação, o painel, a configuração da loja e o cadastro de produtos ficam liberados normalmente.';
 
-    refs.activationInfo.innerHTML = `
-      <p class="small text-uppercase fw-semibold text-secondary mb-2">Status da ativação</p>
-      <p class="small text-secondary mb-2">A sua conta fica pendente até a confirmação do email. O prazo limite para ativação é <strong>${expiresAt}</strong>.</p>
-      <p class="small text-secondary mb-0">${nextStep}</p>
-    `;
+    refs.activationInfo.innerHTML = '';
+
+    const eyebrow = document.createElement('p');
+    eyebrow.className = 'small text-uppercase fw-semibold text-secondary mb-2';
+    eyebrow.textContent = 'Status da ativação';
+
+    const deadline = document.createElement('p');
+    deadline.className = 'small text-secondary mb-2';
+    deadline.append('A sua conta fica pendente até a confirmação do email. O prazo limite para ativação é ');
+    const strong = document.createElement('strong');
+    strong.textContent = expiresAt;
+    deadline.appendChild(strong);
+    deadline.append('.');
+
+    const nextStepText = document.createElement('p');
+    nextStepText.className = 'small text-secondary mb-0';
+    nextStepText.textContent = nextStep;
+
+    refs.activationInfo.append(eyebrow, deadline, nextStepText);
   }
 
   async function finalizeActivation() {

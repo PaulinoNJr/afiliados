@@ -1,14 +1,17 @@
 const {
   setJsonSecurityHeaders,
+  applyCors,
+  enforceRateLimit,
   verifyRecaptchaToken,
   validateRecaptchaV3Payload
 } = require('./_security');
 
 module.exports = async (req, res) => {
   setJsonSecurityHeaders(res);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  applyCors(req, res, {
+    methods: 'POST, OPTIONS',
+    headers: 'Content-Type'
+  });
 
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
@@ -19,6 +22,12 @@ module.exports = async (req, res) => {
   }
 
   try {
+    enforceRateLimit(req, {
+      keyPrefix: 'verify-recaptcha',
+      windowMs: 60 * 1000,
+      max: 30
+    });
+
     const payload = await verifyRecaptchaToken({
       token: req.body?.token,
       req
@@ -40,8 +49,9 @@ module.exports = async (req, res) => {
   } catch (error) {
     const isConfigError = /RECAPTCHA_SECRET_KEY/.test(error.message);
     const isValidationError = /recaptcha|recusada|ausente/i.test(error.message);
+    const isRateLimitError = /Muitas requisicoes/i.test(error.message);
 
-    return res.status(isConfigError ? 500 : (isValidationError ? 400 : 500)).json({
+    return res.status(isRateLimitError ? 429 : (isConfigError ? 500 : (isValidationError ? 400 : 500))).json({
       ok: false,
       error: error.message
     });

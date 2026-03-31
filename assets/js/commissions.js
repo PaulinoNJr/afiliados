@@ -48,6 +48,10 @@
     });
   }
 
+  function escapeHtml(value) {
+    return window.StoreUtils.escapeHtml(value);
+  }
+
   function getStatusBadge(status) {
     if (status === 'available') return 'text-bg-success';
     if (status === 'paid') return 'text-bg-primary';
@@ -94,8 +98,8 @@
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><div class="fw-semibold">${formatCurrency(commission.amount)}</div><div class="small text-secondary">ID ${commission.id}</div></td>
-        <td><span class="badge ${getStatusBadge(commission.status)}">${commission.status}</span></td>
-        <td><span class="small text-secondary">${commission.conversion_id || 'Sem conversao'}</span></td>
+        <td><span class="badge ${getStatusBadge(commission.status)}">${escapeHtml(commission.status)}</span></td>
+        <td><span class="small text-secondary">${escapeHtml(commission.conversion_id || 'Sem conversao')}</span></td>
         <td><span class="small text-secondary">${formatDate(commission.available_at || commission.created_at)}</span></td>
       `;
       refs.commissionsTableBody.appendChild(tr);
@@ -115,9 +119,9 @@
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><div class="fw-semibold">${formatCurrency(payout.amount)}</div><div class="small text-secondary">${formatDate(payout.requested_at || payout.created_at)}</div></td>
-        <td><span class="badge ${getStatusBadge(payout.status)}">${payout.status}</span></td>
+        <td><span class="badge ${getStatusBadge(payout.status)}">${escapeHtml(payout.status)}</span></td>
         <td><span class="small text-secondary">${formatDate(payout.processed_at)}</span></td>
-        <td><span class="small text-secondary">${payout.notes || 'Sem observacoes'}</span></td>
+        <td><span class="small text-secondary">${escapeHtml(payout.notes || 'Sem observacoes')}</span></td>
       `;
       refs.payoutsTableBody.appendChild(tr);
     });

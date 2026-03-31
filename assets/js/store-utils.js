@@ -82,6 +82,15 @@
     return normalized ? `${window.location.origin}/r/${normalized}` : `${window.location.origin}/r/`;
   }
 
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function validatePasswordRules(password) {
     const value = String(password || '');
     const rules = {
@@ -241,6 +250,7 @@
     getStoreSlugFromPath,
     getStoreUrl,
     getTrackingUrl,
+    escapeHtml,
     formatPhone,
     validatePasswordRules,
     checkSlugAvailability,

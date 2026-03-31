@@ -135,6 +135,10 @@
     });
   }
 
+  function escapeHtml(value) {
+    return window.StoreUtils.escapeHtml(value);
+  }
+
   function parsePrice(value) {
     const raw = String(value || '').trim().replace(/\s/g, '');
     if (!raw) return Number.NaN;
@@ -422,11 +426,12 @@
     state.visibleProducts.forEach((item) => {
       const tr = document.createElement('tr');
       const quality = getQuality(item);
+      const descriptionPreview = item.descricao ? `${item.descricao.slice(0, 88)}${item.descricao.length > 88 ? '...' : ''}` : 'Sem descrição.';
 
       const tdProduct = document.createElement('td');
       tdProduct.innerHTML = `
-        <div class="fw-semibold mb-1">${item.titulo || 'Produto sem titulo'}</div>
-        <div class="small text-secondary mb-1">${item.descricao ? `${item.descricao.slice(0, 88)}${item.descricao.length > 88 ? '...' : ''}` : 'Sem descrição.'}</div>
+        <div class="fw-semibold mb-1">${escapeHtml(item.titulo || 'Produto sem titulo')}</div>
+        <div class="small text-secondary mb-1">${escapeHtml(descriptionPreview)}</div>
       `;
       const link = document.createElement('a');
       link.href = item.link_afiliado;
@@ -438,7 +443,7 @@
 
       const tdCategory = document.createElement('td');
       tdCategory.innerHTML = `
-        <span class="badge text-bg-light">${item.category_name}</span>
+        <span class="badge text-bg-light">${escapeHtml(item.category_name)}</span>
         <div class="small text-secondary mt-1">ordem ${item.category_sort_order}</div>
       `;
 

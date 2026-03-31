@@ -45,15 +45,19 @@
     });
   }
 
+  function escapeHtml(value) {
+    return window.StoreUtils.escapeHtml(value);
+  }
+
   function applyHeader() {
-    refs.userEmail.textContent = state.session.user.email || 'Usuário autenticado';
+    refs.userEmail.textContent = state.session.user.email || 'Usuario autenticado';
     refs.userRoleBadge.textContent = window.Auth.getRoleLabel(state.profile?.role);
     refs.userRoleBadge.className = window.Auth.normalizeRole(state.profile?.role) === 'admin' ? 'badge text-bg-primary' : 'badge text-bg-secondary';
     window.Auth.applyProfileAccess(state.profile);
   }
 
   function getOfferLabel(item) {
-    return `${item.product_title} · ${item.campaign_name}`;
+    return `${item.product_title} - ${item.campaign_name}`;
   }
 
   function renderStats() {
@@ -80,16 +84,16 @@
       column.innerHTML = `
         <article class="card border-0 shadow-sm h-100">
           <div class="card-body p-4">
-            <p class="dashboard-link-label">${item.advertiser_name}</p>
-            <h2 class="h5">${item.product_title}</h2>
-            <p class="text-secondary small mb-3">${item.campaign_name}${item.campaign_description ? ` · ${item.campaign_description}` : ''}</p>
+            <p class="dashboard-link-label">${escapeHtml(item.advertiser_name)}</p>
+            <h2 class="h5">${escapeHtml(item.product_title)}</h2>
+            <p class="text-secondary small mb-3">${escapeHtml(item.campaign_name)}${item.campaign_description ? ` - ${escapeHtml(item.campaign_description)}` : ''}</p>
             <div class="d-flex flex-wrap gap-2 mb-3">
-              <span class="badge text-bg-light">${item.commission_type === 'fixed' ? 'Comissão fixa' : 'Comissão percentual'}</span>
+              <span class="badge text-bg-light">${item.commission_type === 'fixed' ? 'Comissao fixa' : 'Comissao percentual'}</span>
               <span class="badge text-bg-secondary">${item.commission_type === 'fixed' ? formatCurrency(item.commission_value) : `${Number(item.commission_value || 0).toFixed(2)}%`}</span>
             </div>
             <p class="fw-semibold mb-4">${formatCurrency(item.product_price)}</p>
             <button type="button" class="btn btn-primary w-100" data-generate-link="true" data-campaign-id="${item.campaign_id}" data-product-id="${item.product_id}">
-              Gerar link rastreável
+              Gerar link rastreavel
             </button>
           </div>
         </article>
@@ -113,8 +117,8 @@
       const trackingUrl = window.StoreUtils.getTrackingUrl(link.code);
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><div class="fw-semibold">${matchingCatalog ? getOfferLabel(matchingCatalog) : 'Oferta vinculada'}</div><div class="small text-secondary">${formatDate(link.created_at)}</div></td>
-        <td><a href="${trackingUrl}" target="_blank" rel="noopener noreferrer" class="small text-decoration-none">${trackingUrl}</a></td>
+        <td><div class="fw-semibold">${escapeHtml(matchingCatalog ? getOfferLabel(matchingCatalog) : 'Oferta vinculada')}</div><div class="small text-secondary">${formatDate(link.created_at)}</div></td>
+        <td><a href="${trackingUrl}" target="_blank" rel="noopener noreferrer" class="small text-decoration-none">${escapeHtml(trackingUrl)}</a></td>
         <td>${state.clickCountByLink[link.id] || 0}</td>
         <td class="text-end"><button type="button" class="btn btn-sm btn-outline-primary" data-copy-link="${trackingUrl}">Copiar</button></td>
       `;
@@ -161,7 +165,7 @@
         await navigator.clipboard.writeText(trackingUrl);
       }
 
-      showStatus('Link rastreável gerado com sucesso.', 'success');
+      showStatus('Link rastreavel gerado com sucesso.', 'success');
       await loadLinks();
     } catch (err) {
       showStatus(`Erro ao gerar link: ${err.message}`, 'danger');
@@ -171,9 +175,9 @@
   async function copyLink(value) {
     try {
       await navigator.clipboard.writeText(value);
-      showStatus('Link rastreável copiado com sucesso.', 'success');
+      showStatus('Link rastreavel copiado com sucesso.', 'success');
     } catch {
-      showStatus('Não foi possível copiar o link automaticamente.', 'warning');
+      showStatus('Nao foi possivel copiar o link automaticamente.', 'warning');
     }
   }
 
@@ -219,7 +223,7 @@
       await loadCatalog();
       await loadLinks();
     } catch (err) {
-      showStatus(`Erro ao iniciar links rastreáveis: ${err.message}`, 'danger');
+      showStatus(`Erro ao iniciar links rastreaveis: ${err.message}`, 'danger');
     }
   }
 

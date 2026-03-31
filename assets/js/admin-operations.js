@@ -59,6 +59,10 @@
     });
   }
 
+  function escapeHtml(value) {
+    return window.StoreUtils.escapeHtml(value);
+  }
+
   function getStatusBadge(status) {
     if (status === 'approved' || status === 'available') return 'text-bg-success';
     if (status === 'pending') return 'text-bg-warning';
@@ -219,22 +223,22 @@
       tr.innerHTML = `
         <td>
           <div class="fw-semibold">${formatCurrency(conversion.gross_amount)}</div>
-          <div class="small text-secondary">${conversion.external_order_id || conversion.id}</div>
+          <div class="small text-secondary">${escapeHtml(conversion.external_order_id || conversion.id)}</div>
           <div class="small text-secondary">${formatDate(conversion.occurred_at || conversion.created_at)}</div>
         </td>
         <td>
-          <div class="fw-semibold">${getProfileLabel(conversion.affiliate_id)}</div>
-          <div class="small text-secondary">${conversion.affiliate_id}</div>
+          <div class="fw-semibold">${escapeHtml(getProfileLabel(conversion.affiliate_id))}</div>
+          <div class="small text-secondary">${escapeHtml(conversion.affiliate_id)}</div>
         </td>
         <td>
-          <div class="fw-semibold">${getOfferLabel(conversion)}</div>
+          <div class="fw-semibold">${escapeHtml(getOfferLabel(conversion))}</div>
           <div class="small text-secondary">Liquido ${formatCurrency(conversion.net_amount || conversion.gross_amount)}</div>
         </td>
         <td>
           <div class="fw-semibold">${commission ? formatCurrency(commission.amount) : formatCurrency(0)}</div>
-          <div class="small text-secondary">${commission?.status || 'sem calculo'}</div>
+          <div class="small text-secondary">${escapeHtml(commission?.status || 'sem calculo')}</div>
         </td>
-        <td><span class="badge ${getStatusBadge(conversion.status)}">${conversion.status}</span></td>
+        <td><span class="badge ${getStatusBadge(conversion.status)}">${escapeHtml(conversion.status)}</span></td>
         <td class="text-end">${getConversionActions(conversion)}</td>
       `;
       refs.conversionsTableBody.appendChild(tr);
@@ -294,14 +298,14 @@
           <div class="small text-secondary">${formatDate(payout.requested_at || payout.created_at)}</div>
         </td>
         <td>
-          <div class="fw-semibold">${getProfileLabel(payout.affiliate_id)}</div>
-          <div class="small text-secondary">${payout.affiliate_id}</div>
+          <div class="fw-semibold">${escapeHtml(getProfileLabel(payout.affiliate_id))}</div>
+          <div class="small text-secondary">${escapeHtml(payout.affiliate_id)}</div>
         </td>
         <td>
-          <span class="badge ${getStatusBadge(payout.status)}">${payout.status}</span>
+          <span class="badge ${getStatusBadge(payout.status)}">${escapeHtml(payout.status)}</span>
           <div class="small text-secondary">${formatDate(payout.processed_at)}</div>
         </td>
-        <td><span class="small text-secondary">${payout.notes || 'Sem observacoes'}</span></td>
+        <td><span class="small text-secondary">${escapeHtml(payout.notes || 'Sem observacoes')}</span></td>
         <td class="text-end">${getPayoutActions(payout)}</td>
       `;
       refs.payoutsTableBody.appendChild(tr);
@@ -326,16 +330,16 @@
       tr.innerHTML = `
         <td><span class="small text-secondary">${formatDate(log.created_at)}</span></td>
         <td>
-          <div class="fw-semibold">${adminLabel}</div>
-          <div class="small text-secondary">${log.admin_user_id}</div>
+          <div class="fw-semibold">${escapeHtml(adminLabel)}</div>
+          <div class="small text-secondary">${escapeHtml(log.admin_user_id)}</div>
         </td>
         <td>
-          <div class="fw-semibold">${eventInfo.title}</div>
-          <div class="small text-secondary">${eventInfo.detail}</div>
+          <div class="fw-semibold">${escapeHtml(eventInfo.title)}</div>
+          <div class="small text-secondary">${escapeHtml(eventInfo.detail)}</div>
         </td>
         <td>
-          <div class="small text-secondary">${log.entity_type || 'sem entidade'} ${log.entity_id || ''}</div>
-          <div class="small text-secondary">${metadata.note || metadata.setting_key || 'Sem observacoes adicionais'}</div>
+          <div class="small text-secondary">${escapeHtml(log.entity_type || 'sem entidade')} ${escapeHtml(log.entity_id || '')}</div>
+          <div class="small text-secondary">${escapeHtml(metadata.note || metadata.setting_key || 'Sem observacoes adicionais')}</div>
         </td>
       `;
       refs.auditLogsTableBody.appendChild(tr);

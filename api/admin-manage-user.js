@@ -1,5 +1,7 @@
 const {
   setJsonSecurityHeaders,
+  applyCors,
+  enforceRateLimit,
   getAuthenticatedSupabaseUser,
   getUserRole,
   updateSupabaseAuthUserById,
@@ -9,16 +11,17 @@ const {
 
 module.exports = async (req, res) => {
   setJsonSecurityHeaders(res);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  applyCors(req, res, {
+    methods: 'POST, OPTIONS',
+    headers: 'Content-Type, Authorization'
+  });
 
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ ok: false, error: 'Método não permitido.' });
+    return res.status(405).json({ ok: false, error: 'Metodo nao permitido.' });
   }
 
   const authorization = String(req.headers.authorization || '').trim();
@@ -37,7 +40,7 @@ module.exports = async (req, res) => {
       return {
         ok: false,
         userId,
-        error: 'Por segurança, você não pode desativar ou excluir a própria conta por esta tela.'
+        error: 'Por seguranca, voce nao pode desativar ou excluir a propria conta por esta tela.'
       };
     }
 
@@ -46,7 +49,7 @@ module.exports = async (req, res) => {
       return {
         ok: false,
         userId,
-        error: 'Usuário não encontrado.'
+        error: 'Usuario nao encontrado.'
       };
     }
 
@@ -88,11 +91,17 @@ module.exports = async (req, res) => {
   }
 
   try {
+    enforceRateLimit(req, {
+      keyPrefix: 'admin-manage-user',
+      windowMs: 60 * 1000,
+      max: 20
+    });
+
     const currentUser = await getAuthenticatedSupabaseUser(accessToken);
     if (!currentUser?.id) {
       return res.status(401).json({
         ok: false,
-        error: 'Sessão inválida para gerenciar usuários.'
+        error: 'Sessao invalida para gerenciar usuarios.'
       });
     }
 
@@ -123,7 +132,7 @@ module.exports = async (req, res) => {
     if (!['disable', 'delete'].includes(action)) {
       return res.status(400).json({
         ok: false,
-        error: 'Ação inválida para gerenciamento de conta.'
+        error: 'Acao invalida para gerenciamento de conta.'
       });
     }
 
@@ -146,7 +155,7 @@ module.exports = async (req, res) => {
         action,
         userId: result.userId,
         message: action === 'disable'
-          ? 'Conta desativada com sucesso. O usuário não conseguirá mais entrar no sistema.'
+          ? 'Conta desativada com sucesso. O usuario nao conseguira mais entrar no sistema.'
           : 'Conta excluida com sucesso. Os dados relacionados foram removidos conforme as regras de cascata do banco.'
       });
     }
@@ -188,10 +197,11 @@ module.exports = async (req, res) => {
     });
   } catch (error) {
     const message = /SUPABASE_SERVICE_ROLE_KEY/i.test(error.message)
-      ? 'SUPABASE_SERVICE_ROLE_KEY não está configurada no backend. Adicione essa chave nas variáveis de ambiente da Vercel ou no .env.local do vercel dev para permitir desativar ou excluir contas pelo admin.'
+      ? 'SUPABASE_SERVICE_ROLE_KEY nao esta configurada no backend. Adicione essa chave nas variaveis de ambiente para permitir desativar ou excluir contas pelo admin.'
       : error.message;
 
-    return res.status(500).json({
+    const status = /Muitas requisicoes/i.test(error.message) ? 429 : 500;
+    return res.status(status).json({
       ok: false,
       error: message
     });

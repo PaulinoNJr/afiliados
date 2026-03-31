@@ -50,6 +50,15 @@
     return 'https://via.placeholder.com/640x480?text=Produto';
   }
 
+  function isValidHttpUrl(raw) {
+    try {
+      const parsed = new URL(String(raw || '').trim());
+      return ['http:', 'https:'].includes(parsed.protocol);
+    } catch {
+      return false;
+    }
+  }
+
   function normalizeAccentColor(value) {
     const raw = String(value || '').trim().toLowerCase();
     return /^#([0-9a-f]{6}|[0-9a-f]{3})$/.test(raw) ? raw : DEFAULT_ACCENT;
@@ -443,10 +452,11 @@
 
       const link = document.createElement('a');
       link.className = 'btn btn-primary mt-auto';
-      link.href = item.link_afiliado;
+      link.href = isValidHttpUrl(item.link_afiliado) ? item.link_afiliado : '#';
       link.textContent = ctaLabel;
       link.target = '_blank';
       link.rel = 'noopener noreferrer nofollow';
+      link.classList.toggle('disabled', !isValidHttpUrl(item.link_afiliado));
       link.style.borderColor = accentColor;
       link.dataset.buttonStyle = buttonStyle;
       if (buttonStyle === 'outline') {

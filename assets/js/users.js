@@ -90,6 +90,10 @@
     return new Date(value).toLocaleString('pt-BR');
   }
 
+  function escapeHtml(value) {
+    return window.StoreUtils.escapeHtml(value);
+  }
+
   function isValidHttpUrl(raw) {
     try {
       const parsed = new URL(raw);
@@ -312,14 +316,14 @@
 
       const tdEmail = document.createElement('td');
       tdEmail.innerHTML = `
-        <div class="fw-semibold">${user.user_email || `Sem email (${user.user_id.slice(0, 8)}...)`}</div>
-        <div class="small text-secondary">${[user.first_name, user.last_name].filter(Boolean).join(' ') || 'Sem nome informado'}${isOwnAccount ? ' · sua conta' : ''}</div>
+        <div class="fw-semibold">${escapeHtml(user.user_email || `Sem email (${user.user_id.slice(0, 8)}...)`)}</div>
+        <div class="small text-secondary">${escapeHtml([user.first_name, user.last_name].filter(Boolean).join(' ') || 'Sem nome informado')}${isOwnAccount ? ' · sua conta' : ''}</div>
       `;
 
       const tdStore = document.createElement('td');
       tdStore.innerHTML = `
-        <div class="fw-semibold">${user.store_name || 'Sem loja'}</div>
-        <div class="small text-secondary">${user.slug ? `/${user.slug}` : 'Slug não definido'}</div>
+        <div class="fw-semibold">${escapeHtml(user.store_name || 'Sem loja')}</div>
+        <div class="small text-secondary">${escapeHtml(user.slug ? `/${user.slug}` : 'Slug não definido')}</div>
       `;
 
       const tdRole = document.createElement('td');

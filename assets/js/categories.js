@@ -57,6 +57,10 @@
     refs.status.classList.remove('d-none');
   }
 
+  function escapeHtml(value) {
+    return window.StoreUtils.escapeHtml(value);
+  }
+
   function hideStatus() {
     refs.status.classList.add('d-none');
   }
@@ -137,11 +141,11 @@
       content.className = 'category-admin-copy';
       content.innerHTML = `
         <div class="d-flex flex-wrap gap-2 align-items-center mb-1">
-          <strong>${category.name}</strong>
+          <strong>${escapeHtml(category.name)}</strong>
           <span class="badge text-bg-light">ordem ${category.sort_order}</span>
           <span class="badge text-bg-secondary">${count} produto(s)</span>
         </div>
-        <div class="small text-secondary">slug interno: ${category.slug}</div>
+        <div class="small text-secondary">slug interno: ${escapeHtml(category.slug)}</div>
       `;
 
       const actions = document.createElement('div');

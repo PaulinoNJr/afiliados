@@ -46,8 +46,17 @@
     });
   }
 
+  function escapeHtml(value) {
+    return window.StoreUtils.escapeHtml(value);
+  }
+
   function renderTable(columns = [], rows = []) {
-    refs.performanceTableHead.innerHTML = columns.map((column) => `<th>${column}</th>`).join('');
+    refs.performanceTableHead.innerHTML = '';
+    columns.forEach((column) => {
+      const th = document.createElement('th');
+      th.textContent = column;
+      refs.performanceTableHead.appendChild(th);
+    });
     refs.performanceTableBody.innerHTML = '';
 
     if (!rows.length) {
@@ -73,8 +82,8 @@
       const article = document.createElement('article');
       article.className = 'dashboard-activity-item';
       article.innerHTML = `
-        <strong>${item.title}</strong>
-        <p>${item.description}</p>
+        <strong>${escapeHtml(item.title)}</strong>
+        <p>${escapeHtml(item.description)}</p>
       `;
       refs.activityList.appendChild(article);
     });
@@ -164,8 +173,8 @@
           : `${Number(campaign.commission_value || 0).toFixed(2)}%`;
 
         return [
-          `<div class="fw-semibold">${campaign.name || 'Campanha sem nome'}</div><div class="small text-secondary">Comissao ${commissionLabel}</div>`,
-          `<span class="badge ${getStatusBadge(campaign.status)}">${campaign.status || 'draft'}</span>`,
+          `<div class="fw-semibold">${escapeHtml(campaign.name || 'Campanha sem nome')}</div><div class="small text-secondary">Comissao ${escapeHtml(commissionLabel)}</div>`,
+          `<span class="badge ${getStatusBadge(campaign.status)}">${escapeHtml(campaign.status || 'draft')}</span>`,
           `<span class="fw-semibold">${productCount}</span>`,
           `<span class="small text-secondary">${formatDate(campaign.updated_at || campaign.created_at)}</span>`
         ];
@@ -226,9 +235,9 @@
     renderTable(
       ['Conta', 'Perfil', 'Status', 'Criado em'],
       profiles.slice(0, 6).map((item) => [
-        `<div class="fw-semibold">${item.user_email || item.user_id}</div><div class="small text-secondary">${item.store_name || 'Sem marca definida'}</div>`,
+        `<div class="fw-semibold">${escapeHtml(item.user_email || item.user_id)}</div><div class="small text-secondary">${escapeHtml(item.store_name || 'Sem marca definida')}</div>`,
         `<span class="badge ${item.role === 'admin' ? 'text-bg-primary' : 'text-bg-secondary'}">${window.Auth.getRoleLabel(item.role)}</span>`,
-        `<span class="badge ${item.activation_status === 'active' ? 'text-bg-success' : 'text-bg-warning'}">${item.activation_status || 'pending'}</span>`,
+        `<span class="badge ${item.activation_status === 'active' ? 'text-bg-success' : 'text-bg-warning'}">${escapeHtml(item.activation_status || 'pending')}</span>`,
         `<span class="small text-secondary">${formatDate(item.created_at)}</span>`
       ])
     );
@@ -294,8 +303,8 @@
         const offer = catalog.find((item) => item.campaign_id === link.campaign_id && item.product_id === link.product_id);
         const trackingUrl = window.StoreUtils.getTrackingUrl(link.code);
         return [
-          `<div class="fw-semibold">${offer ? `${offer.product_title} - ${offer.campaign_name}` : 'Oferta vinculada'}</div>`,
-          `<a href="${trackingUrl}" target="_blank" rel="noopener noreferrer" class="small text-decoration-none">${trackingUrl}</a>`,
+          `<div class="fw-semibold">${escapeHtml(offer ? `${offer.product_title} - ${offer.campaign_name}` : 'Oferta vinculada')}</div>`,
+          `<a href="${trackingUrl}" target="_blank" rel="noopener noreferrer" class="small text-decoration-none">${escapeHtml(trackingUrl)}</a>`,
           `<span class="fw-semibold">${clickCountByLink[link.id] || 0}</span>`,
           `<span class="small text-secondary">${formatDate(link.created_at)}</span>`
         ];

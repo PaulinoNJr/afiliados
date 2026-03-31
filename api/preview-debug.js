@@ -1,3 +1,11 @@
+const {
+  setJsonSecurityHeaders,
+  applyCors,
+  enforceRateLimit,
+  getAuthenticatedSupabaseUser,
+  getUserRole
+} = require('./_security');
+
 function normalizeText(raw, maxLength = 400) {
   if (raw === null || raw === undefined) return null;
 
@@ -71,7 +79,7 @@ function extractJsonObjectFromText(value) {
     try {
       return JSON.parse(candidate);
     } catch {
-      // Continua para heurística abaixo.
+      // Continua para heuristica abaixo.
     }
   }
 
@@ -96,13 +104,13 @@ function buildProbePayload({ model, url }) {
         {
           role: 'system',
           content: [
-            'Você extrai dados de produto a partir de links de afiliado.',
-            'Abra o link informado, siga redirecionamentos até a página do produto e responda somente com JSON válido.',
-            'Campos obrigatórios do JSON: title, image, price, description, source_url, resolved_product_url.',
-            'Use null quando um campo não puder ser obtido com confiança.',
-            'Em price, retorne apenas número decimal sem símbolo de moeda.',
+            'Voce extrai dados de produto a partir de links de afiliado.',
+            'Abra o link informado, siga redirecionamentos ate a pagina do produto e responda somente com JSON valido.',
+            'Campos obrigatorios do JSON: title, image, price, description, source_url, resolved_product_url.',
+            'Use null quando um campo nao puder ser obtido com confianca.',
+            'Em price, retorne apenas numero decimal sem simbolo de moeda.',
             'Em image, retorne uma URL absoluta da imagem principal.',
-            'Não inclua markdown, comentários ou texto fora do JSON.'
+            'Nao inclua markdown, comentarios ou texto fora do JSON.'
           ].join(' ')
         },
         {
@@ -126,23 +134,65 @@ function buildProbePayload({ model, url }) {
   };
 }
 
-module.exports = async (req, res) => {
-  if (String(process.env.PREVIEW_DEBUG_ENABLED || '').trim() !== '1') {
-    return res.status(404).json({ ok: false, error: 'Endpoint indisponível.' });
+async function ensureDebugAccess(req) {
+  const debugToken = String(process.env.PREVIEW_DEBUG_TOKEN || '').trim();
+  const requestToken = String(req.headers['x-preview-debug-token'] || '').trim();
+
+  if (debugToken && requestToken && requestToken === debugToken) {
+    return true;
   }
 
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('Cache-Control', 'no-store, max-age=0');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  const authorization = String(req.headers.authorization || '').trim();
+  const accessToken = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
+  const currentUser = await getAuthenticatedSupabaseUser(accessToken);
+
+  if (!currentUser?.id) {
+    return false;
+  }
+
+  const role = await getUserRole(currentUser.id);
+  return role === 'admin';
+}
+
+module.exports = async (req, res) => {
+  if (String(process.env.PREVIEW_DEBUG_ENABLED || '').trim() !== '1') {
+    return res.status(404).json({ ok: false, error: 'Endpoint indisponivel.' });
+  }
+
+  setJsonSecurityHeaders(res);
+  applyCors(req, res, {
+    methods: 'GET, OPTIONS',
+    headers: 'Content-Type, Authorization, X-Preview-Debug-Token'
+  });
 
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
   }
 
   if (req.method !== 'GET') {
-    return res.status(405).json({ ok: false, error: 'Método não permitido.' });
+    return res.status(405).json({ ok: false, error: 'Metodo nao permitido.' });
+  }
+
+  try {
+    enforceRateLimit(req, {
+      keyPrefix: 'preview-debug',
+      windowMs: 60 * 1000,
+      max: 10
+    });
+
+    const allowed = await ensureDebugAccess(req);
+    if (!allowed) {
+      return res.status(403).json({
+        ok: false,
+        error: 'Acesso restrito ao modo debug.'
+      });
+    }
+  } catch (error) {
+    const status = /Muitas requisicoes/i.test(error.message) ? 429 : 500;
+    return res.status(status).json({
+      ok: false,
+      error: error.message
+    });
   }
 
   const config = getOpenClawConfig();
@@ -156,7 +206,7 @@ module.exports = async (req, res) => {
         return res.status(400).json({ ok: false, error: 'A URL de teste deve usar http/https.' });
       }
     } catch {
-      return res.status(400).json({ ok: false, error: 'A URL de teste é inválida.' });
+      return res.status(400).json({ ok: false, error: 'A URL de teste e invalida.' });
     }
   }
 
@@ -179,8 +229,8 @@ module.exports = async (req, res) => {
             attempted: false,
             ok: false,
             reason: config.missing.length
-              ? `Configuração incompleta: ${config.missing.join(', ')}`
-              : 'Probe não solicitado.'
+              ? `Configuracao incompleta: ${config.missing.join(', ')}`
+              : 'Probe nao solicitado.'
           }
         : null
     });
@@ -196,7 +246,7 @@ module.exports = async (req, res) => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'authorization': config.authHeader,
+        authorization: config.authHeader,
         'x-openclaw-agent-id': config.agentId
       },
       body: JSON.stringify(buildProbePayload({ model: config.model, url: rawUrl || null })),
@@ -209,7 +259,7 @@ module.exports = async (req, res) => {
     try {
       payload = responseText ? JSON.parse(responseText) : null;
     } catch {
-      // Mantém o texto bruto no retorno.
+      // Mantem o texto bruto no retorno.
     }
 
     const assistantText = extractAssistantTextFromChatCompletion(payload);

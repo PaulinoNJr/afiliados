@@ -1,17 +1,35 @@
-const { setJsonSecurityHeaders } = require('./_security');
+const {
+  setJsonSecurityHeaders,
+  applyCors,
+  enforceRateLimit
+} = require('./_security');
 
 module.exports = async (req, res) => {
   setJsonSecurityHeaders(res);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  applyCors(req, res, {
+    methods: 'GET, OPTIONS',
+    headers: 'Content-Type'
+  });
 
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
   }
 
   if (req.method !== 'GET') {
-    return res.status(405).json({ ok: false, error: 'Método não permitido.' });
+    return res.status(405).json({ ok: false, error: 'Metodo nao permitido.' });
+  }
+
+  try {
+    enforceRateLimit(req, {
+      keyPrefix: 'public-config',
+      windowMs: 60 * 1000,
+      max: 60
+    });
+  } catch (error) {
+    return res.status(429).json({
+      ok: false,
+      error: error.message
+    });
   }
 
   return res.status(200).json({

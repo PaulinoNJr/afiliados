@@ -7,6 +7,11 @@
   - Em caso de falha parcial/total, o frontend permite preenchimento manual.
 */
 
+const {
+  applyCors,
+  enforceRateLimit
+} = require('./_security');
+
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -1500,9 +1505,10 @@ function parsePrice(html) {
 module.exports = async (req, res) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Cache-Control', 'no-store, max-age=0');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  applyCors(req, res, {
+    methods: 'GET, OPTIONS',
+    headers: 'Content-Type'
+  });
 
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
@@ -1510,6 +1516,19 @@ module.exports = async (req, res) => {
 
   if (req.method !== 'GET') {
     return res.status(405).json({ ok: false, error: 'Método não permitido.' });
+  }
+
+  try {
+    enforceRateLimit(req, {
+      keyPrefix: 'preview',
+      windowMs: 60 * 1000,
+      max: 20
+    });
+  } catch (error) {
+    return res.status(429).json({
+      ok: false,
+      error: error.message
+    });
   }
 
   const rawUrl = req.query?.url;

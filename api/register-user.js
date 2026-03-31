@@ -1,5 +1,7 @@
 const {
   setJsonSecurityHeaders,
+  applyCors,
+  enforceRateLimit,
   validatePasswordStrength,
   verifyRecaptchaToken,
   validateRecaptchaV3Payload,
@@ -9,9 +11,10 @@ const {
 
 module.exports = async (req, res) => {
   setJsonSecurityHeaders(res);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  applyCors(req, res, {
+    methods: 'POST, OPTIONS',
+    headers: 'Content-Type'
+  });
 
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
@@ -44,6 +47,12 @@ module.exports = async (req, res) => {
   }
 
   try {
+    enforceRateLimit(req, {
+      keyPrefix: 'register-user',
+      windowMs: 15 * 60 * 1000,
+      max: 10
+    });
+
     const payload = await verifyRecaptchaToken({
       token: recaptchaToken,
       req
@@ -57,6 +66,9 @@ module.exports = async (req, res) => {
 
     const activationExpiresAt = new Date(Date.now() + activationWindowDays * 24 * 60 * 60 * 1000).toISOString();
     const requestOrigin = getRequestOrigin(req);
+    if (!requestOrigin) {
+      throw new Error('APP_URL ou SITE_URL precisa estar configurada para o fluxo de ativacao.');
+    }
     const emailRedirectTo = `${requestOrigin}/ativacao`;
 
     const signup = await createSupabasePendingSignup({
@@ -90,7 +102,8 @@ module.exports = async (req, res) => {
       }
     });
   } catch (error) {
-    return res.status(/recaptcha|requisitos|minimos/i.test(error.message) ? 400 : 500).json({
+    const isRateLimitError = /Muitas requisicoes/i.test(error.message);
+    return res.status(isRateLimitError ? 429 : (/recaptcha|requisitos|minimos/i.test(error.message) ? 400 : 500)).json({
       ok: false,
       error: error.message
     });

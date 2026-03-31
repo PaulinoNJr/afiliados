@@ -58,6 +58,10 @@
     });
   }
 
+  function escapeHtml(value) {
+    return window.StoreUtils.escapeHtml(value);
+  }
+
   function getStatusBadge(status) {
     if (status === 'approved') return 'text-bg-success';
     if (status === 'pending') return 'text-bg-warning';
@@ -128,8 +132,8 @@
     state.clicks.forEach((click) => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><div class="fw-semibold">${getOfferLabel(click)}</div><div class="small text-secondary">${click.id}</div></td>
-        <td><div class="fw-semibold">${getProfileLabel(click.affiliate_id)}</div><div class="small text-secondary">${click.affiliate_id}</div></td>
+        <td><div class="fw-semibold">${escapeHtml(getOfferLabel(click))}</div><div class="small text-secondary">${escapeHtml(click.id)}</div></td>
+        <td><div class="fw-semibold">${escapeHtml(getProfileLabel(click.affiliate_id))}</div><div class="small text-secondary">${escapeHtml(click.affiliate_id)}</div></td>
         <td><span class="small text-secondary">${formatDate(click.occurred_at)}</span></td>
         <td class="text-end"><button type="button" class="btn btn-sm btn-outline-primary" data-use-click="${click.id}">Usar clique</button></td>
       `;
@@ -152,10 +156,10 @@
       const commission = state.commissionsByConversionId[conversion.id];
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><div class="fw-semibold">${formatCurrency(conversion.gross_amount)}</div><div class="small text-secondary">${conversion.external_order_id || conversion.id}</div></td>
-        <td><span class="badge ${getStatusBadge(conversion.status)}">${conversion.status}</span></td>
-        <td><div class="fw-semibold">${campaign?.name || 'Campanha'}</div><div class="small text-secondary">${getProfileLabel(conversion.affiliate_id)} - ${formatDate(conversion.occurred_at)}</div></td>
-        <td><div class="fw-semibold">${commission ? formatCurrency(commission.amount) : formatCurrency(0)}</div><div class="small text-secondary">${commission?.status || 'pendente'}</div></td>
+        <td><div class="fw-semibold">${formatCurrency(conversion.gross_amount)}</div><div class="small text-secondary">${escapeHtml(conversion.external_order_id || conversion.id)}</div></td>
+        <td><span class="badge ${getStatusBadge(conversion.status)}">${escapeHtml(conversion.status)}</span></td>
+        <td><div class="fw-semibold">${escapeHtml(campaign?.name || 'Campanha')}</div><div class="small text-secondary">${escapeHtml(getProfileLabel(conversion.affiliate_id))} - ${formatDate(conversion.occurred_at)}</div></td>
+        <td><div class="fw-semibold">${commission ? formatCurrency(commission.amount) : formatCurrency(0)}</div><div class="small text-secondary">${escapeHtml(commission?.status || 'pendente')}</div></td>
         <td><span class="small text-secondary">${formatDate(conversion.approved_at || conversion.created_at)}</span></td>
       `;
       refs.conversionsTableBody.appendChild(tr);

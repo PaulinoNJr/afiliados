@@ -50,8 +50,12 @@
     });
   }
 
+  function escapeHtml(value) {
+    return window.StoreUtils.escapeHtml(value);
+  }
+
   function applyHeader() {
-    refs.userEmail.textContent = state.session.user.email || 'Usuário autenticado';
+    refs.userEmail.textContent = state.session.user.email || 'Usuario autenticado';
     refs.userRoleBadge.textContent = window.Auth.getRoleLabel(state.profile?.role);
     refs.userRoleBadge.className = state.isAdmin ? 'badge text-bg-primary' : 'badge text-bg-secondary';
     window.Auth.applyProfileAccess(state.profile);
@@ -71,7 +75,7 @@
       return;
     }
 
-    refs.campaignProductsHint.textContent = 'Selecione os produtos que farão parte da campanha.';
+    refs.campaignProductsHint.textContent = 'Selecione os produtos que farao parte da campanha.';
 
     state.products.forEach((product) => {
       const label = document.createElement('label');
@@ -79,7 +83,7 @@
       label.innerHTML = `
         <input type="checkbox" class="form-check-input mt-1" value="${product.id}" ${selectedIds.includes(product.id) ? 'checked' : ''} />
         <span>
-          <strong>${product.titulo}</strong>
+          <strong>${escapeHtml(product.titulo)}</strong>
           <small>${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(product.preco || 0))}</small>
         </span>
       `;
@@ -140,8 +144,8 @@
     state.campaigns.forEach((campaign) => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><div class="fw-semibold">${campaign.name}</div><div class="small text-secondary">${campaign.description || 'Sem descrição'}</div></td>
-        <td><span class="badge text-bg-${campaign.status === 'active' ? 'success' : campaign.status === 'paused' ? 'warning' : campaign.status === 'closed' ? 'dark' : 'secondary'}">${campaign.status}</span></td>
+        <td><div class="fw-semibold">${escapeHtml(campaign.name)}</div><div class="small text-secondary">${escapeHtml(campaign.description || 'Sem descricao')}</div></td>
+        <td><span class="badge text-bg-${campaign.status === 'active' ? 'success' : campaign.status === 'paused' ? 'warning' : campaign.status === 'closed' ? 'dark' : 'secondary'}">${escapeHtml(campaign.status)}</span></td>
         <td>${campaign.commission_type === 'fixed' ? 'R$' : '%'} ${Number(campaign.commission_value || 0).toFixed(2)}</td>
         <td>${campaign.productIds?.length || 0}</td>
         <td>${campaign.starts_at ? String(campaign.starts_at).slice(0, 10) : '-'} / ${campaign.ends_at ? String(campaign.ends_at).slice(0, 10) : '-'}</td>
@@ -249,7 +253,7 @@
     try {
       const { error } = await window.db.from('campaigns').delete().eq('id', campaignId);
       if (error) throw error;
-      showStatus('Campanha excluída com sucesso.', 'success');
+      showStatus('Campanha excluida com sucesso.', 'success');
       if (state.editingCampaignId === campaignId) resetForm();
       await loadCampaigns();
     } catch (err) {

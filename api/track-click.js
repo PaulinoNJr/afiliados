@@ -1,5 +1,9 @@
 const crypto = require('crypto');
-const { getSupabaseConfig, getClientIp } = require('./_security');
+const {
+  getSupabaseConfig,
+  getClientIp,
+  enforceRateLimit
+} = require('./_security');
 
 function getCookieValue(cookieHeader, key) {
   const cookie = String(cookieHeader || '');
@@ -12,6 +16,15 @@ function createIpHash(value) {
   const salt = String(process.env.CLICK_HASH_SALT || process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
   if (!raw) return null;
   return crypto.createHash('sha256').update(`${salt}:${raw}`).digest('hex');
+}
+
+function isSafeRedirectUrl(value) {
+  try {
+    const parsed = new URL(String(value || '').trim());
+    return ['http:', 'https:'].includes(parsed.protocol);
+  } catch {
+    return false;
+  }
 }
 
 async function supabaseRestRequest({ path, method = 'GET', body } = {}) {
@@ -43,17 +56,23 @@ module.exports = async (req, res) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
 
   if (!code || !/^[a-z0-9]{8,32}$/.test(code)) {
-    return res.status(404).send('Link rastreável inválido.');
+    return res.status(404).send('Link rastreavel invalido.');
   }
 
   try {
+    enforceRateLimit(req, {
+      keyPrefix: `track-click:${code}`,
+      windowMs: 60 * 1000,
+      max: 60
+    });
+
     const rows = await supabaseRestRequest({
       path: `affiliate_links?select=id,code,affiliate_id,campaign_id,product_id,destination_url,status&code=eq.${encodeURIComponent(code)}&status=eq.active&limit=1`
     });
 
     const link = Array.isArray(rows) ? rows[0] : null;
-    if (!link?.destination_url) {
-      return res.status(404).send('Link rastreável não encontrado.');
+    if (!link?.destination_url || !isSafeRedirectUrl(link.destination_url)) {
+      return res.status(404).send('Link rastreavel nao encontrado.');
     }
 
     const existingSessionId = getCookieValue(req.headers.cookie, 'af_click_sid');
@@ -78,7 +97,7 @@ module.exports = async (req, res) => {
         }
       });
     } catch (trackingError) {
-      console.error('Falha ao registrar clique rastreável:', trackingError);
+      console.error('Falha ao registrar clique rastreavel:', trackingError);
     }
 
     res.setHeader(
@@ -87,7 +106,11 @@ module.exports = async (req, res) => {
     );
     return res.redirect(302, link.destination_url);
   } catch (error) {
-    console.error('Falha ao resolver link rastreável:', error);
-    return res.status(500).send('Não foi possível processar o redirecionamento.');
+    if (/Muitas requisicoes/i.test(error.message)) {
+      return res.status(429).send('Muitas requisicoes em pouco tempo. Tente novamente em instantes.');
+    }
+
+    console.error('Falha ao resolver link rastreavel:', error);
+    return res.status(500).send('Nao foi possivel processar o redirecionamento.');
   }
 };

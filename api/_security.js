@@ -6,19 +6,38 @@ function setJsonSecurityHeaders(res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
 }
 
+const rateLimitStore = new Map();
+
 function getClientIp(req) {
   const forwardedFor = String(req.headers['x-forwarded-for'] || '').trim();
   return forwardedFor.split(',')[0]?.trim() || '';
 }
 
+function normalizeOrigin(value) {
+  return String(value || '').trim().replace(/\/+$/, '').toLowerCase();
+}
+
+function getConfiguredAppOrigin() {
+  return String(process.env.APP_URL || process.env.SITE_URL || '').trim().replace(/\/+$/, '');
+}
+
 function getRequestOrigin(req) {
+  const configuredOrigin = getConfiguredAppOrigin();
+  if (configuredOrigin) {
+    return configuredOrigin;
+  }
+
   const host = String(req?.headers?.['x-forwarded-host'] || req?.headers?.host || '').trim();
   const fallbackProtocol = /localhost|127\.0\.0\.1/i.test(host) ? 'http' : 'https';
   const protocol = String(req?.headers?.['x-forwarded-proto'] || '').trim() || fallbackProtocol;
 
   if (!host) {
-    const fallback = String(process.env.APP_URL || process.env.SITE_URL || '').trim().replace(/\/+$/, '');
-    return fallback || '';
+    return '';
+  }
+
+  const normalizedHost = normalizeHostname(host);
+  if (!/^(localhost|127\.0\.0\.1)$/.test(normalizedHost)) {
+    return '';
   }
 
   return `${protocol}://${host}`;
@@ -44,6 +63,11 @@ function getAllowedRecaptchaHostnames(req) {
     return configured;
   }
 
+  const configuredOriginHostname = normalizeHostname(getConfiguredAppOrigin());
+  if (configuredOriginHostname) {
+    return [configuredOriginHostname];
+  }
+
   const requestHosts = [
     req?.headers?.['x-forwarded-host'],
     req?.headers?.host
@@ -52,6 +76,73 @@ function getAllowedRecaptchaHostnames(req) {
     .filter(Boolean);
 
   return Array.from(new Set(requestHosts));
+}
+
+function getAllowedCorsOrigins(req) {
+  const configured = String(process.env.CORS_ALLOWED_ORIGINS || '')
+    .split(',')
+    .map(normalizeOrigin)
+    .filter(Boolean);
+
+  if (configured.length) {
+    return configured;
+  }
+
+  const defaults = [];
+  const configuredOrigin = normalizeOrigin(getConfiguredAppOrigin());
+  if (configuredOrigin) {
+    defaults.push(configuredOrigin);
+  }
+
+  const localhostOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:5173'
+  ];
+
+  const requestOrigin = normalizeOrigin(req?.headers?.origin);
+  if (requestOrigin && /:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(requestOrigin)) {
+    defaults.push(requestOrigin);
+  }
+
+  return Array.from(new Set([...defaults, ...localhostOrigins].filter(Boolean)));
+}
+
+function applyCors(req, res, { methods = 'GET, OPTIONS', headers = 'Content-Type', allowCredentials = false } = {}) {
+  const origin = normalizeOrigin(req?.headers?.origin);
+  const allowedOrigins = getAllowedCorsOrigins(req);
+
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
+    res.setHeader('Vary', 'Origin');
+    if (allowCredentials) {
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
+  }
+
+  res.setHeader('Access-Control-Allow-Methods', methods);
+  res.setHeader('Access-Control-Allow-Headers', headers);
+}
+
+function enforceRateLimit(req, { keyPrefix = 'global', windowMs = 60_000, max = 60 } = {}) {
+  const now = Date.now();
+  const ip = getClientIp(req) || 'unknown';
+  const key = `${keyPrefix}:${ip}`;
+  const entry = rateLimitStore.get(key);
+
+  if (!entry || entry.resetAt <= now) {
+    rateLimitStore.set(key, {
+      count: 1,
+      resetAt: now + windowMs
+    });
+    return;
+  }
+
+  entry.count += 1;
+  if (entry.count > max) {
+    throw new Error('Muitas requisicoes em pouco tempo. Tente novamente em instantes.');
+  }
 }
 
 function getSupabaseConfig({ requireAnonKey = false, requireServiceRoleKey = false } = {}) {
@@ -402,8 +493,11 @@ async function createSupabasePendingSignup({ email, password, metadata = {}, ema
 
 module.exports = {
   setJsonSecurityHeaders,
+  applyCors,
+  enforceRateLimit,
   getClientIp,
   getRequestOrigin,
+  getConfiguredAppOrigin,
   normalizeHostname,
   getAllowedRecaptchaHostnames,
   getSupabaseConfig,
