@@ -15,6 +15,7 @@ Site completo para divulgar produtos de afiliado do Mercado Livre, com:
 |-- admin.html
 |-- users.html
 |-- login.html
+|-- recuperar-senha.html
 |-- index.html
 |-- vercel.json
 |-- api/
@@ -40,9 +41,10 @@ Site completo para divulgar produtos de afiliado do Mercado Livre, com:
 3. No painel `Authentication > Providers`, deixe o provider de email/senha ativo.
 4. Em `Authentication > URL Configuration`, adicione:
 - `Site URL`: URL do seu domínio da Vercel (ou `http://localhost:3000` para teste)
-- `Redirect URLs`: inclua `http://localhost:3000/ativacao`, `http://localhost:3000/ativacao.html`, `https://SEU-DOMINIO.vercel.app/ativacao` e `https://SEU-DOMINIO.vercel.app/ativacao.html`
+- `Redirect URLs`: inclua `http://localhost:3000/ativacao`, `http://localhost:3000/ativacao.html`, `http://localhost:3000/recuperar-senha`, `http://localhost:3000/recuperar-senha.html`, `https://SEU-DOMINIO.vercel.app/ativacao`, `https://SEU-DOMINIO.vercel.app/ativacao.html`, `https://SEU-DOMINIO.vercel.app/recuperar-senha` e `https://SEU-DOMINIO.vercel.app/recuperar-senha.html`
 5. Em `Authentication > Email Templates > Confirm signup`, copie o conteudo de [`supabase/email-template-confirmation.html`](./supabase/email-template-confirmation.html) para que o Supabase use o template customizado do projeto.
-6. O `schema.sql` já promove automaticamente `paulino.covabra@gmail.com` para perfil `admin`.
+6. Em `Authentication > Email Templates > Reset password`, copie o conteudo de [`supabase/email-template-recovery.html`](./supabase/email-template-recovery.html) para padronizar o fluxo seguro de recuperacao de senha.
+7. O `schema.sql` já promove automaticamente `paulino.covabra@gmail.com` para perfil `admin`.
 
 ## 2) Configurar variáveis do Supabase no frontend
 
@@ -89,6 +91,7 @@ Abra:
 3. Framework preset: `Other`.
 4. Deploy.
 5. Atualize `Authentication > URL Configuration` no Supabase com a URL final da Vercel.
+6. Revise tambem o template `Reset password` no Supabase para apontar para a rota `recuperar-senha`.
 
 ## 5) Integrar com Open.Claw
 
@@ -196,18 +199,29 @@ No `admin.html`, a mensagem de preenchimento automático agora informa também q
 
 1. Acesse `login.html` e faça login com usuário existente no Supabase Auth.
 2. Após login, você é redirecionado para `admin.html`.
-3. O sistema usa dois perfis:
+3. Se esquecer a senha, use `login.html` > `Esqueci minha senha` para solicitar um link temporário.
+4. O sistema usa dois perfis:
 - `admin`: cria usuários e gerencia todos os produtos.
 - `produtor`: gerencia apenas os próprios produtos.
-4. O `admin` também acessa `users.html` para:
+5. O `admin` também acessa `users.html` para:
 - listar usuários
 - alterar perfil (`admin`/`produtor`)
 - criar novos usuários
-5. No admin:
+6. No admin:
 - Cole o link de afiliado e clique em "Preencher automaticamente".
 - Ajuste manualmente campos se necessário.
 - Salve produto.
-6. A `index.html` pública lista os produtos em cards responsivos.
+7. A `index.html` pública lista os produtos em cards responsivos.
+
+## Recuperacao de senha
+
+O fluxo implementado segue boas praticas de mercado para reduzir abuso e vazamento de informacao:
+
+- a tela de solicitacao devolve mensagem neutra, sem informar se o email existe ou nao
+- o email leva para uma pagina dedicada (`recuperar-senha`) em vez de expor a troca de senha direto no login
+- o link precisa ser validado explicitamente antes de consumir o token, o que ajuda contra scanners automaticos de email
+- a nova senha reaproveita as mesmas regras minimas de seguranca do cadastro
+- depois da redefinicao, o usuario volta para o login em vez de ficar autenticado automaticamente
 
 ## Limitações da captura automática
 

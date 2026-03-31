@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recuperar senha | Afiliados</title>
+  <meta name="description" content="Solicite um link seguro para redefinir a senha da sua conta." />
+  <meta name="referrer" content="no-referrer" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body class="bg-light">
+  <main class="min-vh-100 d-flex align-items-center py-5 auth-shell">
+    <div class="container">
+      <div class="row justify-content-center g-4 auth-layout-row">
+        <div class="col-12 col-xl-5">
+          <div class="card border-0 shadow-sm h-100 auth-info-card">
+            <div class="card-body p-4 p-md-5">
+              <span class="badge text-bg-primary mb-3">Acesso seguro</span>
+              <h1 class="h3 mb-2">Recuperação de senha</h1>
+              <p class="text-secondary mb-4">Use este fluxo apenas quando não conseguir entrar na conta. O link enviado por email é temporário, de uso único e deve ser validado antes da troca da senha.</p>
+
+              <div class="password-helper">
+                <p class="small text-uppercase fw-semibold text-secondary mb-2">Boas práticas aplicadas</p>
+                <ul class="password-rules-list">
+                  <li class="is-valid">Mensagem neutra no pedido para evitar enumeração de contas</li>
+                  <li class="is-valid">Validação explícita do link antes de consumir o token</li>
+                  <li class="is-valid">Nova senha com regras mínimas de força</li>
+                  <li class="is-valid">Retorno ao login após redefinição concluída</li>
+                </ul>
+              </div>
+
+              <div class="password-helper mt-3">
+                <p class="small text-uppercase fw-semibold text-secondary mb-2">Quando o email chegar</p>
+                <p class="small text-secondary mb-2">Abra sempre o link mais recente recebido. Se o email não aparecer em alguns minutos, confira a pasta de spam ou tente solicitar novamente.</p>
+                <p class="small text-secondary mb-0">Se você não solicitou a recuperação, ignore a mensagem e considere trocar a senha caso suspeite de uso indevido do email.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-xl-6">
+          <div class="card border-0 shadow-sm auth-form-card">
+            <div class="card-body p-4 p-md-5">
+              <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+                <div>
+                  <h2 class="h4 mb-1">Recuperar acesso</h2>
+                  <p class="text-secondary mb-0">Solicite o link, valide o acesso e defina uma nova senha forte.</p>
+                </div>
+                <a href="login.html" class="btn btn-outline-primary btn-sm">Voltar ao login</a>
+              </div>
+
+              <div id="statusMessage" class="alert d-none" role="alert"></div>
+
+              <section id="requestSection">
+                <form id="requestResetForm" novalidate>
+                  <div class="mb-3">
+                    <label for="recoveryEmail" class="form-label">Email da conta</label>
+                    <input id="recoveryEmail" type="email" class="form-control" required autocomplete="email" />
+                  </div>
+                  <div class="password-helper mb-4">
+                    <p class="small text-secondary mb-0">Por segurança, a resposta será a mesma mesmo quando o email não existir na base.</p>
+                  </div>
+                  <button id="requestResetBtn" type="submit" class="btn btn-primary w-100">Enviar link de recuperação</button>
+                </form>
+              </section>
+
+              <section id="verifySection" class="d-none">
+                <div class="password-helper mb-4">
+                  <p class="small text-uppercase fw-semibold text-secondary mb-2">Validar link</p>
+                  <p class="small text-secondary mb-0">Clique no botão abaixo para confirmar que o link foi aberto por você. Isso ajuda a evitar consumo automático do token por scanners de email.</p>
+                </div>
+                <button id="verifyRecoveryBtn" type="button" class="btn btn-primary w-100">Validar link de recuperação</button>
+              </section>
+
+              <section id="resetSection" class="d-none">
+                <form id="resetPasswordForm" novalidate>
+                  <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                      <label for="newPassword" class="form-label">Nova senha</label>
+                      <input id="newPassword" type="password" class="form-control" minlength="8" required autocomplete="new-password" />
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label for="newPasswordConfirm" class="form-label">Confirmar nova senha</label>
+                      <input id="newPasswordConfirm" type="password" class="form-control" minlength="8" required autocomplete="new-password" />
+                    </div>
+                    <div class="col-12">
+                      <div class="password-helper">
+                        <p class="small text-secondary mb-2">Escolha uma senha forte com:</p>
+                        <ul id="passwordRules" class="password-rules-list">
+                          <li data-rule="minLength">Pelo menos 8 caracteres</li>
+                          <li data-rule="lowercase">Uma letra minúscula</li>
+                          <li data-rule="uppercase">Uma letra maiúscula</li>
+                          <li data-rule="number">Um número</li>
+                          <li data-rule="special">Um caractere especial</li>
+                        </ul>
+                        <small id="passwordMatchFeedback" class="d-block mt-2 text-secondary">Repita a nova senha para confirmar.</small>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="password-helper mt-4">
+                    <p class="small text-uppercase fw-semibold text-secondary mb-2">Depois de salvar</p>
+                    <p class="small text-secondary mb-0">Você será redirecionado para o login para entrar novamente com a senha nova.</p>
+                  </div>
+
+                  <button id="updatePasswordBtn" type="submit" class="btn btn-primary w-100 mt-4">Salvar nova senha</button>
+                </form>
+              </section>
+
+              <div class="text-center mt-4 d-grid gap-2">
+                <a href="cadastro.html" class="btn btn-outline-primary">Criar nova conta</a>
+                <a href="index.html" class="link-secondary">Voltar para a página inicial</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/store-utils.js"></script>
+  <script src="assets/js/password-recovery.js"></script>
+</body>
+</html>

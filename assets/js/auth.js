@@ -33,6 +33,18 @@
     return { data, error };
   }
 
+  async function requestPasswordReset(email, options = {}) {
+    ensureClient();
+    const { data, error } = await window.db.auth.resetPasswordForEmail(email, options);
+    return { data, error };
+  }
+
+  async function updatePassword(password) {
+    ensureClient();
+    const { data, error } = await window.db.auth.updateUser({ password });
+    return { data, error };
+  }
+
   async function register(email, password, profileData = {}) {
     throw new Error('Cadastro direto pelo frontend foi desativado. Use os endpoints seguros do backend.');
   }
@@ -205,7 +217,9 @@
     isAccountActive,
     ensureActivatedSession,
     login,
+    requestPasswordReset,
     register,
+    updatePassword,
     logout,
     requireAuth,
     redirectIfAuthenticated
