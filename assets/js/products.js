@@ -4,7 +4,7 @@
   const state = {
     session: null,
     profile: null,
-    role: 'produtor',
+    role: 'advertiser',
     isAdmin: false,
     categories: [],
     products: [],
@@ -193,7 +193,7 @@
 
   function applyHeader() {
     refs.userEmail.textContent = state.session.user.email || 'Usuario autenticado';
-    refs.userRoleBadge.textContent = state.isAdmin ? 'admin' : 'produtor';
+    refs.userRoleBadge.textContent = window.Auth.getRoleLabel(state.profile?.role);
     refs.userRoleBadge.className = state.isAdmin ? 'badge text-bg-primary' : 'badge text-bg-secondary';
     refs.viewPublicStoreLink.href = state.profile?.slug ? window.StoreUtils.getStoreUrl(state.profile.slug) : 'loja.html';
     window.Auth.applyProfileAccess(state.profile);
@@ -787,7 +787,9 @@
 
       state.session = activation.session;
       state.profile = activation.profile;
-      state.role = state.profile?.role || 'produtor';
+      const allowed = await window.Auth.ensureRoleAccess(state.profile, ['admin', 'advertiser']);
+      if (!allowed) return;
+      state.role = window.Auth.normalizeRole(state.profile?.role);
       state.isAdmin = state.role === 'admin';
       applyHeader();
       bindEvents();

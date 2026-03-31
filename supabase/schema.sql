@@ -68,7 +68,9 @@ $$;
 create table if not exists public.user_profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
   user_email text,
-  role text not null default 'produtor' check (role in ('admin', 'produtor')),
+  role text not null default 'advertiser',
+  account_type text not null default 'advertiser',
+  company_name text,
   first_name text,
   last_name text,
   phone text,
@@ -98,6 +100,8 @@ create table if not exists public.user_profiles (
 alter table public.user_profiles
   add column if not exists user_email text,
   add column if not exists role text,
+  add column if not exists account_type text,
+  add column if not exists company_name text,
   add column if not exists first_name text,
   add column if not exists last_name text,
   add column if not exists phone text,
@@ -124,7 +128,10 @@ alter table public.user_profiles
   add column if not exists updated_at timestamptz not null default now();
 
 alter table public.user_profiles
-  alter column role set default 'produtor',
+  alter column role set default 'advertiser',
+  alter column role set not null,
+  alter column account_type set default 'advertiser',
+  alter column account_type set not null,
   alter column activation_status set default 'pending',
   alter column activation_requested_at set default now(),
   alter column activation_email_sent_at set default now(),
@@ -137,8 +144,20 @@ alter table public.user_profiles
   alter column cta_label set default 'Ver produto';
 
 update public.user_profiles
-set role = 'produtor'
+set role = 'advertiser'
 where role is null;
+
+update public.user_profiles
+set role = 'advertiser'
+where role = 'produtor';
+
+update public.user_profiles
+set account_type = case
+  when role = 'affiliate' then 'affiliate'
+  else 'advertiser'
+end
+where account_type is null
+   or trim(account_type) = '';
 
 update public.user_profiles
 set activation_status = 'active'
@@ -205,6 +224,32 @@ as $$
 declare
   fallback_store_name text;
 begin
+  new.role := lower(nullif(trim(coalesce(new.role, '')), ''));
+  if new.role is null or new.role = 'produtor' then
+    new.role := 'advertiser';
+  elsif new.role not in ('admin', 'advertiser', 'affiliate') then
+    raise exception 'Perfil de acesso invalido.';
+  end if;
+
+  new.account_type := lower(nullif(trim(coalesce(new.account_type, '')), ''));
+  if new.account_type is null then
+    new.account_type := case
+      when new.role = 'affiliate' then 'affiliate'
+      else 'advertiser'
+    end;
+  elsif new.account_type not in ('advertiser', 'affiliate') then
+    raise exception 'Tipo de conta invalido.';
+  end if;
+
+  if new.role = 'admin' then
+    new.account_type := 'advertiser';
+  elsif new.account_type = 'affiliate' then
+    new.role := 'affiliate';
+  elsif new.role <> 'admin' then
+    new.role := 'advertiser';
+  end if;
+
+  new.company_name := nullif(trim(coalesce(new.company_name, '')), '');
   new.first_name := nullif(trim(coalesce(new.first_name, '')), '');
   new.last_name := nullif(trim(coalesce(new.last_name, '')), '');
   new.phone := nullif(trim(coalesce(new.phone, '')), '');
@@ -268,6 +313,7 @@ begin
   end if;
 
   fallback_store_name := coalesce(
+    case when new.role = 'advertiser' then new.company_name else null end,
     nullif(trim(new.store_name), ''),
     nullif(trim(concat_ws(' ', new.first_name, new.last_name)), ''),
     nullif(initcap(replace(split_part(coalesce(new.user_email, ''), '@', 1), '.', ' ')), ''),
@@ -343,6 +389,9 @@ set search_path = public
 as $$
 declare
   meta jsonb := coalesce(new.raw_user_meta_data, '{}'::jsonb);
+  account_type_value text;
+  role_value text;
+  company_name_value text;
   first_name_value text;
   last_name_value text;
   phone_value text;
@@ -350,6 +399,19 @@ declare
   slug_value text;
   generated_store_name text;
 begin
+  account_type_value := lower(nullif(trim(meta ->> 'account_type'), ''));
+  if account_type_value is null then
+    account_type_value := 'advertiser';
+  elsif account_type_value not in ('advertiser', 'affiliate') then
+    account_type_value := 'advertiser';
+  end if;
+
+  role_value := case
+    when account_type_value = 'affiliate' then 'affiliate'
+    else 'advertiser'
+  end;
+
+  company_name_value := nullif(trim(meta ->> 'company_name'), '');
   first_name_value := nullif(trim(meta ->> 'first_name'), '');
   last_name_value := nullif(trim(meta ->> 'last_name'), '');
   phone_value := nullif(trim(meta ->> 'phone'), '');
@@ -357,6 +419,7 @@ begin
   slug_value := nullif(trim(meta ->> 'slug'), '');
 
   generated_store_name := coalesce(
+    case when role_value = 'advertiser' then company_name_value else null end,
     nullif(trim(concat_ws(' ', first_name_value, last_name_value)), ''),
     nullif(initcap(replace(split_part(coalesce(new.email, ''), '@', 1), '.', ' ')), ''),
     'Minha loja'
@@ -366,6 +429,8 @@ begin
     user_id,
     user_email,
     role,
+    account_type,
+    company_name,
     first_name,
     last_name,
     phone,
@@ -380,7 +445,9 @@ begin
   values (
     new.id,
     new.email,
-    'produtor',
+    role_value,
+    account_type_value,
+    company_name_value,
     first_name_value,
     last_name_value,
     phone_value,
@@ -394,6 +461,9 @@ begin
   )
   on conflict (user_id) do update
     set user_email = excluded.user_email,
+        role = coalesce(user_profiles.role, excluded.role),
+        account_type = coalesce(user_profiles.account_type, excluded.account_type),
+        company_name = coalesce(user_profiles.company_name, excluded.company_name),
         first_name = coalesce(user_profiles.first_name, excluded.first_name),
         last_name = coalesce(user_profiles.last_name, excluded.last_name),
         phone = coalesce(user_profiles.phone, excluded.phone),
@@ -511,6 +581,16 @@ create unique index if not exists idx_user_profiles_slug on public.user_profiles
 
 do $$
 begin
+  if exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.user_profiles'::regclass
+      and conname = 'user_profiles_role_check'
+  ) then
+    alter table public.user_profiles
+      drop constraint user_profiles_role_check;
+  end if;
+
   if not exists (
     select 1
     from pg_constraint
@@ -536,6 +616,28 @@ begin
       add constraint ck_user_profiles_activation_status_valid
       check (activation_status in ('pending', 'active', 'expired'));
   end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'ck_user_profiles_role_valid'
+      and conrelid = 'public.user_profiles'::regclass
+  ) then
+    alter table public.user_profiles
+      add constraint ck_user_profiles_role_valid
+      check (role in ('admin', 'advertiser', 'affiliate'));
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'ck_user_profiles_account_type_valid'
+      and conrelid = 'public.user_profiles'::regclass
+  ) then
+    alter table public.user_profiles
+      add constraint ck_user_profiles_account_type_valid
+      check (account_type in ('advertiser', 'affiliate'));
+  end if;
 end;
 $$;
 
@@ -551,6 +653,22 @@ as $$
     from public.user_profiles profile
     where profile.user_id = auth.uid()
       and profile.role = 'admin'
+  );
+$$;
+
+create or replace function public.is_advertiser_or_admin(target_profile_id uuid default auth.uid())
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.user_profiles profile
+    where profile.user_id = auth.uid()
+      and profile.user_id = target_profile_id
+      and profile.role in ('admin', 'advertiser')
   );
 $$;
 
@@ -792,7 +910,9 @@ security definer
 set search_path = public
 as $$
 begin
-  perform public.ensure_default_product_category(new.user_id);
+  if new.role = 'advertiser' then
+    perform public.ensure_default_product_category(new.user_id);
+  end if;
   return new;
 end;
 $$;
@@ -848,7 +968,8 @@ alter table public.produtos
 
 select public.ensure_default_product_category(profile.user_id)
 from public.user_profiles profile
-where profile.user_id is not null;
+where profile.user_id is not null
+  and profile.role = 'advertiser';
 
 select public.ensure_default_product_category(existing_products.profile_id)
 from (
@@ -1163,29 +1284,29 @@ create policy "Leitura de categorias por dono ou admin"
   on public.product_categories
   for select
   to authenticated
-  using (auth.uid() = profile_id or public.is_admin());
+  using (public.is_advertiser_or_admin(profile_id) or public.is_admin());
 
 drop policy if exists "Insercao de categorias por dono ou admin" on public.product_categories;
 create policy "Insercao de categorias por dono ou admin"
   on public.product_categories
   for insert
   to authenticated
-  with check (auth.uid() = profile_id or public.is_admin());
+  with check (public.is_advertiser_or_admin(profile_id) or public.is_admin());
 
 drop policy if exists "Atualizacao de categorias por dono ou admin" on public.product_categories;
 create policy "Atualizacao de categorias por dono ou admin"
   on public.product_categories
   for update
   to authenticated
-  using (auth.uid() = profile_id or public.is_admin())
-  with check (auth.uid() = profile_id or public.is_admin());
+  using (public.is_advertiser_or_admin(profile_id) or public.is_admin())
+  with check (public.is_advertiser_or_admin(profile_id) or public.is_admin());
 
 drop policy if exists "Exclusao de categorias por dono ou admin" on public.product_categories;
 create policy "Exclusao de categorias por dono ou admin"
   on public.product_categories
   for delete
   to authenticated
-  using (auth.uid() = profile_id or public.is_admin());
+  using (public.is_advertiser_or_admin(profile_id) or public.is_admin());
 
 drop policy if exists "Leitura publica de produtos" on public.produtos;
 drop policy if exists "Leitura de produtos por dono ou admin" on public.produtos;
@@ -1193,7 +1314,7 @@ create policy "Leitura de produtos por dono ou admin"
   on public.produtos
   for select
   to authenticated
-  using (auth.uid() = profile_id or public.is_admin());
+  using (public.is_advertiser_or_admin(profile_id) or public.is_admin());
 
 drop policy if exists "Insercao por usuario autenticado" on public.produtos;
 drop policy if exists "Insercao por dono ou admin" on public.produtos;
@@ -1201,7 +1322,7 @@ create policy "Insercao por dono ou admin"
   on public.produtos
   for insert
   to authenticated
-  with check (auth.uid() = profile_id or public.is_admin());
+  with check (public.is_advertiser_or_admin(profile_id) or public.is_admin());
 
 drop policy if exists "Atualizacao por dono ou admin" on public.produtos;
 drop policy if exists "Atualizacao somente do dono" on public.produtos;
@@ -1209,8 +1330,8 @@ create policy "Atualizacao por dono ou admin"
   on public.produtos
   for update
   to authenticated
-  using (auth.uid() = profile_id or public.is_admin())
-  with check (auth.uid() = profile_id or public.is_admin());
+  using (public.is_advertiser_or_admin(profile_id) or public.is_admin())
+  with check (public.is_advertiser_or_admin(profile_id) or public.is_admin());
 
 drop policy if exists "Exclusao por dono ou admin" on public.produtos;
 drop policy if exists "Exclusao somente do dono" on public.produtos;
@@ -1218,10 +1339,11 @@ create policy "Exclusao por dono ou admin"
   on public.produtos
   for delete
   to authenticated
-  using (auth.uid() = profile_id or public.is_admin());
+  using (public.is_advertiser_or_admin(profile_id) or public.is_admin());
 
 grant usage on schema public to anon, authenticated;
 grant execute on function public.is_admin() to authenticated;
+grant execute on function public.is_advertiser_or_admin(uuid) to authenticated;
 grant execute on function public.finalize_account_activation() to authenticated;
 grant execute on function public.get_public_store_by_slug(text) to anon, authenticated;
 grant execute on function public.get_public_products_by_profile(uuid) to anon, authenticated;

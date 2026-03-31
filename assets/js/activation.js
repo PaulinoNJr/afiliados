@@ -114,8 +114,8 @@
     });
   }
 
-  function finishAsActive() {
-    refs.goToLoginBtn.href = 'admin.html';
+  function finishAsActive(profile = null) {
+    refs.goToLoginBtn.href = window.Auth.getDashboardRoute(profile?.role);
     refs.goToLoginBtn.textContent = 'Abrir painel';
     setConfirmButton({ visible: false });
   }
@@ -132,14 +132,14 @@
 
     if (window.Auth.isAccountActive(profile)) {
       showStatus('Sua conta ja esta ativa. Voce pode acessar o painel normalmente.', 'success');
-      finishAsActive();
+      finishAsActive(profile);
       return true;
     }
 
     profile = await finalizeActivation();
     renderInfo(profile);
     showStatus('Conta ativada com sucesso. O painel ja pode ser acessado.', 'success');
-    finishAsActive();
+    finishAsActive(profile);
     return true;
   }
 

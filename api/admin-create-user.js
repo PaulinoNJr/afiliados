@@ -41,6 +41,8 @@ module.exports = async (req, res) => {
 
   const email = String(req.body?.email || '').trim().toLowerCase();
   const password = String(req.body?.password || '');
+  const requestedRole = String(req.body?.role || 'advertiser').trim().toLowerCase();
+  const roleToCreate = ['advertiser', 'affiliate'].includes(requestedRole) ? requestedRole : 'advertiser';
 
   if (!email || !password) {
     return res.status(400).json({
@@ -61,7 +63,9 @@ module.exports = async (req, res) => {
     const user = await createSupabaseAuthUser({
       email,
       password,
-      metadata: {},
+      metadata: {
+        account_type: roleToCreate
+      },
       emailConfirm: true
     });
 

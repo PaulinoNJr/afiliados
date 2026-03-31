@@ -62,6 +62,13 @@
                   <input id="newUserPasswordConfirm" type="password" class="form-control" minlength="8" required autocomplete="new-password" />
                 </div>
                 <div class="mb-3">
+                  <label for="newUserRole" class="form-label">Tipo inicial da conta</label>
+                  <select id="newUserRole" class="form-select">
+                    <option value="advertiser">anunciante</option>
+                    <option value="affiliate">afiliado</option>
+                  </select>
+                </div>
+                <div class="mb-3">
                   <div class="password-helper">
                     <p class="small text-secondary mb-2">Requisitos mínimos da senha:</p>
                     <ul id="newUserPasswordRules" class="password-rules-list">
@@ -77,7 +84,7 @@
                 <button id="createUserBtn" type="submit" class="btn btn-primary w-100">Criar usuário</button>
               </form>
               <small class="text-muted d-block mt-2">
-                Novos usuários entram como perfil <strong>produtor</strong>.
+                Novos usuários entram como <strong>anunciante</strong> ou <strong>afiliado</strong> e podem ser promovidos a admin depois.
               </small>
             </div>
           </div>
@@ -148,7 +155,8 @@
                   <div class="col-12 col-md-6">
                     <label for="editRole" class="form-label">Perfil</label>
                     <select id="editRole" class="form-select">
-                      <option value="produtor">produtor</option>
+                      <option value="advertiser">anunciante</option>
+                      <option value="affiliate">afiliado</option>
                       <option value="admin">admin</option>
                     </select>
                   </div>

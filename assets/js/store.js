@@ -174,7 +174,7 @@
   function applyHeader() {
     const email = state.session.user.email || 'Usuario autenticado';
     refs.userEmail.textContent = email;
-    refs.userRoleBadge.textContent = state.isAdmin ? 'admin' : 'produtor';
+    refs.userRoleBadge.textContent = window.Auth.getRoleLabel(state.profile?.role);
     refs.userRoleBadge.className = state.isAdmin ? 'badge text-bg-primary' : 'badge text-bg-secondary';
     window.Auth.applyProfileAccess(state.profile);
   }
@@ -484,7 +484,9 @@
 
       state.session = activation.session;
       state.profile = activation.profile;
-      state.isAdmin = state.profile?.role === 'admin';
+      const allowed = await window.Auth.ensureRoleAccess(state.profile, ['admin', 'advertiser']);
+      if (!allowed) return;
+      state.isAdmin = window.Auth.normalizeRole(state.profile?.role) === 'admin';
       applyHeader();
       populateForm(state.profile);
       bindEvents();

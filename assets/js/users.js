@@ -23,6 +23,7 @@
     newUserEmail: document.getElementById('newUserEmail'),
     newUserPassword: document.getElementById('newUserPassword'),
     newUserPasswordConfirm: document.getElementById('newUserPasswordConfirm'),
+    newUserRole: document.getElementById('newUserRole'),
     newUserPasswordRules: document.getElementById('newUserPasswordRules'),
     newUserPasswordMatchFeedback: document.getElementById('newUserPasswordMatchFeedback'),
 
@@ -225,8 +226,8 @@
 
   function applyHeader() {
     refs.userEmail.textContent = state.session.user.email || 'Usuario autenticado';
-    refs.userRoleBadge.textContent = state.profile.role;
-    refs.userRoleBadge.className = state.profile.role === 'admin' ? 'badge text-bg-primary' : 'badge text-bg-secondary';
+    refs.userRoleBadge.textContent = window.Auth.getRoleLabel(state.profile.role);
+    refs.userRoleBadge.className = window.Auth.normalizeRole(state.profile.role) === 'admin' ? 'badge text-bg-primary' : 'badge text-bg-secondary';
     window.Auth.applyProfileAccess(state.profile);
   }
 
@@ -244,7 +245,7 @@
     state.selectedUser = user;
 
     refs.selectedUserEmail.value = user.user_email || '';
-    refs.editRole.value = user.role || 'produtor';
+    refs.editRole.value = window.Auth.normalizeRole(user.role);
     refs.editFirstName.value = user.first_name || '';
     refs.editLastName.value = user.last_name || '';
     refs.editPhone.value = user.phone || '';
@@ -323,8 +324,8 @@
 
       const tdRole = document.createElement('td');
       const badge = document.createElement('span');
-      badge.className = user.role === 'admin' ? 'badge text-bg-primary' : 'badge text-bg-secondary';
-      badge.textContent = user.role || 'produtor';
+      badge.className = window.Auth.normalizeRole(user.role) === 'admin' ? 'badge text-bg-primary' : 'badge text-bg-secondary';
+      badge.textContent = window.Auth.getRoleLabel(user.role);
       tdRole.appendChild(badge);
 
       if (user.authDisabled) {
@@ -373,6 +374,7 @@
 
       state.users = (data || []).map((user) => ({
         ...user,
+        role: window.Auth.normalizeRole(user.role),
         ...(localFlags.get(user.user_id) || {})
       }));
 
@@ -455,7 +457,7 @@
       return;
     }
 
-    if (!['admin', 'produtor'].includes(role)) {
+    if (!['admin', 'advertiser', 'affiliate'].includes(role)) {
       showStatus('Perfil inválido.', 'warning');
       return;
     }
@@ -529,6 +531,7 @@
     const email = refs.newUserEmail.value.trim();
     const password = refs.newUserPassword.value;
     const confirmPassword = refs.newUserPasswordConfirm.value;
+    const role = refs.newUserRole.value;
 
     if (!email || !password || !confirmPassword) {
       showStatus('Preencha email, senha e confirmação de senha.', 'warning');
@@ -557,7 +560,8 @@
         },
         body: JSON.stringify({
           email,
-          password
+          password,
+          role
         })
       });
 
@@ -567,6 +571,7 @@
       }
 
       refs.createUserForm.reset();
+      refs.newUserRole.value = 'advertiser';
       updatePasswordValidation();
       showStatus('Usuario criado com sucesso.', 'success');
 
@@ -700,7 +705,7 @@
 
       state.session = activation.session;
       state.profile = activation.profile;
-      const isAdmin = state.profile?.role === 'admin';
+      const isAdmin = window.Auth.normalizeRole(state.profile?.role) === 'admin';
 
       if (!isAdmin) {
         showStatus('Acesso restrito: somente admin pode gerenciar usuários.', 'danger');

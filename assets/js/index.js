@@ -568,8 +568,9 @@
       const session = await window.Auth.getSession();
       if (!session) return;
 
-      refs.navAdmin.textContent = 'Painel admin';
-      refs.navAdmin.href = 'admin.html';
+      const profile = await window.Auth.getProfile();
+      refs.navAdmin.textContent = `Painel ${window.Auth.getRoleLabel(profile?.role)}`;
+      refs.navAdmin.href = window.Auth.getDashboardRoute(profile?.role);
       refs.navLogout.classList.remove('d-none');
 
       refs.navLogout.addEventListener('click', async () => {

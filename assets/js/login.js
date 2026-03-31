@@ -58,7 +58,7 @@
     }
 
     try {
-      await window.Auth.redirectIfAuthenticated('admin.html');
+      await window.Auth.redirectIfAuthenticated();
     } catch (err) {
       showStatus(err.message || 'Erro ao validar sessao.');
     }
@@ -100,7 +100,7 @@
 
       showStatus('Login realizado com sucesso. Redirecionando...', 'success');
       setTimeout(() => {
-        window.location.href = 'admin.html';
+        window.Auth.redirectToDashboard(profile);
       }, 500);
     } catch (err) {
       showStatus(err.message || 'Erro inesperado durante login.');
