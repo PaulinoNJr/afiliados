@@ -1,4 +1,4 @@
-(() => {
+﻿(() => {
   const DEFAULT_ACCENT = '#0d6efd';
   const DEFAULT_CTA = 'Ver produto';
 
@@ -106,6 +106,10 @@
   function normalizeAccentColor(value) {
     const raw = String(value || '').trim().toLowerCase();
     return /^#([0-9a-f]{6}|[0-9a-f]{3})$/.test(raw) ? raw : DEFAULT_ACCENT;
+  }
+
+  function getAccountTypeForRole(role) {
+    return window.Auth.normalizeRole(role) === 'affiliate' ? 'affiliate' : 'advertiser';
   }
 
   function setSlugFeedback(message, tone = 'secondary') {
@@ -229,7 +233,7 @@
   }
 
   function applyHeader() {
-    refs.userEmail.textContent = state.session.user.email || 'Usuario autenticado';
+    refs.userEmail.textContent = state.session.user.email || 'Usuário autenticado';
     refs.userRoleBadge.textContent = window.Auth.getRoleLabel(state.profile.role);
     refs.userRoleBadge.className = window.Auth.normalizeRole(state.profile.role) === 'admin' ? 'badge text-bg-primary' : 'badge text-bg-secondary';
     window.Auth.applyProfileAccess(state.profile);
@@ -242,7 +246,7 @@
     refs.selectedUserStoreLink.classList.add('d-none');
     refs.selectedUserAccountHint.textContent = 'Desativar bloqueia novos logins. Excluir remove a conta, o perfil e os registros associados.';
     setAccountActionsLoading();
-    setSlugFeedback('Use letras minúsculas, números e hifens.', 'secondary');
+    setSlugFeedback('Use letras minúsculas, números e hífens.', 'secondary');
   }
 
   function populateEditor(user) {
@@ -261,7 +265,7 @@
     refs.editBio.value = user.bio || '';
     refs.editPhotoUrl.value = user.photo_url || '';
     refs.editBannerUrl.value = user.banner_url || '';
-    refs.editorIntro.textContent = `Editando ${user.user_email || 'usuário sem email'}.`;
+    refs.editorIntro.textContent = `Editando ${user.user_email || 'usuário sem e-mail'}.`;
     refs.userEditorCard.classList.remove('d-none');
 
     if (user.slug) {
@@ -274,13 +278,13 @@
     if (user.user_id === state.session?.user?.id) {
       refs.selectedUserAccountHint.textContent = 'Seu próprio usuário não pode ser desativado ou excluído por esta tela.';
     } else if (user.authDisabled) {
-      refs.selectedUserAccountHint.textContent = 'Esta conta ja foi desativada no Auth. Excluir remove a conta e os registros associados.';
+      refs.selectedUserAccountHint.textContent = 'Esta conta já foi desativada no Auth. Excluir remove a conta e os registros associados.';
     } else {
       refs.selectedUserAccountHint.textContent = 'Desativar bloqueia novos logins. Excluir remove a conta, o perfil e os registros associados.';
     }
 
     setAccountActionsLoading();
-    setSlugFeedback('Use letras minúsculas, números e hifens.', 'secondary');
+    setSlugFeedback('Use letras minúsculas, números e hífens.', 'secondary');
   }
 
   function renderUsers() {
@@ -316,7 +320,7 @@
 
       const tdEmail = document.createElement('td');
       tdEmail.innerHTML = `
-        <div class="fw-semibold">${escapeHtml(user.user_email || `Sem email (${user.user_id.slice(0, 8)}...)`)}</div>
+        <div class="fw-semibold">${escapeHtml(user.user_email || `Sem e-mail (${user.user_id.slice(0, 8)}...)`)}</div>
         <div class="small text-secondary">${escapeHtml([user.first_name, user.last_name].filter(Boolean).join(' ') || 'Sem nome informado')}${isOwnAccount ? ' · sua conta' : ''}</div>
       `;
 
@@ -371,7 +375,7 @@
 
       const { data, error } = await window.db
         .from('user_profiles')
-        .select('user_id, user_email, role, first_name, last_name, phone, store_name, slug, headline, accent_color, cta_label, bio, photo_url, banner_url, created_at, updated_at')
+        .select('user_id, user_email, role, account_type, first_name, last_name, phone, store_name, slug, headline, accent_color, cta_label, bio, photo_url, banner_url, created_at, updated_at')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -450,6 +454,7 @@
     const photoUrl = refs.editPhotoUrl.value.trim();
     const bannerUrl = refs.editBannerUrl.value.trim();
     const role = refs.editRole.value;
+    const accountType = getAccountTypeForRole(role);
 
     if (!firstName) {
       showStatus('Informe o nome do usuário.', 'warning');
@@ -467,17 +472,17 @@
     }
 
     if (state.selectedUser.user_id === state.session.user.id && role !== 'admin') {
-      showStatus('Para evitar bloqueio do painel, seu próprio usuário precisa continuar como admin aqui.', 'warning');
+      showStatus('Para evitar bloqueio do painel, seu próprio usuário precisa continuar como administrador aqui.', 'warning');
       return;
     }
 
     if (photoUrl && !isValidHttpUrl(photoUrl)) {
-      showStatus('Informe uma URL valida para a foto ou deixe o campo vazio.', 'warning');
+      showStatus('Informe um endereço válido para a foto ou deixe o campo vazio.', 'warning');
       return;
     }
 
     if (bannerUrl && !isValidHttpUrl(bannerUrl)) {
-      showStatus('Informe uma URL valida para o banner ou deixe o campo vazio.', 'warning');
+      showStatus('Informe um endereço válido para o banner ou deixe o campo vazio.', 'warning');
       return;
     }
 
@@ -491,6 +496,7 @@
         .from('user_profiles')
         .update({
           role,
+          account_type: accountType,
           first_name: firstName,
           last_name: lastName || null,
           phone: phone || null,
@@ -504,7 +510,7 @@
           banner_url: bannerUrl || null
         })
         .eq('user_id', state.selectedUser.user_id)
-        .select('user_id, user_email, role, first_name, last_name, phone, store_name, slug, headline, accent_color, cta_label, bio, photo_url, banner_url, created_at, updated_at')
+        .select('user_id, user_email, role, account_type, first_name, last_name, phone, store_name, slug, headline, accent_color, cta_label, bio, photo_url, banner_url, created_at, updated_at')
         .single();
 
       if (error) throw error;
@@ -519,7 +525,7 @@
         applyHeader();
       }
 
-      showStatus('Usuario atualizado com sucesso.', 'success');
+      showStatus('Usuário atualizado com sucesso.', 'success');
       await loadUsers();
     } catch (err) {
       showStatus(`Erro ao atualizar usuário: ${err.message}`, 'danger');
@@ -538,7 +544,7 @@
     const role = refs.newUserRole.value;
 
     if (!email || !password || !confirmPassword) {
-      showStatus('Preencha email, senha e confirmação de senha.', 'warning');
+      showStatus('Preencha e-mail, senha e confirmação de senha.', 'warning');
       return;
     }
 
@@ -577,7 +583,7 @@
       refs.createUserForm.reset();
       refs.newUserRole.value = 'advertiser';
       updatePasswordValidation();
-      showStatus('Usuario criado com sucesso.', 'success');
+      showStatus('Usuário criado com sucesso.', 'success');
 
       await loadUsers();
     } catch (err) {
@@ -645,7 +651,7 @@
 
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(payload.error || 'Nao foi possivel concluir o gerenciamento da conta.');
+        throw new Error(payload.error || 'Não foi possível concluir o gerenciamento da conta.');
       }
 
       if (action === 'disable') {
@@ -686,7 +692,7 @@
           .map((item) => item.error)
           .filter(Boolean)
           .join(' | ');
-        throw new Error(details || payload.message || 'Nao foi possivel concluir o gerenciamento da conta.');
+        throw new Error(details || payload.message || 'Não foi possível concluir o gerenciamento da conta.');
       }
 
       await loadUsers();
@@ -712,7 +718,7 @@
       const isAdmin = window.Auth.normalizeRole(state.profile?.role) === 'admin';
 
       if (!isAdmin) {
-        showStatus('Acesso restrito: somente admin pode gerenciar usuários.', 'danger');
+        showStatus('Acesso restrito: somente administrador pode gerenciar usuários.', 'danger');
         setTimeout(() => {
           window.location.href = 'admin.html';
         }, 1200);
@@ -768,3 +774,5 @@
 
   document.addEventListener('DOMContentLoaded', init);
 })();
+
+

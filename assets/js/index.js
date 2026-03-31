@@ -209,26 +209,17 @@
     document.body.style.removeProperty('--store-accent-color');
     document.body.style.removeProperty('--store-button-text-color');
 
-    refs.homeHeroBadge.textContent = 'Pagina de afiliados profissional com URL propria';
-    refs.homeHeroTitle.textContent = 'Crie sua loja de afiliados, publique seus produtos e venda com mais autoridade';
-    refs.homeHeroDescription.textContent = 'Monte uma vitrine online otimizada para afiliados, organize seus links em uma página clara e compartilhe um endereço profissional para gerar mais cliques e mais confiança.';
     refs.marketingCardContent.classList.remove('d-none');
     refs.homeMarketingSection.classList.remove('d-none');
-    refs.homeHeroBadge.textContent = 'SaaS para programas de afiliados';
-    refs.homeHeroTitle.textContent = 'Crie, opere e escale seu programa de afiliados em um unico produto';
-    refs.homeHeroDescription.textContent = 'Lance campanhas, publique produtos, aprove afiliados, gere links rastreaveis e acompanhe cliques, conversoes e comissoes com uma experiencia de software comercializavel.';
+    refs.homeHeroBadge.textContent = 'Plataforma para programas de afiliados';
+    refs.homeHeroTitle.textContent = 'Crie, gerencie e amplie seu programa de afiliados em um só lugar';
+    refs.homeHeroDescription.textContent = 'Publique campanhas, organize produtos, aprove parceiros, gere links rastreáveis e acompanhe cliques, conversões e comissões com clareza.';
     resetStoreUi();
     finishResolvingPage();
 
     updateSeo({
-      title: 'Pagina de Afiliados Profissional | Crie sua Loja de Afiliados',
-      description: 'Crie uma página de afiliados profissional, organize seus links, publique sua loja online e apareça com mais autoridade no Google e nas redes sociais.',
-      image: defaultImage(),
-      url: `${window.location.origin}/`
-    });
-    updateSeo({
-      title: 'Programa de Afiliados SaaS | Plataforma para Anunciantes e Afiliados',
-      description: 'Crie, opere e escale seu programa de afiliados com uma plataforma SaaS para campanhas, links rastreaveis, cliques, conversoes e comissoes.',
+      title: 'Programa de Afiliados | Plataforma para Anunciantes e Afiliados',
+      description: 'Crie, gerencie e amplie seu programa de afiliados com uma plataforma para campanhas, links rastreáveis, cliques, conversões e comissões.',
       image: defaultImage(),
       url: `${window.location.origin}/`
     });
@@ -239,21 +230,7 @@
       name: 'Afiliados',
       applicationCategory: 'BusinessApplication',
       operatingSystem: 'Web',
-      description: 'Plataforma para criar página de afiliados, loja de afiliados e vitrine online com URL personalizada.',
-      offers: {
-        '@type': 'Offer',
-        price: '0',
-        priceCurrency: 'BRL'
-      },
-      url: `${window.location.origin}/`
-    });
-    updateStructuredData({
-      '@context': 'https://schema.org',
-      '@type': 'SoftwareApplication',
-      name: 'Afiliados',
-      applicationCategory: 'BusinessApplication',
-      operatingSystem: 'Web',
-      description: 'Plataforma SaaS para empresas criarem seu proprio programa de afiliados, ativarem parceiros e acompanharem performance comercial.',
+      description: 'Plataforma para empresas criarem seu próprio programa de afiliados, ativarem parceiros e acompanharem resultados comerciais.',
       offers: {
         '@type': 'Offer',
         price: '0',
@@ -409,7 +386,7 @@
 
       const title = document.createElement('h2');
       title.className = 'h6 mb-2';
-      title.textContent = item.titulo || 'Produto sem titulo';
+      title.textContent = item.titulo || 'Produto sem título';
 
       const categoryBadge = document.createElement('div');
       categoryBadge.className = 'store-category-pill mb-2';

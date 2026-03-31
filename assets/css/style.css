@@ -106,6 +106,19 @@ body.page-resolving footer {
   width: 100%;
 }
 
+.page-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.page-header-actions .btn,
+.page-header-actions a {
+  min-width: 11.5rem;
+}
+
 .workspace-menu {
   position: fixed;
   top: calc(var(--app-topbar-height, 72px) + 0.45rem);
