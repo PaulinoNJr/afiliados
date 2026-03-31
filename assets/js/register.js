@@ -1,19 +1,69 @@
 (() => {
   const RECAPTCHA_ACTION = 'register_submit';
+  const ACCOUNT_COPY = {
+    advertiser: {
+      badge: 'Novo anunciante',
+      title: 'Crie seu programa de afiliados',
+      description: 'Cadastre sua operação, publique campanhas e prepare seu ambiente para aprovar parceiros e acompanhar performance.',
+      previewLabel: 'Exemplo do seu workspace',
+      previewSecondary: 'Seu ambiente começa pronto para catálogo, campanhas, afiliados e métricas.',
+      benefits: [
+        'Dashboard com produtos, campanhas e afiliados',
+        'Comissões configuráveis por campanha',
+        'Base pronta para relatórios e white label'
+      ],
+      activationHelp: `
+        <p class="small text-uppercase fw-semibold text-secondary mb-2">Como ativar sua conta</p>
+        <ol class="small text-secondary mb-0 ps-3">
+          <li>Finalize o cadastro.</li>
+          <li>Abra o email de confirmação enviado para o endereço informado.</li>
+          <li>Clique no link de ativação em até 5 dias.</li>
+          <li>Na página de ativação, confirme o email para liberar o painel.</li>
+          <li>Depois da ativação, siga para o onboarding do anunciante.</li>
+        </ol>
+      `
+    },
+    affiliate: {
+      badge: 'Novo afiliado',
+      title: 'Entre para promover campanhas e ofertas',
+      description: 'Comece sua jornada como afiliado com acesso a campanhas, links próprios, métricas de clique e visão de comissões.',
+      previewLabel: 'Exemplo do seu link inicial',
+      previewSecondary: 'Seu perfil entra preparado para receber campanhas e gerar links rastreáveis.',
+      benefits: [
+        'Biblioteca de campanhas disponíveis',
+        'Geração e cópia de links rastreáveis',
+        'Comissões, saques e materiais de divulgação'
+      ],
+      activationHelp: `
+        <p class="small text-uppercase fw-semibold text-secondary mb-2">Como ativar sua conta</p>
+        <ol class="small text-secondary mb-0 ps-3">
+          <li>Finalize o cadastro.</li>
+          <li>Abra o email de confirmação enviado para o endereço informado.</li>
+          <li>Clique no link de ativação em até 5 dias.</li>
+          <li>Na página de ativação, confirme o email para liberar o painel.</li>
+          <li>Depois da ativação, siga para o onboarding do afiliado.</li>
+        </ol>
+      `
+    }
+  };
 
   const state = {
     slugCheckNonce: 0,
     recaptchaLoaded: false,
-    recaptchaScriptPromise: null
+    recaptchaScriptPromise: null,
+    accountType: 'advertiser'
   };
 
   const refs = {
     form: document.getElementById('registerForm'),
+    accountTypeInputs: document.querySelectorAll('input[name="accountType"]'),
+    companyName: document.getElementById('companyName'),
     firstName: document.getElementById('firstName'),
     lastName: document.getElementById('lastName'),
     phone: document.getElementById('phone'),
     photoUrl: document.getElementById('photoUrl'),
     email: document.getElementById('email'),
+    slugField: document.getElementById('slugField'),
     slug: document.getElementById('slug'),
     slugFeedback: document.getElementById('slugFeedback'),
     password: document.getElementById('password'),
@@ -23,7 +73,13 @@
     recaptchaStatus: document.getElementById('recaptchaStatus'),
     registerBtn: document.getElementById('registerBtn'),
     signupPublicUrl: document.getElementById('signupPublicUrl'),
+    signupPreviewLabel: document.getElementById('signupPreviewLabel'),
+    signupPreviewSecondary: document.getElementById('signupPreviewSecondary'),
     activationHelp: document.getElementById('activationHelp'),
+    accountTypeBadge: document.getElementById('accountTypeBadge'),
+    accountTypeTitle: document.getElementById('accountTypeTitle'),
+    accountTypeDescription: document.getElementById('accountTypeDescription'),
+    accountTypeBenefits: document.getElementById('accountTypeBenefits'),
     status: document.getElementById('statusMessage')
   };
 
@@ -47,6 +103,11 @@
     }
   }
 
+  function getSelectedAccountType() {
+    const checked = [...refs.accountTypeInputs].find((input) => input.checked);
+    return checked?.value === 'affiliate' ? 'affiliate' : 'advertiser';
+  }
+
   function setSlugFeedback(message, tone = 'secondary') {
     refs.slugFeedback.className = `d-block mt-2 text-${tone}`;
     refs.slugFeedback.textContent = message;
@@ -59,24 +120,18 @@
 
   async function ensureRecaptchaSiteKey() {
     const currentKey = String(window.AppConfig?.RECAPTCHA_SITE_KEY || '').trim();
-    if (currentKey) {
-      return currentKey;
-    }
+    if (currentKey) return currentKey;
 
     try {
       const response = await fetch('/api/public-config', {
         method: 'GET',
-        headers: {
-          accept: 'application/json'
-        }
+        headers: { accept: 'application/json' }
       });
 
       const payload = await response.json().catch(() => ({}));
       const resolvedKey = String(payload?.recaptchaSiteKey || '').trim();
 
-      if (!response.ok || !resolvedKey) {
-        return '';
-      }
+      if (!response.ok || !resolvedKey) return '';
 
       window.AppConfig.RECAPTCHA_SITE_KEY = resolvedKey;
       window.AppConfig.recaptchaConfigured = true;
@@ -117,12 +172,61 @@
     };
   }
 
+  function getSuggestedSlug() {
+    return window.StoreUtils.normalizeStoreSlug(
+      refs.slug.value ||
+      refs.companyName.value ||
+      refs.firstName.value ||
+      refs.email.value.split('@')[0] ||
+      'novo-perfil'
+    );
+  }
+
   function updatePublicUrlPreview() {
-    const slug = window.StoreUtils.normalizeStoreSlug(refs.slug.value);
-    refs.slug.value = slug;
-    refs.signupPublicUrl.textContent = slug
-      ? `${window.location.origin}/${slug}`
-      : `${window.location.origin}/sua-loja`;
+    if (state.accountType === 'affiliate') {
+      const slug = window.StoreUtils.normalizeStoreSlug(refs.slug.value || getSuggestedSlug());
+      refs.signupPublicUrl.textContent = slug
+        ? `${window.location.origin}/r/${slug}/oferta-principal`
+        : `${window.location.origin}/r/seu-perfil/oferta-principal`;
+      return;
+    }
+
+    refs.signupPublicUrl.textContent = `${window.location.origin}/app/anunciante/dashboard`;
+  }
+
+  function renderBenefits(list = []) {
+    refs.accountTypeBenefits.innerHTML = '';
+    list.forEach((item) => {
+      const li = document.createElement('li');
+      li.className = 'is-valid';
+      li.textContent = item;
+      refs.accountTypeBenefits.appendChild(li);
+    });
+  }
+
+  function applyAccountType(accountType) {
+    state.accountType = accountType === 'affiliate' ? 'affiliate' : 'advertiser';
+    const content = ACCOUNT_COPY[state.accountType];
+
+    refs.accountTypeBadge.textContent = content.badge;
+    refs.accountTypeTitle.textContent = content.title;
+    refs.accountTypeDescription.textContent = content.description;
+    refs.signupPreviewLabel.textContent = content.previewLabel;
+    refs.signupPreviewSecondary.textContent = content.previewSecondary;
+    refs.activationHelp.innerHTML = content.activationHelp;
+    renderBenefits(content.benefits);
+
+    const isAffiliate = state.accountType === 'affiliate';
+    refs.slugField.classList.toggle('d-none', !isAffiliate);
+    refs.companyName.required = !isAffiliate;
+    refs.companyName.placeholder = isAffiliate ? 'Ex.: Seu nome, canal ou operação' : 'Ex.: Nova Marca Digital';
+
+    if (!isAffiliate) {
+      refs.slug.value = '';
+      setSlugFeedback('Esse identificador será usado para montar sua URL pública inicial.', 'secondary');
+    }
+
+    updatePublicUrlPreview();
   }
 
   function formatActivationDate(value) {
@@ -133,24 +237,13 @@
     });
   }
 
-  function updateActivationHelp(expiresAt = null) {
-    if (!refs.activationHelp) return;
+  function updateActivationHelp(expiration = null) {
+    if (!expiration) return;
 
-    const details = expiresAt
-      ? `O link enviado para o seu email ficará disponível até ${formatActivationDate(expiresAt)}.`
-      : 'O link enviado para o seu email ficará disponível por até 5 dias.';
-
-    refs.activationHelp.innerHTML = `
-      <p class="small text-uppercase fw-semibold text-secondary mb-2">Como ativar sua conta</p>
-      <ol class="small text-secondary mb-2 ps-3">
-        <li>Finalize o cadastro.</li>
-        <li>Abra o email de confirmação enviado para o endereço informado.</li>
-        <li>Clique no link de ativação em até 5 dias.</li>
-        <li>Na página de ativação, confirme o email para liberar o painel.</li>
-        <li>Após a confirmação, sua conta ficará ativa e o painel será liberado.</li>
-      </ol>
-      <p class="small text-secondary mb-0">${details}</p>
-    `;
+    const detail = document.createElement('p');
+    detail.className = 'small text-secondary mt-3 mb-0';
+    detail.textContent = `O link enviado para o seu email ficará disponível até ${formatActivationDate(expiration)}.`;
+    refs.activationHelp.appendChild(detail);
   }
 
   async function registerUserViaApi({ email, password, recaptchaToken, recaptchaAction, metadata }) {
@@ -184,7 +277,7 @@
     }
 
     refs.registerBtn.disabled = false;
-    setRecaptchaStatus('Proteção automática Google reCAPTCHA v3 ativa. Não existe caixa para marcar: a validação acontece ao enviar o cadastro.', 'success');
+    setRecaptchaStatus('Proteção automática Google reCAPTCHA v3 ativa. A validação acontece ao enviar o cadastro.', 'success');
   }
 
   function loadRecaptchaScript() {
@@ -294,6 +387,8 @@
   async function onSubmit(event) {
     event.preventDefault();
 
+    const accountType = getSelectedAccountType();
+    const companyName = refs.companyName.value.trim();
     const firstName = refs.firstName.value.trim();
     const lastName = refs.lastName.value.trim();
     const phone = refs.phone.value.trim();
@@ -307,8 +402,12 @@
       return;
     }
 
-    const passwordValidation = updatePasswordValidation();
+    if (accountType === 'advertiser' && !companyName) {
+      showStatus('Informe a empresa ou operação para continuar como anunciante.', 'warning');
+      return;
+    }
 
+    const passwordValidation = updatePasswordValidation();
     if (!passwordValidation.ok) {
       showStatus('Escolha uma senha com pelo menos 8 caracteres, letras maiúsculas, minúsculas, números e caractere especial.', 'warning');
       return;
@@ -320,40 +419,54 @@
     }
 
     if (photoUrl && !isValidHttpUrl(photoUrl)) {
-      showStatus('Informe uma URL valida para a foto ou deixe o campo vazio.', 'warning');
+      showStatus('Informe uma URL válida para a foto ou deixe o campo vazio.', 'warning');
       return;
     }
 
-    const slugResult = await validateSlugAvailability();
-    if (!slugResult.ok) return;
+    let slugResult = { ok: true, slug: null };
+    if (accountType === 'affiliate') {
+      refs.slug.value = refs.slug.value.trim() || getSuggestedSlug();
+      slugResult = await validateSlugAvailability();
+      if (!slugResult.ok) return;
+    }
 
     setLoading(true);
     refs.status.classList.add('d-none');
 
     try {
       const recaptchaToken = await getRecaptchaToken();
-
       const registerPayload = await registerUserViaApi({
         email,
         password,
         recaptchaToken,
         recaptchaAction: RECAPTCHA_ACTION,
         metadata: {
+          account_type: accountType,
+          company_name: companyName || null,
           first_name: firstName,
           last_name: lastName || null,
           phone: phone || null,
           photo_url: photoUrl || null,
-          slug: slugResult.slug
+          slug: slugResult.slug || null
         }
       });
 
       refs.form.reset();
-      updatePublicUrlPreview();
+      refs.accountTypeInputs.forEach((input) => {
+        input.checked = input.value === accountType;
+      });
+      applyAccountType(accountType);
       updatePasswordValidation();
       updateActivationHelp(registerPayload?.activation?.expiresAt || null);
-      setSlugFeedback('Esse endereço será usado na sua página pública.', 'secondary');
+      setSlugFeedback('Esse identificador será usado para montar sua URL pública inicial.', 'secondary');
       setRecaptchaStatus('Cadastro validado com Google reCAPTCHA v3. A proteção permanece ativa para a próxima tentativa.', 'secondary');
-      showStatus(`Cadastro realizado. Enviamos um email de ativação para ${email}. Confirme sua conta em até 5 dias para liberar o painel.`, 'success');
+
+      showStatus(
+        accountType === 'advertiser'
+          ? `Conta de anunciante criada. Enviamos um email de ativação para ${email}.`
+          : `Conta de afiliado criada. Enviamos um email de ativação para ${email}.`,
+        'success'
+      );
     } catch (err) {
       setRecaptchaStatus('A validação com Google reCAPTCHA v3 falhou. Tente novamente em instantes.', 'warning');
       showStatus(`Erro ao criar conta: ${err.message}`, 'danger');
@@ -362,11 +475,25 @@
     }
   }
 
+  function applyAccountTypeFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const requested = params.get('type');
+    const normalized = requested === 'affiliate' ? 'affiliate' : 'advertiser';
+    refs.accountTypeInputs.forEach((input) => {
+      input.checked = input.value === normalized;
+    });
+    applyAccountType(normalized);
+  }
+
   async function init() {
     if (window.AppConfig?.missingConfig) {
       showStatus('Configure SUPABASE_URL e SUPABASE_ANON_KEY em assets/js/config.js.', 'warning');
       return;
     }
+
+    refs.accountTypeInputs.forEach((input) => {
+      input.addEventListener('change', () => applyAccountType(getSelectedAccountType()));
+    });
 
     refs.phone.addEventListener('input', () => {
       refs.phone.value = window.StoreUtils.formatPhone(refs.phone.value);
@@ -383,21 +510,22 @@
     });
 
     refs.slug.addEventListener('blur', async () => {
-      if (!refs.slug.value.trim()) return;
+      if (state.accountType !== 'affiliate' || !refs.slug.value.trim()) return;
       await validateSlugAvailability({ silent: true });
     });
 
     refs.firstName.addEventListener('blur', () => {
-      if (!refs.slug.value.trim()) {
-        refs.slug.value = window.StoreUtils.normalizeStoreSlug(refs.firstName.value);
-        updatePublicUrlPreview();
-      }
+      if (state.accountType !== 'affiliate' || refs.slug.value.trim()) return;
+      refs.slug.value = getSuggestedSlug();
+      updatePublicUrlPreview();
     });
 
+    refs.companyName.addEventListener('input', updatePublicUrlPreview);
+    refs.email.addEventListener('input', updatePublicUrlPreview);
     refs.form.addEventListener('submit', onSubmit);
-    updatePublicUrlPreview();
     updatePasswordValidation();
-    updateActivationHelp();
+    applyAccountTypeFromUrl();
+
     try {
       await loadRecaptchaScript();
     } catch (err) {

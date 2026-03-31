@@ -3,43 +3,96 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login | Afiliados</title>
-  <meta name="description" content="Acesse a área administrativa do catálogo de afiliados." />
+  <title>Entrar | Afiliados</title>
+  <meta name="description" content="Acesse sua operação de afiliados com um login pensado para anunciantes, afiliados e administradores." />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body class="bg-light">
   <main class="min-vh-100 d-flex align-items-center py-5 auth-shell">
     <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-12 col-md-8 col-lg-5">
+      <div class="row justify-content-center g-4 auth-layout-row">
+        <div class="col-12 col-xl-5">
+          <div class="card border-0 shadow-sm h-100 auth-info-card auth-brand-panel">
+            <div class="card-body p-4 p-md-5">
+              <span id="loginContextEyebrow" class="badge text-bg-primary mb-3">Workspace Afiliados</span>
+              <h1 id="loginContextTitle" class="h3 mb-2">Entre na sua operação com visibilidade comercial</h1>
+              <p id="loginContextDescription" class="text-secondary mb-4">Acesse campanhas, links, produtos, aprovações, comissões e métricas em um ambiente com cara de produto SaaS.</p>
+
+              <div class="saas-auth-metrics mb-4">
+                <article>
+                  <strong>Dashboard por perfil</strong>
+                  <span>Afiliado, anunciante e admin</span>
+                </article>
+                <article>
+                  <strong>Tracking centralizado</strong>
+                  <span>Cliques, conversões e comissões</span>
+                </article>
+                <article>
+                  <strong>Base preparada</strong>
+                  <span>Para white label e domínio customizado</span>
+                </article>
+              </div>
+
+              <div class="password-helper">
+                <p class="small text-uppercase fw-semibold text-secondary mb-2">Entradas rápidas</p>
+                <div class="saas-auth-links">
+                  <a href="cadastro.html?type=advertiser" class="btn btn-outline-primary btn-sm">Sou anunciante</a>
+                  <a href="cadastro.html?type=affiliate" class="btn btn-outline-primary btn-sm">Sou afiliado</a>
+                  <a href="recuperar-senha.html" class="btn btn-outline-dark btn-sm">Esqueci minha senha</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-xl-5">
           <div class="card border-0 shadow-sm auth-form-card">
             <div class="card-body p-4 p-md-5">
-              <div class="text-center mb-4">
-                <h1 class="h4 mb-1">Área administrativa</h1>
-                <p class="text-secondary mb-0">Entre com seu usuário do Supabase Auth</p>
+              <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+                <div>
+                  <p class="admin-eyebrow mb-2">Autenticação</p>
+                  <h2 class="h4 mb-1">Entrar na plataforma</h2>
+                  <p class="text-secondary mb-0">Use seu email e senha para continuar.</p>
+                </div>
+                <a href="index.html" class="btn btn-outline-primary btn-sm">Voltar ao site</a>
               </div>
 
               <div id="statusMessage" class="alert d-none" role="alert"></div>
 
               <form id="loginForm" novalidate>
-                <div class="mb-3">
-                  <label for="email" class="form-label">Email</label>
-                  <input type="email" id="email" class="form-control" required autocomplete="email" />
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" id="email" class="form-control" required autocomplete="email" />
+                  </div>
+                  <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center gap-3">
+                      <label for="password" class="form-label mb-0">Senha</label>
+                      <a href="recuperar-senha.html" class="link-secondary small">Esqueci minha senha</a>
+                    </div>
+                    <input type="password" id="password" class="form-control mt-2" required autocomplete="current-password" />
+                  </div>
                 </div>
-                <div class="mb-3">
-                  <label for="password" class="form-label">Senha</label>
-                  <input type="password" id="password" class="form-control" required autocomplete="current-password" />
-                </div>
-                <div class="d-flex justify-content-end mb-3">
-                  <a href="recuperar-senha.html" class="link-secondary small">Esqueci minha senha</a>
-                </div>
-                <button id="loginBtn" type="submit" class="btn btn-primary w-100">Entrar</button>
+                <button id="loginBtn" type="submit" class="btn btn-primary w-100 mt-4">Entrar</button>
               </form>
 
+              <div class="password-helper mt-4">
+                <p class="small text-uppercase fw-semibold text-secondary mb-2">Login social</p>
+                <p class="small text-secondary mb-3">Google e Microsoft entram na próxima etapa do produto. O layout já está preparado para isso.</p>
+                <div class="row g-2">
+                  <div class="col-12 col-sm-6">
+                    <button type="button" class="btn btn-outline-secondary w-100" disabled>Google em breve</button>
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <button type="button" class="btn btn-outline-secondary w-100" disabled>Microsoft em breve</button>
+                  </div>
+                </div>
+              </div>
+
               <div class="text-center mt-4 d-grid gap-2">
-                <a href="cadastro.html" class="btn btn-outline-primary">Criar nova conta</a>
-                <a href="index.html" class="link-secondary">Voltar para a página inicial</a>
+                <a href="cadastro.html?type=advertiser" class="btn btn-outline-primary">Criar conta de anunciante</a>
+                <a href="cadastro.html?type=affiliate" class="btn btn-outline-dark">Criar conta de afiliado</a>
               </div>
             </div>
           </div>

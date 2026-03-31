@@ -1683,3 +1683,245 @@ body.bg-light {
     padding-top: 1.4rem;
   }
 }
+
+.auth-brand-panel {
+  min-height: 100%;
+}
+
+.saas-inline-proof,
+.saas-logo-cloud,
+.saas-bullet-grid,
+.saas-auth-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.saas-inline-proof span,
+.saas-logo-cloud span,
+.saas-bullet-grid span {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(219, 229, 243, 0.94);
+  color: #334155;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.saas-metric-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.saas-metric-strip article,
+.saas-auth-metrics article {
+  padding: 1rem;
+  border-radius: 1.1rem;
+  border: 1px solid rgba(219, 229, 243, 0.88);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.saas-metric-strip strong,
+.saas-auth-metrics strong {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 1.2rem;
+  line-height: 1.05;
+}
+
+.saas-metric-strip span,
+.saas-auth-metrics span {
+  color: var(--muted-text);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.saas-flow-rail {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.saas-flow-step {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: flex-start;
+  padding: 0.9rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(219, 229, 243, 0.88);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.saas-flow-step span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 0.95rem;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.saas-flow-step p {
+  margin: 0.15rem 0 0;
+  color: var(--muted-text);
+  font-size: 0.86rem;
+}
+
+.saas-solution-card {
+  background:
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.08), transparent 32%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(246, 250, 255, 0.98) 100%);
+}
+
+.pricing-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.pricing-card.is-featured {
+  border-color: rgba(96, 165, 250, 0.8) !important;
+  box-shadow: 0 1.4rem 3rem rgba(37, 99, 235, 0.16) !important;
+}
+
+.pricing-plan {
+  margin-bottom: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+.pricing-price {
+  margin-bottom: 0.9rem;
+  font-size: clamp(2rem, 4vw, 2.9rem);
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+}
+
+.pricing-price span {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--muted-text);
+}
+
+.pricing-list {
+  margin: 0 0 1.2rem;
+  padding-left: 1.2rem;
+  color: #334155;
+}
+
+.pricing-list li + li {
+  margin-top: 0.35rem;
+}
+
+.site-footer-heading {
+  margin-bottom: 0.9rem;
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #0f172a;
+}
+
+.site-footer-links.is-column {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.saas-trust-grid {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.saas-trust-grid article,
+.saas-quote-card {
+  padding: 1.15rem;
+  border-radius: 1.2rem;
+  border: 1px solid rgba(219, 229, 243, 0.88);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 1rem 2rem rgba(15, 23, 42, 0.06);
+}
+
+.saas-trust-grid p,
+.saas-quote-meta span {
+  margin: 0.3rem 0 0;
+  color: var(--muted-text);
+}
+
+.saas-quote-copy {
+  margin: 0 0 1rem;
+  font-size: 1.08rem;
+  line-height: 1.7;
+  color: #0f172a;
+}
+
+.saas-quote-meta {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.saas-auth-metrics {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.persona-choice {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.persona-choice-option {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: start;
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(219, 229, 243, 0.88);
+  background: rgba(255, 255, 255, 0.94);
+  cursor: pointer;
+}
+
+.persona-choice-option strong {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.persona-choice-option small {
+  display: block;
+  color: var(--muted-text);
+  line-height: 1.5;
+}
+
+.persona-choice-option input {
+  margin-top: 0.2rem;
+}
+
+@media (max-width: 991.98px) {
+  .saas-metric-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .saas-inline-proof,
+  .saas-logo-cloud,
+  .saas-bullet-grid,
+  .saas-auth-links {
+    gap: 0.55rem;
+  }
+
+  .persona-choice-option {
+    grid-template-columns: 20px minmax(0, 1fr);
+  }
+}

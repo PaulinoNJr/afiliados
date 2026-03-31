@@ -63,6 +63,8 @@ module.exports = async (req, res) => {
       email,
       password,
       metadata: {
+        account_type: metadata.account_type || 'advertiser',
+        company_name: metadata.company_name || null,
         first_name: metadata.first_name || null,
         last_name: metadata.last_name || null,
         phone: metadata.phone || null,
