@@ -189,33 +189,39 @@
   }
 
   async function loadAdminDashboard() {
-    const [profilesResult, productsResult] = await Promise.all([
+    const [profilesResult, conversionsResult, payoutsResult] = await Promise.all([
       window.db
         .from('user_profiles')
         .select('user_id, user_email, role, activation_status, store_name, created_at')
         .order('created_at', { ascending: false }),
       window.db
-        .from('produtos')
-        .select('id')
+        .from('conversions')
+        .select('id, status'),
+      window.db
+        .from('payout_requests')
+        .select('id, status')
     ]);
 
     if (profilesResult.error) throw profilesResult.error;
-    if (productsResult.error) throw productsResult.error;
+    if (conversionsResult.error) throw conversionsResult.error;
+    if (payoutsResult.error) throw payoutsResult.error;
 
     const profiles = (profilesResult.data || []).map((item) => ({
       ...item,
       role: window.Auth.normalizeRole(item.role)
     }));
-    const products = productsResult.data || [];
+    const conversions = conversionsResult.data || [];
+    const payouts = payoutsResult.data || [];
     const advertisers = profiles.filter((item) => item.role === 'advertiser').length;
-    const affiliates = profiles.filter((item) => item.role === 'affiliate').length;
+    const pendingConversions = conversions.filter((item) => item.status === 'pending').length;
+    const openPayouts = payouts.filter((item) => ['requested', 'approved', 'processing'].includes(item.status)).length;
     const pendingActivation = profiles.filter((item) => item.activation_status !== 'active').length;
 
-    refs.dashboardDescription.textContent = 'Use o backoffice para governar papeis, acompanhar qualidade da base e reduzir atritos antes da camada completa de conversoes e payouts.';
+    refs.dashboardDescription.textContent = 'O backoffice agora concentra usuarios, aprovacao de conversoes e a fila de payouts em uma operacao unica.';
     refs.metricOneValue.textContent = String(profiles.length);
     refs.metricTwoValue.textContent = String(advertisers);
-    refs.metricThreeValue.textContent = String(affiliates);
-    refs.metricFourValue.textContent = String(products.length);
+    refs.metricThreeValue.textContent = String(pendingConversions);
+    refs.metricFourValue.textContent = String(openPayouts);
 
     renderTable(
       ['Conta', 'Perfil', 'Status', 'Criado em'],
@@ -233,12 +239,12 @@
         description: pendingActivation ? `${pendingActivation} conta(s) ainda nao concluiram ativacao por email.` : 'Nenhuma ativacao pendente no momento.'
       },
       {
-        title: 'Separacao de perfis concluida',
-        description: 'A base ja diferencia admin, anunciante e afiliado, o que simplifica RBAC e futura expansao white label.'
+        title: 'Conversoes aguardando decisao',
+        description: pendingConversions ? `${pendingConversions} conversao(oes) pendentes esperando aprovacao ou rejeicao do backoffice.` : 'Nenhuma conversao pendente aguardando decisao.'
       },
       {
-        title: 'Proxima camada',
-        description: 'Entram agora conversions, commissions, payout requests, antifraude e observabilidade.'
+        title: 'Fila de saques',
+        description: openPayouts ? `${openPayouts} solicitacao(oes) de saque seguem abertas para aprovacao, processamento ou pagamento.` : 'Nenhum saque aberto no momento.'
       }
     ]);
   }
@@ -288,7 +294,7 @@
         const offer = catalog.find((item) => item.campaign_id === link.campaign_id && item.product_id === link.product_id);
         const trackingUrl = window.StoreUtils.getTrackingUrl(link.code);
         return [
-          `<div class="fw-semibold">${offer ? `${offer.product_title} · ${offer.campaign_name}` : 'Oferta vinculada'}</div>`,
+          `<div class="fw-semibold">${offer ? `${offer.product_title} - ${offer.campaign_name}` : 'Oferta vinculada'}</div>`,
           `<a href="${trackingUrl}" target="_blank" rel="noopener noreferrer" class="small text-decoration-none">${trackingUrl}</a>`,
           `<span class="fw-semibold">${clickCountByLink[link.id] || 0}</span>`,
           `<span class="small text-secondary">${formatDate(link.created_at)}</span>`

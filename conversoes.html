@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conversoes | Afiliados</title>
+  <meta name="description" content="Registre conversoes a partir de cliques rastreados e acompanhe a geracao de comissoes." />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm sticky-top">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="index.html">Afiliados</a>
+      <div class="ms-auto d-flex align-items-center gap-3 app-nav-actions">
+        <span id="userRoleBadge" class="badge text-bg-secondary">perfil</span>
+        <small id="userEmail" class="text-secondary d-none d-md-inline"></small>
+        <button id="logoutBtn" class="btn btn-outline-danger btn-sm" type="button">Sair</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="py-4 py-lg-5 app-shell-main">
+    <div class="container">
+      <section class="admin-hero-panel p-4 p-lg-5 mb-4">
+        <div class="row g-4 align-items-center">
+          <div class="col-12 col-xl-8">
+            <p class="admin-eyebrow mb-2">Conversoes</p>
+            <h1 class="h2 mb-2">Feche o ciclo comercial a partir dos cliques rastreados</h1>
+            <p class="mb-0 text-secondary">Selecione um clique valido, registre a venda e deixe a comissao nascer automaticamente no financeiro do afiliado.</p>
+          </div>
+          <div class="col-12 col-xl-4">
+            <div class="d-grid gap-2 d-sm-flex justify-content-xl-end page-header-actions">
+              <a href="campanhas.html" class="btn btn-outline-secondary">Campanhas</a>
+              <a id="backToDashboardBtn" href="dashboard-anunciante.html" class="btn btn-outline-dark">Voltar ao painel</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="workspace-menu" aria-label="Navegacao do sistema">
+        <div class="workspace-menu-shell">
+          <a id="menuDashboardLink" href="dashboard-anunciante.html" class="workspace-menu-link">Painel</a>
+          <a href="produtos.html" class="workspace-menu-link">Produtos</a>
+          <a href="campanhas.html" class="workspace-menu-link">Campanhas</a>
+          <a href="conversoes.html" class="workspace-menu-link is-active" aria-current="page">Conversoes</a>
+          <a href="users.html" class="workspace-menu-link d-none" data-admin-only="true">Usuarios</a>
+        </div>
+      </section>
+
+      <div id="statusMessage" class="alert d-none" role="alert"></div>
+
+      <section class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3"><article class="card stat-card border-0 shadow-sm h-100"><div class="card-body"><p class="stat-label mb-1">Cliques elegiveis</p><p id="statEligibleClicks" class="stat-value mb-0">0</p></div></article></div>
+        <div class="col-12 col-sm-6 col-xl-3"><article class="card stat-card border-0 shadow-sm h-100"><div class="card-body"><p class="stat-label mb-1">Conversoes</p><p id="statConversions" class="stat-value mb-0">0</p></div></article></div>
+        <div class="col-12 col-sm-6 col-xl-3"><article class="card stat-card border-0 shadow-sm h-100"><div class="card-body"><p class="stat-label mb-1">Aprovadas</p><p id="statApprovedConversions" class="stat-value mb-0">0</p></div></article></div>
+        <div class="col-12 col-sm-6 col-xl-3"><article class="card stat-card border-0 shadow-sm h-100"><div class="card-body"><p class="stat-label mb-1">Volume bruto</p><p id="statGrossVolume" class="stat-value mb-0">R$ 0,00</p></div></article></div>
+      </section>
+
+      <section class="row g-4 align-items-start">
+        <div class="col-12 col-xxl-5">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                <div>
+                  <p class="store-settings-kicker mb-1">Registro manual</p>
+                  <h2 class="h4 mb-1">Nova conversao</h2>
+                  <p class="text-secondary small mb-0">Use esta etapa para operacao inicial, homologacao e demonstracao do ciclo completo.</p>
+                </div>
+                <button id="clearConversionFormBtn" type="button" class="btn btn-sm btn-outline-secondary">Limpar</button>
+              </div>
+              <form id="conversionForm" novalidate>
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label for="conversionClickId" class="form-label">Clique rastreado</label>
+                    <select id="conversionClickId" class="form-select" required></select>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="conversionGrossAmount" class="form-label">Valor bruto</label>
+                    <input id="conversionGrossAmount" type="number" class="form-control" min="0" step="0.01" required />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="conversionNetAmount" class="form-label">Valor liquido</label>
+                    <input id="conversionNetAmount" type="number" class="form-control" min="0" step="0.01" />
+                  </div>
+                  <div class="col-12">
+                    <label for="conversionOrderId" class="form-label">Pedido externo</label>
+                    <input id="conversionOrderId" type="text" class="form-control" maxlength="120" />
+                  </div>
+                  <div class="col-12">
+                    <label class="persona-choice-option">
+                      <input id="conversionApproveImmediately" type="checkbox" class="form-check-input mt-1" checked />
+                      <span>
+                        <strong>Aprovar imediatamente</strong>
+                        <small>Quando ativo, a comissao ja entra como disponivel no financeiro do afiliado.</small>
+                      </span>
+                    </label>
+                  </div>
+                </div>
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                  <button id="saveConversionBtn" type="submit" class="btn btn-primary">Registrar conversao</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-xxl-7">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-3">
+                <div>
+                  <h2 class="h5 mb-1">Cliques rastreados recentes</h2>
+                  <p class="text-secondary small mb-0">Use a lista abaixo para localizar o clique certo antes de registrar a conversao.</p>
+                </div>
+                <button id="reloadConversionsBtn" type="button" class="btn btn-sm btn-outline-primary">Atualizar</button>
+              </div>
+              <div class="table-responsive">
+                <table class="table admin-table align-middle">
+                  <thead><tr><th>Oferta</th><th>Afiliado</th><th>Data</th><th class="text-end">Acao</th></tr></thead>
+                  <tbody id="clicksTableBody"></tbody>
+                </table>
+              </div>
+              <div id="clicksEmptyState" class="text-center py-4 text-secondary d-none">Nenhum clique rastreado disponivel no momento.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="row g-4 mt-1">
+        <div class="col-12">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <h2 class="h5 mb-3">Conversoes registradas</h2>
+              <div class="table-responsive">
+                <table class="table admin-table align-middle">
+                  <thead><tr><th>Conversao</th><th>Status</th><th>Campanha</th><th>Comissao</th><th>Data</th></tr></thead>
+                  <tbody id="conversionsTableBody"></tbody>
+                </table>
+              </div>
+              <div id="conversionsEmptyState" class="text-center py-4 text-secondary d-none">Nenhuma conversao registrada ainda.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/store-utils.js"></script>
+  <script src="assets/js/conversions.js"></script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Operacoes | Afiliados</title>
+  <meta name="description" content="Aprove ou rejeite conversoes e payout requests em um backoffice unico." />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm sticky-top">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="index.html">Afiliados</a>
+      <div class="ms-auto d-flex align-items-center gap-3 app-nav-actions">
+        <span id="userRoleBadge" class="badge text-bg-primary">admin</span>
+        <small id="userEmail" class="text-secondary d-none d-md-inline"></small>
+        <button id="logoutBtn" class="btn btn-outline-danger btn-sm" type="button">Sair</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="py-4 py-lg-5 app-shell-main">
+    <div class="container">
+      <section class="admin-hero-panel p-4 p-lg-5 mb-4">
+        <div class="row g-4 align-items-center">
+          <div class="col-12 col-xl-8">
+            <p class="admin-eyebrow mb-2">Operacoes</p>
+            <h1 class="h2 mb-2">Aprove conversoes e governe o fluxo de saques</h1>
+            <p class="mb-0 text-secondary">Use esta esteira para tratar os eventos criticos do comercial sem depender de ajustes manuais na base.</p>
+          </div>
+          <div class="col-12 col-xl-4">
+            <div class="d-grid gap-2 d-sm-flex justify-content-xl-end page-header-actions">
+              <a href="conversoes.html" class="btn btn-outline-secondary">Tela de conversoes</a>
+              <a href="dashboard-admin.html" class="btn btn-outline-dark">Voltar ao painel</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="workspace-menu" aria-label="Navegacao do sistema">
+        <div class="workspace-menu-shell">
+          <a href="dashboard-admin.html" class="workspace-menu-link">Painel</a>
+          <a href="operacoes.html" class="workspace-menu-link is-active" aria-current="page">Operacoes</a>
+          <a href="users.html" class="workspace-menu-link">Usuarios</a>
+          <a href="produtos.html" class="workspace-menu-link">Produtos</a>
+          <a href="categorias.html" class="workspace-menu-link">Categorias</a>
+          <a href="perfil.html" class="workspace-menu-link">Perfil</a>
+        </div>
+      </section>
+
+      <div id="statusMessage" class="alert d-none" role="alert"></div>
+
+      <section class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3"><article class="card stat-card border-0 shadow-sm h-100"><div class="card-body"><p class="stat-label mb-1">Conversoes pendentes</p><p id="statPendingConversions" class="stat-value mb-0">0</p></div></article></div>
+        <div class="col-12 col-sm-6 col-xl-3"><article class="card stat-card border-0 shadow-sm h-100"><div class="card-body"><p class="stat-label mb-1">Saques abertos</p><p id="statOpenPayouts" class="stat-value mb-0">0</p></div></article></div>
+        <div class="col-12 col-sm-6 col-xl-3"><article class="card stat-card border-0 shadow-sm h-100"><div class="card-body"><p class="stat-label mb-1">Valor em fila</p><p id="statQueuedAmount" class="stat-value mb-0">R$ 0,00</p></div></article></div>
+        <div class="col-12 col-sm-6 col-xl-3"><article class="card stat-card border-0 shadow-sm h-100"><div class="card-body"><p class="stat-label mb-1">Pago no historico</p><p id="statPaidAmount" class="stat-value mb-0">R$ 0,00</p></div></article></div>
+      </section>
+
+      <section class="row g-4 align-items-start mb-4">
+        <div class="col-12 col-xl-4">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+              <p class="store-settings-kicker mb-1">Configuracao</p>
+              <h2 class="h5 mb-2">Minimo de saque</h2>
+              <p id="payoutMinimumHint" class="text-secondary small mb-4">Carregando regra atual do financeiro...</p>
+              <form id="payoutMinimumForm" novalidate>
+                <div class="mb-3">
+                  <label for="payoutMinimumAmount" class="form-label">Valor minimo</label>
+                  <input id="payoutMinimumAmount" type="number" class="form-control" min="0" step="0.01" />
+                </div>
+                <button id="savePayoutMinimumBtn" type="submit" class="btn btn-primary w-100">Salvar regra</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-xl-8">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+              <p class="store-settings-kicker mb-1">Ritmo da operacao</p>
+              <h2 class="h5 mb-2">Como a fila se comporta</h2>
+              <div class="dashboard-activity-list">
+                <article class="dashboard-activity-item">
+                  <strong>Conversao aprovada</strong>
+                  <p>A comissao vira disponivel automaticamente para o afiliado, respeitando a campanha associada.</p>
+                </article>
+                <article class="dashboard-activity-item">
+                  <strong>Saque solicitado</strong>
+                  <p>As comissoes ficam reservadas no payout request e saem do saldo disponivel mostrado ao afiliado.</p>
+                </article>
+                <article class="dashboard-activity-item">
+                  <strong>Saque pago ou rejeitado</strong>
+                  <p>Pago liquida as comissoes. Rejeitado devolve os valores para a carteira disponivel do afiliado.</p>
+                </article>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="row g-4 align-items-start mb-4">
+        <div class="col-12">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-3">
+                <div>
+                  <p class="store-settings-kicker mb-1">Conversoes</p>
+                  <h2 class="h5 mb-1">Fila de aprovacao</h2>
+                  <p class="text-secondary small mb-0">Aprovando a conversao, a comissao e recalculada automaticamente no financeiro do afiliado.</p>
+                </div>
+                <button id="reloadOperationsBtn" type="button" class="btn btn-sm btn-outline-primary">Atualizar</button>
+              </div>
+              <div class="table-responsive">
+                <table class="table admin-table align-middle">
+                  <thead><tr><th>Conversao</th><th>Afiliado</th><th>Oferta</th><th>Comissao</th><th>Status</th><th class="text-end">Acoes</th></tr></thead>
+                  <tbody id="conversionsTableBody"></tbody>
+                </table>
+              </div>
+              <div id="conversionsEmptyState" class="text-center py-4 text-secondary d-none">Nenhuma conversao encontrada.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="row g-4">
+        <div class="col-12">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-3">
+                <div>
+                  <p class="store-settings-kicker mb-1">Saques</p>
+                  <h2 class="h5 mb-1">Payout requests</h2>
+                  <p class="text-secondary small mb-0">Aprove, mova para processamento, marque como pago ou rejeite com registro automatico nas observacoes.</p>
+                </div>
+              </div>
+              <div class="table-responsive">
+                <table class="table admin-table align-middle">
+                  <thead><tr><th>Solicitacao</th><th>Afiliado</th><th>Status</th><th>Observacoes</th><th class="text-end">Acoes</th></tr></thead>
+                  <tbody id="payoutsTableBody"></tbody>
+                </table>
+              </div>
+              <div id="payoutsEmptyState" class="text-center py-4 text-secondary d-none">Nenhuma solicitacao de saque encontrada.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="row g-4 mt-1">
+        <div class="col-12">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-3">
+                <div>
+                  <p class="store-settings-kicker mb-1">Auditoria</p>
+                  <h2 class="h5 mb-1">Historico recente</h2>
+                  <p class="text-secondary small mb-0">Toda decisao critica do backoffice fica rastreada aqui para conferencia posterior.</p>
+                </div>
+              </div>
+              <div class="table-responsive">
+                <table class="table admin-table align-middle">
+                  <thead><tr><th>Quando</th><th>Admin</th><th>Evento</th><th>Contexto</th></tr></thead>
+                  <tbody id="auditLogsTableBody"></tbody>
+                </table>
+              </div>
+              <div id="auditLogsEmptyState" class="text-center py-4 text-secondary d-none">Nenhum evento de auditoria registrado ainda.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/store-utils.js"></script>
+  <script src="assets/js/admin-operations.js"></script>
+</body>
+</html>

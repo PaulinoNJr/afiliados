@@ -65,6 +65,8 @@ as $$
     'produtos',
     'campanhas',
     'links',
+    'conversoes',
+    'operacoes',
     'comissoes',
     'r'
   ]);
@@ -1311,6 +1313,38 @@ alter table public.settings
   add column if not exists created_at timestamptz not null default now(),
   add column if not exists updated_at timestamptz not null default now();
 
+create table if not exists public.admin_audit_logs (
+  id uuid primary key default gen_random_uuid(),
+  admin_user_id uuid not null references auth.users(id) on delete cascade,
+  event_type text not null,
+  entity_type text not null,
+  entity_id uuid,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+alter table public.admin_audit_logs
+  add column if not exists admin_user_id uuid references auth.users(id) on delete cascade,
+  add column if not exists event_type text,
+  add column if not exists entity_type text,
+  add column if not exists entity_id uuid,
+  add column if not exists metadata jsonb not null default '{}'::jsonb,
+  add column if not exists created_at timestamptz not null default now();
+
+update public.admin_audit_logs
+set metadata = '{}'::jsonb
+where metadata is null;
+
+alter table public.admin_audit_logs
+  alter column admin_user_id set not null,
+  alter column event_type set not null,
+  alter column entity_type set not null,
+  alter column metadata set not null;
+
+create index if not exists idx_admin_audit_logs_created_at on public.admin_audit_logs (created_at desc);
+create index if not exists idx_admin_audit_logs_admin_user_id on public.admin_audit_logs (admin_user_id, created_at desc);
+create index if not exists idx_admin_audit_logs_entity on public.admin_audit_logs (entity_type, entity_id, created_at desc);
+
 create table if not exists public.conversions (
   id uuid primary key default gen_random_uuid(),
   click_id uuid references public.clicks(id) on delete set null,
@@ -1816,6 +1850,122 @@ begin
 end;
 $$;
 
+create or replace function public.log_admin_audit(
+  audit_event_type text,
+  audit_entity_type text,
+  audit_entity_id uuid default null,
+  audit_metadata jsonb default '{}'::jsonb
+)
+returns public.admin_audit_logs
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  current_profile public.user_profiles;
+  created_log public.admin_audit_logs;
+begin
+  select *
+  into current_profile
+  from public.user_profiles profile
+  where profile.user_id = auth.uid();
+
+  if current_profile.user_id is null then
+    raise exception 'Perfil autenticado nao encontrado.';
+  end if;
+
+  if current_profile.role <> 'admin' then
+    raise exception 'Somente administradores podem registrar auditoria.';
+  end if;
+
+  insert into public.admin_audit_logs (
+    admin_user_id,
+    event_type,
+    entity_type,
+    entity_id,
+    metadata
+  )
+  values (
+    current_profile.user_id,
+    nullif(trim(coalesce(audit_event_type, '')), ''),
+    nullif(trim(coalesce(audit_entity_type, '')), ''),
+    audit_entity_id,
+    coalesce(audit_metadata, '{}'::jsonb)
+  )
+  returning *
+  into created_log;
+
+  return created_log;
+end;
+$$;
+
+create or replace function public.set_payout_minimum_amount(minimum_amount numeric)
+returns public.settings
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  current_profile public.user_profiles;
+  current_setting public.settings;
+  previous_amount numeric;
+begin
+  select *
+  into current_profile
+  from public.user_profiles profile
+  where profile.user_id = auth.uid();
+
+  if current_profile.user_id is null then
+    raise exception 'Perfil autenticado nao encontrado.';
+  end if;
+
+  if current_profile.role <> 'admin' then
+    raise exception 'Somente administradores podem alterar configuracoes financeiras.';
+  end if;
+
+  if minimum_amount is null or minimum_amount <= 0 then
+    raise exception 'Informe um valor minimo de saque valido.';
+  end if;
+
+  select *
+  into current_setting
+  from public.settings setting_item
+  where setting_item.key = 'payout.minimum_amount'
+  limit 1;
+
+  begin
+    previous_amount := (current_setting.value ->> 'amount')::numeric;
+  exception
+    when others then
+      previous_amount := null;
+  end;
+
+  insert into public.settings (key, value)
+  values (
+    'payout.minimum_amount',
+    jsonb_build_object('amount', round(minimum_amount::numeric, 2))
+  )
+  on conflict (key) do update
+    set value = excluded.value,
+        updated_at = now()
+  returning *
+  into current_setting;
+
+  perform public.log_admin_audit(
+    'update_payout_minimum',
+    'settings',
+    current_setting.id,
+    jsonb_build_object(
+      'setting_key', current_setting.key,
+      'previous_amount', previous_amount,
+      'new_amount', round(minimum_amount::numeric, 2)
+    )
+  );
+
+  return current_setting;
+end;
+$$;
+
 create or replace function public.calculate_commission_amount(
   commission_type_value text,
   commission_value numeric,
@@ -2117,6 +2267,281 @@ begin
 end;
 $$;
 
+create or replace function public.review_conversion(
+  target_conversion_id uuid,
+  target_status text
+)
+returns public.conversions
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  current_profile public.user_profiles;
+  normalized_status text := lower(nullif(trim(coalesce(target_status, '')), ''));
+  current_conversion public.conversions;
+  current_commission public.commissions;
+  updated_conversion public.conversions;
+begin
+  select *
+  into current_profile
+  from public.user_profiles profile
+  where profile.user_id = auth.uid();
+
+  if current_profile.user_id is null then
+    raise exception 'Perfil autenticado nao encontrado.';
+  end if;
+
+  if current_profile.role <> 'admin' then
+    raise exception 'Somente administradores podem revisar conversoes.';
+  end if;
+
+  if target_conversion_id is null then
+    raise exception 'Conversao nao informada.';
+  end if;
+
+  if normalized_status not in ('approved', 'rejected', 'refunded') then
+    raise exception 'Status de revisao da conversao invalido.';
+  end if;
+
+  select *
+  into current_conversion
+  from public.conversions conversion_item
+  where conversion_item.id = target_conversion_id;
+
+  if current_conversion.id is null then
+    raise exception 'Conversao nao encontrada.';
+  end if;
+
+  select *
+  into current_commission
+  from public.commissions commission_item
+  where commission_item.conversion_id = target_conversion_id;
+
+  if current_commission.status = 'paid'
+     and normalized_status in ('rejected', 'refunded') then
+    raise exception 'Nao e possivel reverter uma conversao com comissao ja paga.';
+  end if;
+
+  update public.conversions
+  set status = normalized_status,
+      approved_at = case
+        when normalized_status = 'approved' then coalesce(current_conversion.approved_at, now())
+        else null
+      end
+  where id = target_conversion_id
+  returning *
+  into updated_conversion;
+
+  perform public.log_admin_audit(
+    'review_conversion',
+    'conversions',
+    updated_conversion.id,
+    jsonb_build_object(
+      'previous_status', current_conversion.status,
+      'new_status', updated_conversion.status,
+      'affiliate_id', updated_conversion.affiliate_id,
+      'campaign_id', updated_conversion.campaign_id,
+      'product_id', updated_conversion.product_id,
+      'commission_status', current_commission.status,
+      'commission_id', current_commission.id
+    )
+  );
+
+  return updated_conversion;
+end;
+$$;
+
+create or replace function public.review_payout_request(
+  target_payout_request_id uuid,
+  target_status text,
+  action_note text default null
+)
+returns public.payout_requests
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  current_profile public.user_profiles;
+  normalized_status text := lower(nullif(trim(coalesce(target_status, '')), ''));
+  normalized_note text := nullif(trim(coalesce(action_note, '')), '');
+  current_request public.payout_requests;
+  updated_request public.payout_requests;
+  generated_note text;
+begin
+  select *
+  into current_profile
+  from public.user_profiles profile
+  where profile.user_id = auth.uid();
+
+  if current_profile.user_id is null then
+    raise exception 'Perfil autenticado nao encontrado.';
+  end if;
+
+  if current_profile.role <> 'admin' then
+    raise exception 'Somente administradores podem revisar saques.';
+  end if;
+
+  if target_payout_request_id is null then
+    raise exception 'Solicitacao de saque nao informada.';
+  end if;
+
+  if normalized_status not in ('approved', 'processing', 'paid', 'rejected') then
+    raise exception 'Status de revisao do saque invalido.';
+  end if;
+
+  select *
+  into current_request
+  from public.payout_requests payout_request_item
+  where payout_request_item.id = target_payout_request_id;
+
+  if current_request.id is null then
+    raise exception 'Solicitacao de saque nao encontrada.';
+  end if;
+
+  if current_request.status in ('paid', 'rejected')
+     and current_request.status is distinct from normalized_status then
+    raise exception 'Nao e possivel alterar uma solicitacao finalizada.';
+  end if;
+
+  generated_note := coalesce(
+    normalized_note,
+    format(
+      'Status alterado para %s por administrador em %s.',
+      normalized_status,
+      to_char(now(), 'YYYY-MM-DD HH24:MI:SS TZ')
+    )
+  );
+
+  update public.payout_requests
+  set status = normalized_status,
+      notes = case
+        when coalesce(current_request.notes, '') = '' then generated_note
+        else current_request.notes || E'\n' || generated_note
+      end,
+      processed_at = case
+        when normalized_status in ('paid', 'rejected') then coalesce(current_request.processed_at, now())
+        when normalized_status = 'requested' then null
+        else current_request.processed_at
+      end
+  where id = target_payout_request_id
+  returning *
+  into updated_request;
+
+  perform public.log_admin_audit(
+    'review_payout_request',
+    'payout_requests',
+    updated_request.id,
+    jsonb_build_object(
+      'previous_status', current_request.status,
+      'new_status', updated_request.status,
+      'affiliate_id', updated_request.affiliate_id,
+      'amount', updated_request.amount,
+      'note', normalized_note
+    )
+  );
+
+  return updated_request;
+end;
+$$;
+
+create or replace function public.register_manual_conversion(
+  target_click_id uuid,
+  gross_amount_value numeric,
+  net_amount_value numeric default null,
+  external_order_id_value text default null,
+  approve_immediately boolean default true
+)
+returns public.conversions
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  current_profile public.user_profiles;
+  click_row public.clicks;
+  campaign_row public.campaigns;
+  created_conversion public.conversions;
+begin
+  select *
+  into current_profile
+  from public.user_profiles profile
+  where profile.user_id = auth.uid();
+
+  if current_profile.user_id is null then
+    raise exception 'Perfil autenticado nao encontrado.';
+  end if;
+
+  if current_profile.role not in ('admin', 'advertiser') then
+    raise exception 'Somente admin ou anunciante podem registrar conversoes.';
+  end if;
+
+  if target_click_id is null then
+    raise exception 'Clique da conversao nao informado.';
+  end if;
+
+  if gross_amount_value is null or gross_amount_value <= 0 then
+    raise exception 'Valor bruto da conversao invalido.';
+  end if;
+
+  if net_amount_value is not null and net_amount_value < 0 then
+    raise exception 'Valor liquido da conversao invalido.';
+  end if;
+
+  select *
+  into click_row
+  from public.clicks click_item
+  where click_item.id = target_click_id;
+
+  if click_row.id is null then
+    raise exception 'Clique informado nao encontrado.';
+  end if;
+
+  select *
+  into campaign_row
+  from public.campaigns campaign
+  where campaign.id = click_row.campaign_id;
+
+  if campaign_row.id is null then
+    raise exception 'Campanha vinculada ao clique nao encontrada.';
+  end if;
+
+  if current_profile.role = 'advertiser' and campaign_row.advertiser_id <> auth.uid() then
+    raise exception 'Voce nao tem permissao para registrar conversoes desta campanha.';
+  end if;
+
+  insert into public.conversions (
+    click_id,
+    affiliate_id,
+    campaign_id,
+    product_id,
+    external_order_id,
+    gross_amount,
+    net_amount,
+    status,
+    occurred_at,
+    approved_at
+  )
+  values (
+    click_row.id,
+    click_row.affiliate_id,
+    click_row.campaign_id,
+    click_row.product_id,
+    nullif(trim(coalesce(external_order_id_value, '')), ''),
+    gross_amount_value,
+    net_amount_value,
+    case when approve_immediately then 'approved' else 'pending' end,
+    now(),
+    case when approve_immediately then now() else null end
+  )
+  returning *
+  into created_conversion;
+
+  return created_conversion;
+end;
+$$;
+
 drop trigger if exists trg_campaigns_prepare on public.campaigns;
 create trigger trg_campaigns_prepare
 before insert or update on public.campaigns
@@ -2341,6 +2766,7 @@ alter table public.campaign_products enable row level security;
 alter table public.affiliate_links enable row level security;
 alter table public.clicks enable row level security;
 alter table public.settings enable row level security;
+alter table public.admin_audit_logs enable row level security;
 alter table public.conversions enable row level security;
 alter table public.commissions enable row level security;
 alter table public.payout_requests enable row level security;
@@ -2528,7 +2954,16 @@ create policy "Leitura de clicks por dono ou admin"
   on public.clicks
   for select
   to authenticated
-  using (affiliate_id = auth.uid() or public.is_admin());
+  using (
+    affiliate_id = auth.uid()
+    or public.is_admin()
+    or exists (
+      select 1
+      from public.campaigns campaign
+      where campaign.id = clicks.campaign_id
+        and (public.is_advertiser_or_admin(campaign.advertiser_id) or public.is_admin())
+    )
+  );
 
 drop policy if exists "Leitura de settings por admin" on public.settings;
 create policy "Leitura de settings por admin"
@@ -2551,6 +2986,13 @@ create policy "Atualizacao de settings por admin"
   to authenticated
   using (public.is_admin())
   with check (public.is_admin());
+
+drop policy if exists "Leitura de auditoria por admin" on public.admin_audit_logs;
+create policy "Leitura de auditoria por admin"
+  on public.admin_audit_logs
+  for select
+  to authenticated
+  using (public.is_admin());
 
 drop policy if exists "Leitura de conversions por dono ou admin" on public.conversions;
 create policy "Leitura de conversions por dono ou admin"
@@ -2631,9 +3073,14 @@ grant execute on function public.finalize_account_activation() to authenticated;
 grant execute on function public.get_affiliate_campaign_catalog() to authenticated;
 grant execute on function public.create_affiliate_link(uuid, uuid) to authenticated;
 grant execute on function public.get_numeric_setting(text, numeric) to authenticated;
+grant execute on function public.log_admin_audit(text, text, uuid, jsonb) to authenticated;
+grant execute on function public.set_payout_minimum_amount(numeric) to authenticated;
 grant execute on function public.get_affiliate_available_balance(uuid) to authenticated;
 grant execute on function public.get_affiliate_financial_summary(uuid) to authenticated;
 grant execute on function public.request_payout(numeric) to authenticated;
+grant execute on function public.review_conversion(uuid, text) to authenticated;
+grant execute on function public.review_payout_request(uuid, text, text) to authenticated;
+grant execute on function public.register_manual_conversion(uuid, numeric, numeric, text, boolean) to authenticated;
 grant execute on function public.get_public_store_by_slug(text) to anon, authenticated;
 grant execute on function public.get_public_products_by_profile(uuid) to anon, authenticated;
 grant execute on function public.check_public_slug_availability(text, uuid) to anon, authenticated;
@@ -2643,6 +3090,7 @@ grant select, insert, update, delete on public.campaigns to authenticated;
 grant select, insert, delete on public.campaign_products to authenticated;
 grant select, insert, update on public.affiliate_links to authenticated;
 grant select on public.clicks to authenticated;
+grant select on public.admin_audit_logs to authenticated;
 grant select, insert, update, delete on public.settings to authenticated;
 grant select, insert, update, delete on public.conversions to authenticated;
 grant select, insert, update, delete on public.commissions to authenticated;

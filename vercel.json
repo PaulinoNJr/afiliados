@@ -31,7 +31,7 @@
       ]
     },
     {
-      "source": "/(login|admin|users|cadastro|loja|produtos|campanhas|links|comissoes|ativacao|recuperar-senha)(\\.html)?",
+      "source": "/(login|admin|users|cadastro|loja|produtos|campanhas|links|conversoes|operacoes|comissoes|ativacao|recuperar-senha)(\\.html)?",
       "headers": [
         {
           "key": "X-Robots-Tag",
@@ -82,6 +82,14 @@
       "destination": "/links.html"
     },
     {
+      "source": "/conversoes",
+      "destination": "/conversoes.html"
+    },
+    {
+      "source": "/operacoes",
+      "destination": "/operacoes.html"
+    },
+    {
       "source": "/comissoes",
       "destination": "/comissoes.html"
     },
@@ -102,7 +110,7 @@
       "destination": "/api/track-click?code=:code"
     },
     {
-      "source": "/:slug((?!api|assets|login|admin|users|dashboard|cadastro|ativacao|recuperar-senha|loja|produtos|campanhas|links|comissoes|r|.*\\..*)[^/]+)",
+      "source": "/:slug((?!api|assets|login|admin|users|dashboard|cadastro|ativacao|recuperar-senha|loja|produtos|campanhas|links|conversoes|operacoes|comissoes|r|.*\\..*)[^/]+)",
       "destination": "/index.html"
     }
   ]
