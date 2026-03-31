@@ -1,5 +1,5 @@
 (() => {
-  const RESERVED_SLUGS = ['login', 'dashboard', 'admin', 'api', 'users', 'cadastro', 'ativacao', 'recuperar-senha', 'loja', 'produtos', 'campanhas', 'links', 'r'];
+  const RESERVED_SLUGS = ['login', 'dashboard', 'admin', 'api', 'users', 'cadastro', 'ativacao', 'recuperar-senha', 'loja', 'produtos', 'campanhas', 'links', 'comissoes', 'r'];
 
   function normalizeStoreSlug(value) {
     return String(value || '')

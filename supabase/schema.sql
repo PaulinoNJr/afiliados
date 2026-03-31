@@ -60,8 +60,13 @@ as $$
     'users',
     'cadastro',
     'ativacao',
+    'recuperar-senha',
     'loja',
-    'produtos'
+    'produtos',
+    'campanhas',
+    'links',
+    'comissoes',
+    'r'
   ]);
 $$;
 
@@ -674,38 +679,6 @@ begin
       check (account_type in ('advertiser', 'affiliate'));
   end if;
 
-  if not exists (
-    select 1
-    from pg_constraint
-    where conname = 'ck_campaigns_status_valid'
-      and conrelid = 'public.campaigns'::regclass
-  ) then
-    alter table public.campaigns
-      add constraint ck_campaigns_status_valid
-      check (status in ('draft', 'active', 'paused', 'closed'));
-  end if;
-
-  if not exists (
-    select 1
-    from pg_constraint
-    where conname = 'ck_campaigns_commission_type_valid'
-      and conrelid = 'public.campaigns'::regclass
-  ) then
-    alter table public.campaigns
-      add constraint ck_campaigns_commission_type_valid
-      check (commission_type in ('percent', 'fixed'));
-  end if;
-
-  if not exists (
-    select 1
-    from pg_constraint
-    where conname = 'ck_affiliate_links_status_valid'
-      and conrelid = 'public.affiliate_links'::regclass
-  ) then
-    alter table public.affiliate_links
-      add constraint ck_affiliate_links_status_valid
-      check (status in ('active', 'disabled'));
-  end if;
 end;
 $$;
 
@@ -1324,6 +1297,216 @@ create index if not exists idx_clicks_affiliate_id on public.clicks (affiliate_i
 create index if not exists idx_clicks_campaign_id on public.clicks (campaign_id, occurred_at desc);
 create index if not exists idx_clicks_product_id on public.clicks (product_id, occurred_at desc);
 
+create table if not exists public.settings (
+  id uuid primary key default gen_random_uuid(),
+  key text not null unique,
+  value jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.settings
+  add column if not exists key text,
+  add column if not exists value jsonb not null default '{}'::jsonb,
+  add column if not exists created_at timestamptz not null default now(),
+  add column if not exists updated_at timestamptz not null default now();
+
+create table if not exists public.conversions (
+  id uuid primary key default gen_random_uuid(),
+  click_id uuid references public.clicks(id) on delete set null,
+  affiliate_id uuid not null references auth.users(id) on delete cascade,
+  campaign_id uuid references public.campaigns(id) on delete set null,
+  product_id uuid references public.produtos(id) on delete set null,
+  external_order_id text,
+  gross_amount numeric(12,2) not null check (gross_amount >= 0),
+  net_amount numeric(12,2) check (net_amount is null or net_amount >= 0),
+  status text not null default 'pending',
+  occurred_at timestamptz not null default now(),
+  approved_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.conversions
+  add column if not exists click_id uuid references public.clicks(id) on delete set null,
+  add column if not exists affiliate_id uuid references auth.users(id) on delete cascade,
+  add column if not exists campaign_id uuid references public.campaigns(id) on delete set null,
+  add column if not exists product_id uuid references public.produtos(id) on delete set null,
+  add column if not exists external_order_id text,
+  add column if not exists gross_amount numeric(12,2),
+  add column if not exists net_amount numeric(12,2),
+  add column if not exists status text,
+  add column if not exists occurred_at timestamptz not null default now(),
+  add column if not exists approved_at timestamptz,
+  add column if not exists created_at timestamptz not null default now(),
+  add column if not exists updated_at timestamptz not null default now();
+
+update public.conversions
+set status = 'pending'
+where status is null
+   or trim(status) = '';
+
+alter table public.conversions
+  alter column affiliate_id set not null,
+  alter column gross_amount set not null,
+  alter column status set default 'pending',
+  alter column status set not null;
+
+create unique index if not exists idx_conversions_external_order_id on public.conversions (external_order_id) where external_order_id is not null;
+create index if not exists idx_conversions_affiliate_id on public.conversions (affiliate_id, occurred_at desc);
+create index if not exists idx_conversions_campaign_id on public.conversions (campaign_id, occurred_at desc);
+create index if not exists idx_conversions_product_id on public.conversions (product_id, occurred_at desc);
+
+create table if not exists public.payout_requests (
+  id uuid primary key default gen_random_uuid(),
+  affiliate_id uuid not null references auth.users(id) on delete cascade,
+  amount numeric(12,2) not null check (amount > 0),
+  status text not null default 'requested',
+  notes text,
+  requested_at timestamptz not null default now(),
+  processed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.payout_requests
+  add column if not exists affiliate_id uuid references auth.users(id) on delete cascade,
+  add column if not exists amount numeric(12,2),
+  add column if not exists status text,
+  add column if not exists notes text,
+  add column if not exists requested_at timestamptz not null default now(),
+  add column if not exists processed_at timestamptz,
+  add column if not exists created_at timestamptz not null default now(),
+  add column if not exists updated_at timestamptz not null default now();
+
+update public.payout_requests
+set status = 'requested'
+where status is null
+   or trim(status) = '';
+
+alter table public.payout_requests
+  alter column affiliate_id set not null,
+  alter column amount set not null,
+  alter column status set default 'requested',
+  alter column status set not null;
+
+create index if not exists idx_payout_requests_affiliate_id on public.payout_requests (affiliate_id, requested_at desc);
+create index if not exists idx_payout_requests_status on public.payout_requests (status, requested_at desc);
+
+create table if not exists public.commissions (
+  id uuid primary key default gen_random_uuid(),
+  conversion_id uuid not null unique references public.conversions(id) on delete cascade,
+  affiliate_id uuid not null references auth.users(id) on delete cascade,
+  payout_request_id uuid references public.payout_requests(id) on delete set null,
+  amount numeric(12,2) not null check (amount >= 0),
+  status text not null default 'pending',
+  available_at timestamptz,
+  paid_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.commissions
+  add column if not exists conversion_id uuid references public.conversions(id) on delete cascade,
+  add column if not exists affiliate_id uuid references auth.users(id) on delete cascade,
+  add column if not exists payout_request_id uuid references public.payout_requests(id) on delete set null,
+  add column if not exists amount numeric(12,2),
+  add column if not exists status text,
+  add column if not exists available_at timestamptz,
+  add column if not exists paid_at timestamptz,
+  add column if not exists created_at timestamptz not null default now(),
+  add column if not exists updated_at timestamptz not null default now();
+
+update public.commissions
+set status = 'pending'
+where status is null
+   or trim(status) = '';
+
+alter table public.commissions
+  alter column conversion_id set not null,
+  alter column affiliate_id set not null,
+  alter column amount set not null,
+  alter column status set default 'pending',
+  alter column status set not null;
+
+create unique index if not exists idx_commissions_conversion_id on public.commissions (conversion_id);
+create index if not exists idx_commissions_affiliate_id on public.commissions (affiliate_id, status, created_at desc);
+create index if not exists idx_commissions_payout_request_id on public.commissions (payout_request_id);
+
+insert into public.settings (key, value)
+values ('payout.minimum_amount', jsonb_build_object('amount', 100))
+on conflict (key) do nothing;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'ck_campaigns_status_valid'
+      and conrelid = 'public.campaigns'::regclass
+  ) then
+    alter table public.campaigns
+      add constraint ck_campaigns_status_valid
+      check (status in ('draft', 'active', 'paused', 'closed'));
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'ck_campaigns_commission_type_valid'
+      and conrelid = 'public.campaigns'::regclass
+  ) then
+    alter table public.campaigns
+      add constraint ck_campaigns_commission_type_valid
+      check (commission_type in ('percent', 'fixed'));
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'ck_affiliate_links_status_valid'
+      and conrelid = 'public.affiliate_links'::regclass
+  ) then
+    alter table public.affiliate_links
+      add constraint ck_affiliate_links_status_valid
+      check (status in ('active', 'disabled'));
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'ck_conversions_status_valid'
+      and conrelid = 'public.conversions'::regclass
+  ) then
+    alter table public.conversions
+      add constraint ck_conversions_status_valid
+      check (status in ('pending', 'approved', 'rejected', 'refunded'));
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'ck_commissions_status_valid'
+      and conrelid = 'public.commissions'::regclass
+  ) then
+    alter table public.commissions
+      add constraint ck_commissions_status_valid
+      check (status in ('pending', 'approved', 'available', 'paid', 'reversed'));
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'ck_payout_requests_status_valid'
+      and conrelid = 'public.payout_requests'::regclass
+  ) then
+    alter table public.payout_requests
+      add constraint ck_payout_requests_status_valid
+      check (status in ('requested', 'approved', 'processing', 'paid', 'rejected'));
+  end if;
+end;
+$$;
+
 create or replace function public.generate_affiliate_link_code()
 returns text
 language plpgsql
@@ -1605,6 +1788,335 @@ begin
 end;
 $$;
 
+create or replace function public.get_numeric_setting(setting_key text, fallback_value numeric default 0)
+returns numeric
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  stored_value jsonb;
+  parsed_value numeric;
+begin
+  select setting_item.value
+  into stored_value
+  from public.settings setting_item
+  where setting_item.key = setting_key
+  limit 1;
+
+  begin
+    parsed_value := coalesce((stored_value ->> 'amount')::numeric, fallback_value);
+  exception
+    when others then
+      parsed_value := fallback_value;
+  end;
+
+  return coalesce(parsed_value, fallback_value);
+end;
+$$;
+
+create or replace function public.calculate_commission_amount(
+  commission_type_value text,
+  commission_value numeric,
+  base_amount numeric
+)
+returns numeric
+language plpgsql
+immutable
+set search_path = public
+as $$
+begin
+  if coalesce(base_amount, 0) <= 0 or coalesce(commission_value, 0) <= 0 then
+    return 0;
+  end if;
+
+  if commission_type_value = 'fixed' then
+    return round(commission_value::numeric, 2);
+  end if;
+
+  return round((base_amount * commission_value / 100)::numeric, 2);
+end;
+$$;
+
+create or replace function public.prepare_conversion()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  new.external_order_id := nullif(trim(coalesce(new.external_order_id, '')), '');
+  new.status := lower(nullif(trim(coalesce(new.status, '')), ''));
+
+  if new.affiliate_id is null then
+    raise exception 'Afiliado da conversao nao informado.';
+  end if;
+
+  if new.gross_amount is null or new.gross_amount < 0 then
+    raise exception 'Valor bruto da conversao invalido.';
+  end if;
+
+  if new.net_amount is not null and new.net_amount < 0 then
+    raise exception 'Valor liquido da conversao invalido.';
+  end if;
+
+  if new.status is null then
+    new.status := 'pending';
+  elsif new.status not in ('pending', 'approved', 'rejected', 'refunded') then
+    raise exception 'Status da conversao invalido.';
+  end if;
+
+  if new.status = 'approved' then
+    new.approved_at := coalesce(new.approved_at, now());
+  elsif new.status <> 'approved' then
+    new.approved_at := null;
+  end if;
+
+  return new;
+end;
+$$;
+
+create or replace function public.prepare_payout_request()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  new.status := lower(nullif(trim(coalesce(new.status, '')), ''));
+  new.notes := nullif(trim(coalesce(new.notes, '')), '');
+
+  if new.affiliate_id is null then
+    raise exception 'Afiliado do saque nao informado.';
+  end if;
+
+  if new.amount is null or new.amount <= 0 then
+    raise exception 'Valor do saque invalido.';
+  end if;
+
+  if new.status is null then
+    new.status := 'requested';
+  elsif new.status not in ('requested', 'approved', 'processing', 'paid', 'rejected') then
+    raise exception 'Status do saque invalido.';
+  end if;
+
+  if new.status in ('paid', 'rejected') then
+    new.processed_at := coalesce(new.processed_at, now());
+  elsif new.status = 'requested' then
+    new.processed_at := null;
+  end if;
+
+  return new;
+end;
+$$;
+
+create or replace function public.sync_commission_from_conversion()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+declare
+  campaign_row public.campaigns;
+  base_amount numeric;
+  commission_amount numeric;
+  commission_status text;
+  available_at_value timestamptz;
+begin
+  if new.campaign_id is null then
+    return new;
+  end if;
+
+  select *
+  into campaign_row
+  from public.campaigns campaign
+  where campaign.id = new.campaign_id;
+
+  if campaign_row.id is null then
+    return new;
+  end if;
+
+  base_amount := coalesce(new.net_amount, new.gross_amount, 0);
+  commission_amount := public.calculate_commission_amount(
+    campaign_row.commission_type,
+    campaign_row.commission_value,
+    base_amount
+  );
+
+  commission_status := case
+    when new.status = 'pending' then 'pending'
+    when new.status = 'approved' then 'available'
+    else 'reversed'
+  end;
+
+  available_at_value := case when commission_status = 'available' then coalesce(new.approved_at, now()) else null end;
+
+  insert into public.commissions (
+    conversion_id,
+    affiliate_id,
+    amount,
+    status,
+    available_at,
+    paid_at
+  )
+  values (
+    new.id,
+    new.affiliate_id,
+    commission_amount,
+    commission_status,
+    available_at_value,
+    null
+  )
+  on conflict (conversion_id) do update
+    set affiliate_id = excluded.affiliate_id,
+        amount = excluded.amount,
+        status = excluded.status,
+        available_at = excluded.available_at,
+        paid_at = case when excluded.status = 'paid' then coalesce(public.commissions.paid_at, now()) else null end,
+        updated_at = now();
+
+  if new.status in ('rejected', 'refunded') then
+    update public.commissions
+    set payout_request_id = null
+    where conversion_id = new.id;
+  end if;
+
+  return new;
+end;
+$$;
+
+create or replace function public.sync_payout_request_commissions()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if new.status = 'paid' then
+    update public.commissions
+    set status = 'paid',
+        paid_at = coalesce(new.processed_at, now()),
+        updated_at = now()
+    where payout_request_id = new.id;
+  elsif new.status = 'rejected' then
+    update public.commissions
+    set payout_request_id = null,
+        status = 'available',
+        paid_at = null,
+        updated_at = now()
+    where payout_request_id = new.id
+      and status <> 'paid';
+  end if;
+
+  return new;
+end;
+$$;
+
+create or replace function public.get_affiliate_available_balance(target_affiliate_id uuid default auth.uid())
+returns numeric
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(sum(commission.amount), 0)::numeric
+  from public.commissions commission
+  where commission.affiliate_id = target_affiliate_id
+    and commission.status = 'available'
+    and commission.payout_request_id is null;
+$$;
+
+create or replace function public.get_affiliate_financial_summary(target_affiliate_id uuid default auth.uid())
+returns table (
+  pending_amount numeric,
+  available_amount numeric,
+  awaiting_payout_amount numeric,
+  paid_amount numeric,
+  total_conversions bigint,
+  total_commissions bigint,
+  payout_minimum numeric
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    coalesce(sum(case when commission.status = 'pending' then commission.amount else 0 end), 0)::numeric as pending_amount,
+    coalesce(sum(case when commission.status = 'available' and commission.payout_request_id is null then commission.amount else 0 end), 0)::numeric as available_amount,
+    coalesce(sum(case when commission.status = 'available' and commission.payout_request_id is not null then commission.amount else 0 end), 0)::numeric as awaiting_payout_amount,
+    coalesce(sum(case when commission.status = 'paid' then commission.amount else 0 end), 0)::numeric as paid_amount,
+    (select count(*) from public.conversions conversion where conversion.affiliate_id = target_affiliate_id) as total_conversions,
+    count(commission.id) as total_commissions,
+    public.get_numeric_setting('payout.minimum_amount', 100) as payout_minimum
+  from public.commissions commission
+  where commission.affiliate_id = target_affiliate_id;
+$$;
+
+create or replace function public.request_payout(request_amount numeric default null)
+returns public.payout_requests
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  current_profile public.user_profiles;
+  available_balance numeric;
+  minimum_amount numeric;
+  final_amount numeric;
+  created_request public.payout_requests;
+begin
+  select *
+  into current_profile
+  from public.user_profiles profile
+  where profile.user_id = auth.uid();
+
+  if current_profile.user_id is null then
+    raise exception 'Perfil autenticado nao encontrado.';
+  end if;
+
+  if current_profile.role not in ('affiliate', 'admin') then
+    raise exception 'Somente afiliados podem solicitar saque.';
+  end if;
+
+  available_balance := public.get_affiliate_available_balance(auth.uid());
+  minimum_amount := public.get_numeric_setting('payout.minimum_amount', 100);
+
+  if available_balance <= 0 then
+    raise exception 'Nao ha saldo disponivel para saque.';
+  end if;
+
+  final_amount := coalesce(request_amount, available_balance);
+
+  if final_amount <> available_balance then
+    raise exception 'Nesta etapa inicial, a solicitacao deve usar o saldo disponivel integral.';
+  end if;
+
+  if final_amount < minimum_amount then
+    raise exception 'O saque minimo atual e de %.', minimum_amount;
+  end if;
+
+  insert into public.payout_requests (
+    affiliate_id,
+    amount,
+    status
+  )
+  values (
+    auth.uid(),
+    final_amount,
+    'requested'
+  )
+  returning *
+  into created_request;
+
+  update public.commissions
+  set payout_request_id = created_request.id,
+      updated_at = now()
+  where affiliate_id = auth.uid()
+    and status = 'available'
+    and payout_request_id is null;
+
+  return created_request;
+end;
+$$;
+
 drop trigger if exists trg_campaigns_prepare on public.campaigns;
 create trigger trg_campaigns_prepare
 before insert or update on public.campaigns
@@ -1634,6 +2146,54 @@ create trigger trg_affiliate_links_updated_at
 before update on public.affiliate_links
 for each row
 execute function public.set_updated_at();
+
+drop trigger if exists trg_settings_updated_at on public.settings;
+create trigger trg_settings_updated_at
+before update on public.settings
+for each row
+execute function public.set_updated_at();
+
+drop trigger if exists trg_conversions_prepare on public.conversions;
+create trigger trg_conversions_prepare
+before insert or update on public.conversions
+for each row
+execute function public.prepare_conversion();
+
+drop trigger if exists trg_conversions_updated_at on public.conversions;
+create trigger trg_conversions_updated_at
+before update on public.conversions
+for each row
+execute function public.set_updated_at();
+
+drop trigger if exists trg_conversions_sync_commission on public.conversions;
+create trigger trg_conversions_sync_commission
+after insert or update on public.conversions
+for each row
+execute function public.sync_commission_from_conversion();
+
+drop trigger if exists trg_commissions_updated_at on public.commissions;
+create trigger trg_commissions_updated_at
+before update on public.commissions
+for each row
+execute function public.set_updated_at();
+
+drop trigger if exists trg_payout_requests_prepare on public.payout_requests;
+create trigger trg_payout_requests_prepare
+before insert or update on public.payout_requests
+for each row
+execute function public.prepare_payout_request();
+
+drop trigger if exists trg_payout_requests_updated_at on public.payout_requests;
+create trigger trg_payout_requests_updated_at
+before update on public.payout_requests
+for each row
+execute function public.set_updated_at();
+
+drop trigger if exists trg_payout_requests_sync_commissions on public.payout_requests;
+create trigger trg_payout_requests_sync_commissions
+after update on public.payout_requests
+for each row
+execute function public.sync_payout_request_commissions();
 
 drop view if exists public.public_store_products;
 create view public.public_store_products
@@ -1780,6 +2340,10 @@ alter table public.campaigns enable row level security;
 alter table public.campaign_products enable row level security;
 alter table public.affiliate_links enable row level security;
 alter table public.clicks enable row level security;
+alter table public.settings enable row level security;
+alter table public.conversions enable row level security;
+alter table public.commissions enable row level security;
+alter table public.payout_requests enable row level security;
 
 drop policy if exists "Perfil proprio ou admin pode ler" on public.user_profiles;
 create policy "Perfil proprio ou admin pode ler"
@@ -1966,12 +2530,110 @@ create policy "Leitura de clicks por dono ou admin"
   to authenticated
   using (affiliate_id = auth.uid() or public.is_admin());
 
+drop policy if exists "Leitura de settings por admin" on public.settings;
+create policy "Leitura de settings por admin"
+  on public.settings
+  for select
+  to authenticated
+  using (public.is_admin());
+
+drop policy if exists "Insercao de settings por admin" on public.settings;
+create policy "Insercao de settings por admin"
+  on public.settings
+  for insert
+  to authenticated
+  with check (public.is_admin());
+
+drop policy if exists "Atualizacao de settings por admin" on public.settings;
+create policy "Atualizacao de settings por admin"
+  on public.settings
+  for update
+  to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "Leitura de conversions por dono ou admin" on public.conversions;
+create policy "Leitura de conversions por dono ou admin"
+  on public.conversions
+  for select
+  to authenticated
+  using (
+    affiliate_id = auth.uid()
+    or public.is_admin()
+    or exists (
+      select 1
+      from public.campaigns campaign
+      where campaign.id = conversions.campaign_id
+        and (public.is_advertiser_or_admin(campaign.advertiser_id) or public.is_admin())
+    )
+  );
+
+drop policy if exists "Gestao de conversions por admin" on public.conversions;
+create policy "Gestao de conversions por admin"
+  on public.conversions
+  for all
+  to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "Leitura de commissions por dono ou admin" on public.commissions;
+create policy "Leitura de commissions por dono ou admin"
+  on public.commissions
+  for select
+  to authenticated
+  using (
+    affiliate_id = auth.uid()
+    or public.is_admin()
+    or exists (
+      select 1
+      from public.conversions conversion
+      join public.campaigns campaign
+        on campaign.id = conversion.campaign_id
+      where conversion.id = commissions.conversion_id
+        and (public.is_advertiser_or_admin(campaign.advertiser_id) or public.is_admin())
+    )
+  );
+
+drop policy if exists "Gestao de commissions por admin" on public.commissions;
+create policy "Gestao de commissions por admin"
+  on public.commissions
+  for all
+  to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "Leitura de payout_requests por dono ou admin" on public.payout_requests;
+create policy "Leitura de payout_requests por dono ou admin"
+  on public.payout_requests
+  for select
+  to authenticated
+  using (affiliate_id = auth.uid() or public.is_admin());
+
+drop policy if exists "Insercao de payout_requests pelo proprio afiliado ou admin" on public.payout_requests;
+create policy "Insercao de payout_requests pelo proprio afiliado ou admin"
+  on public.payout_requests
+  for insert
+  to authenticated
+  with check (affiliate_id = auth.uid() or public.is_admin());
+
+drop policy if exists "Atualizacao de payout_requests por admin" on public.payout_requests;
+create policy "Atualizacao de payout_requests por admin"
+  on public.payout_requests
+  for update
+  to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
 grant usage on schema public to anon, authenticated;
 grant execute on function public.is_admin() to authenticated;
 grant execute on function public.is_advertiser_or_admin(uuid) to authenticated;
 grant execute on function public.finalize_account_activation() to authenticated;
 grant execute on function public.get_affiliate_campaign_catalog() to authenticated;
 grant execute on function public.create_affiliate_link(uuid, uuid) to authenticated;
+grant execute on function public.get_numeric_setting(text, numeric) to authenticated;
+grant execute on function public.get_affiliate_available_balance(uuid) to authenticated;
+grant execute on function public.get_affiliate_financial_summary(uuid) to authenticated;
+grant execute on function public.request_payout(numeric) to authenticated;
 grant execute on function public.get_public_store_by_slug(text) to anon, authenticated;
 grant execute on function public.get_public_products_by_profile(uuid) to anon, authenticated;
 grant execute on function public.check_public_slug_availability(text, uuid) to anon, authenticated;
@@ -1981,6 +2643,10 @@ grant select, insert, update, delete on public.campaigns to authenticated;
 grant select, insert, delete on public.campaign_products to authenticated;
 grant select, insert, update on public.affiliate_links to authenticated;
 grant select on public.clicks to authenticated;
+grant select, insert, update, delete on public.settings to authenticated;
+grant select, insert, update, delete on public.conversions to authenticated;
+grant select, insert, update, delete on public.commissions to authenticated;
+grant select, insert, update on public.payout_requests to authenticated;
 grant select, insert, update, delete on public.product_categories to authenticated;
 grant select, insert, update on public.user_profiles to authenticated;
 grant select, insert, update, delete on public.produtos to authenticated;

@@ -244,7 +244,7 @@
   }
 
   async function loadAffiliateDashboard() {
-    const [catalogResult, linksResult, clicksResult] = await Promise.all([
+    const [catalogResult, linksResult, clicksResult, summaryResult] = await Promise.all([
       window.db.rpc('get_affiliate_campaign_catalog'),
       window.db
         .from('affiliate_links')
@@ -254,16 +254,21 @@
       window.db
         .from('clicks')
         .select('affiliate_link_id')
-        .eq('affiliate_id', state.session.user.id)
+        .eq('affiliate_id', state.session.user.id),
+      window.db.rpc('get_affiliate_financial_summary', {
+        target_affiliate_id: state.session.user.id
+      })
     ]);
 
     if (catalogResult.error) throw catalogResult.error;
     if (linksResult.error) throw linksResult.error;
     if (clicksResult.error) throw clicksResult.error;
+    if (summaryResult.error) throw summaryResult.error;
 
     const catalog = Array.isArray(catalogResult.data) ? catalogResult.data : [];
     const links = linksResult.data || [];
     const clicks = clicksResult.data || [];
+    const summary = Array.isArray(summaryResult.data) ? (summaryResult.data[0] || {}) : (summaryResult.data || {});
     const uniqueCampaigns = new Set(catalog.map((item) => item.campaign_id).filter(Boolean)).size;
     const clickCountByLink = clicks.reduce((acc, item) => {
       acc[item.affiliate_link_id] = (acc[item.affiliate_link_id] || 0) + 1;
@@ -275,7 +280,7 @@
     refs.metricOneValue.textContent = String(uniqueCampaigns);
     refs.metricTwoValue.textContent = String(links.length);
     refs.metricThreeValue.textContent = String(totalClicks);
-    refs.metricFourValue.textContent = formatCurrency(0);
+    refs.metricFourValue.textContent = formatCurrency(summary.available_amount || 0);
 
     renderTable(
       ['Oferta', 'Link', 'Cliques', 'Criado em'],
@@ -302,7 +307,9 @@
       },
       {
         title: 'Comissao e saque',
-        description: 'A proxima entrega conecta conversoes, aprovacao de comissao e solicitacao de payout no mesmo fluxo.'
+        description: Number(summary.available_amount || 0) > 0
+          ? `Voce ja tem ${formatCurrency(summary.available_amount || 0)} disponivel no modulo financeiro.`
+          : 'O modulo financeiro ja acompanha saldo, comissoes e solicitacao inicial de payout.'
       }
     ]);
   }
