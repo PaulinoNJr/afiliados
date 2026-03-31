@@ -44,7 +44,8 @@ Site completo para divulgar produtos de afiliado do Mercado Livre, com:
 - `Redirect URLs`: inclua `http://localhost:3000/ativacao`, `http://localhost:3000/ativacao.html`, `http://localhost:3000/recuperar-senha`, `http://localhost:3000/recuperar-senha.html`, `https://SEU-DOMINIO.vercel.app/ativacao`, `https://SEU-DOMINIO.vercel.app/ativacao.html`, `https://SEU-DOMINIO.vercel.app/recuperar-senha` e `https://SEU-DOMINIO.vercel.app/recuperar-senha.html`
 5. Em `Authentication > Email Templates > Confirm signup`, copie o conteudo de [`supabase/email-template-confirmation.html`](./supabase/email-template-confirmation.html) para que o Supabase use o template customizado do projeto.
 6. Em `Authentication > Email Templates > Reset password`, copie o conteudo de [`supabase/email-template-recovery.html`](./supabase/email-template-recovery.html) para padronizar o fluxo seguro de recuperacao de senha.
-7. O `schema.sql` já promove automaticamente `paulino.covabra@gmail.com` para perfil `admin`.
+7. Os templates usam `#token_hash=...` no fragmento da URL, e nao na query string, para reduzir exposicao do token em logs, historico e cabecalhos `Referer`.
+8. O `schema.sql` já promove automaticamente `paulino.covabra@gmail.com` para perfil `admin`.
 
 ## 2) Configurar variáveis do Supabase no frontend
 
@@ -219,6 +220,7 @@ O fluxo implementado segue boas praticas de mercado para reduzir abuso e vazamen
 
 - a tela de solicitacao devolve mensagem neutra, sem informar se o email existe ou nao
 - o email leva para uma pagina dedicada (`recuperar-senha`) em vez de expor a troca de senha direto no login
+- o token do email fica no fragmento da URL (`#token_hash`) para evitar vazamento em logs e reduzir exposicao via `Referer`
 - o link precisa ser validado explicitamente antes de consumir o token, o que ajuda contra scanners automaticos de email
 - a nova senha reaproveita as mesmas regras minimas de seguranca do cadastro
 - depois da redefinicao, o usuario volta para o login em vez de ficar autenticado automaticamente
