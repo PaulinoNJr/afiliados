@@ -43,6 +43,18 @@ function getOpenClawConfig() {
   };
 }
 
+function getMercadoLivreApiConfig() {
+  const accessToken = String(
+    process.env.MERCADOLIVRE_ACCESS_TOKEN ||
+    process.env.MELI_ACCESS_TOKEN ||
+    ''
+  ).trim();
+
+  return {
+    configured: Boolean(accessToken)
+  };
+}
+
 function extractAssistantTextFromChatCompletion(payload) {
   const content = payload?.choices?.[0]?.message?.content;
 
@@ -196,6 +208,7 @@ module.exports = async (req, res) => {
   }
 
   const config = getOpenClawConfig();
+  const mercadolivreApi = getMercadoLivreApiConfig();
   const rawUrl = typeof req.query?.url === 'string' ? req.query.url.trim() : '';
   const shouldProbe = req.query?.probe === '1' || Boolean(rawUrl);
 
@@ -217,7 +230,8 @@ module.exports = async (req, res) => {
     auth_mode: config.authMode,
     agent_id: config.agentId,
     model: config.model,
-    timeout_ms: config.timeoutMs
+    timeout_ms: config.timeoutMs,
+    mercadolivre_api_token_configured: mercadolivreApi.configured
   };
 
   if (!shouldProbe || !config.configured) {

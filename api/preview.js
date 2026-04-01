@@ -180,6 +180,59 @@ function normalizeMultilineText(raw, maxLength = 6000) {
   return `${normalized.slice(0, maxLength - 3).trim()}...`;
 }
 
+function collectSnapshotTextCandidates(value, path = 'snapshot', depth = 0, candidates = []) {
+  if (value === null || value === undefined || depth > 8) return candidates;
+
+  if (typeof value === 'string') {
+    const normalized = normalizeMultilineText(value, 6000);
+    if (!normalized || normalized.length < 24 || /^https?:\/\//i.test(normalized)) {
+      return candidates;
+    }
+
+    const normalizedPath = String(path || '').toLowerCase();
+    let score = Math.min(120, Math.floor(normalized.length / 80));
+    if (/description|descricao|plain_text|text/i.test(normalizedPath)) score += 60;
+    if (/content|body|paragraph|section|value|snippet/i.test(normalizedPath)) score += 30;
+    if (/title|name|label/i.test(normalizedPath)) score -= 40;
+
+    candidates.push({
+      value: normalized,
+      source: `api:items.description.${path}`,
+      score
+    });
+    return candidates;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => {
+      collectSnapshotTextCandidates(item, `${path}[${index}]`, depth + 1, candidates);
+    });
+    return candidates;
+  }
+
+  if (typeof value === 'object') {
+    Object.entries(value).forEach(([key, nestedValue]) => {
+      collectSnapshotTextCandidates(nestedValue, `${path}.${key}`, depth + 1, candidates);
+    });
+  }
+
+  return candidates;
+}
+
+function extractDescriptionFromSnapshot(snapshot) {
+  const ranked = collectSnapshotTextCandidates(snapshot)
+    .filter((candidate) => candidate?.value)
+    .sort((a, b) => (b.score - a.score) || (b.value.length - a.value.length));
+
+  const best = ranked[0] || null;
+  if (!best) return null;
+
+  return {
+    description: best.value,
+    source: best.source
+  };
+}
+
 function getOpenClawConfig() {
   const baseUrl = String(process.env.OPENCLAW_BASE_URL || '').trim().replace(/\/+$/, '');
   const token = String(process.env.OPENCLAW_GATEWAY_TOKEN || '').trim();
@@ -211,6 +264,30 @@ function getOpenClawConfig() {
     timeoutMs,
     authHeader: `Bearer ${token || password}`
   };
+}
+
+function getMercadoLivreApiConfig() {
+  const accessToken = String(
+    process.env.MERCADOLIVRE_ACCESS_TOKEN ||
+    process.env.MELI_ACCESS_TOKEN ||
+    ''
+  ).trim();
+
+  return {
+    accessToken,
+    enabled: Boolean(accessToken)
+  };
+}
+
+function buildMercadoLivreApiHeaders(requestHeaders = {}) {
+  const headers = { ...requestHeaders };
+  const config = getMercadoLivreApiConfig();
+
+  if (config.accessToken) {
+    headers.authorization = `Bearer ${config.accessToken}`;
+  }
+
+  return headers;
 }
 
 function extractAssistantTextFromChatCompletion(payload) {
@@ -933,6 +1010,7 @@ function collectMercadoLivreItemIdCandidates({ finalUrl, html }) {
 
 async function getMercadoLivreProduct(link, requestHeaders = {}) {
   try {
+    const mercadolivreApiHeaders = buildMercadoLivreApiHeaders(requestHeaders);
     const response = await fetch(link, {
       method: 'GET',
       headers: requestHeaders,
@@ -956,7 +1034,7 @@ async function getMercadoLivreProduct(link, requestHeaders = {}) {
     for (const candidate of itemCandidates.slice(0, 8)) {
       try {
         const itemResponse = await fetch(`https://api.mercadolibre.com/items/${candidate.id}`, {
-          headers: requestHeaders,
+          headers: mercadolivreApiHeaders,
           redirect: 'follow'
         });
 
@@ -972,7 +1050,7 @@ async function getMercadoLivreProduct(link, requestHeaders = {}) {
         let descData = null;
         try {
           const descResponse = await fetch(`https://api.mercadolibre.com/items/${itemData.id}/description`, {
-            headers: requestHeaders,
+            headers: mercadolivreApiHeaders,
             redirect: 'follow'
           });
           if (descResponse.ok) {
@@ -988,12 +1066,20 @@ async function getMercadoLivreProduct(link, requestHeaders = {}) {
 
         const descriptionPlainText = normalizeMultilineText(descData?.plain_text || null, 6000);
         const descriptionText = normalizeMultilineText(descData?.text || null, 6000);
+        const descriptionSnapshot = extractDescriptionFromSnapshot(descData?.snapshot);
         const fallbackShortDescription = normalizeMultilineText(itemData?.short_description || null, 6000);
-        let description = descriptionPlainText || descriptionText || fallbackShortDescription || null;
+        let description =
+          descriptionPlainText ||
+          descriptionText ||
+          descriptionSnapshot?.description ||
+          fallbackShortDescription ||
+          null;
         let descriptionSource = descriptionPlainText
           ? 'api:items.description.plain_text'
           : descriptionText
             ? 'api:items.description.text'
+            : descriptionSnapshot?.description
+              ? descriptionSnapshot.source
             : fallbackShortDescription
               ? 'api:items.short_description'
               : null;

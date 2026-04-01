@@ -196,6 +196,30 @@ No `admin.html`, a mensagem de preenchimento automático agora informa também q
 - a Open.Claw não está configurada
 - a Open.Claw falhou e o sistema caiu no fallback do Mercado Livre
 
+## 5.1) Melhorar a busca de descricoes via API oficial do Mercado Livre
+
+O endpoint [`/api/preview`](./api/preview.js) já tenta ler a descricao oficial do item em:
+
+- `GET /items/{ITEM_ID}/description`
+
+Com base no guia oficial do Mercado Livre, o sistema agora:
+
+- usa `plain_text` como fonte principal da descricao
+- usa `text` como fallback estruturado
+- tenta extrair texto util de `snapshot` quando os campos principais vierem vazios
+- aceita token bearer opcional para chamar a API oficial com mais chance de sucesso
+
+Variaveis de ambiente opcionais para essa integracao:
+
+- `MERCADOLIVRE_ACCESS_TOKEN`: token OAuth do Mercado Livre para leitura autenticada da API
+- `MELI_ACCESS_TOKEN`: alias aceito pelo projeto para o mesmo token
+
+Observacoes:
+
+- sem token, a captura continua funcionando com fallback HTML quando a API oficial recusar a consulta
+- com token, a chance de recuperar descricao rica pela API aumenta, principalmente em itens protegidos por politica
+- em ambiente hospedado, configure o token em `Project Settings > Environment Variables` da Vercel
+
 ## Fluxo de uso
 
 1. Acesse `login.html` e faça login com usuário existente no Supabase Auth.
