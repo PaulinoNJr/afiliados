@@ -224,7 +224,15 @@
     }
 
     const response = await fetch(`/api/preview?url=${encodeURIComponent(parsedUrl.toString())}`);
-    const payload = await response.json();
+    const rawBody = await response.text();
+
+    let payload = null;
+    try {
+      payload = JSON.parse(rawBody);
+    } catch {
+      const preview = rawBody.trim().slice(0, 140);
+      throw new Error(preview || 'Resposta invalida do servidor ao capturar o produto.');
+    }
 
     if (!response.ok || !payload.ok) {
       throw new Error(payload.error || 'Não foi possível extrair dados do produto.');
