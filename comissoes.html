@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Comissoes e Saques | Afiliados</title>
-  <meta name="description" content="Acompanhe comissoes, saldo disponivel e solicitacoes de saque do afiliado." />
+  <title>Comissões e Saques | Afiliados</title>
+  <meta name="description" content="Acompanhe comissões, saldo disponível e solicitações de saque do afiliado." />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
@@ -26,8 +26,8 @@
         <div class="row g-4 align-items-center">
           <div class="col-12 col-xl-8">
             <p class="admin-eyebrow mb-2">Financeiro do afiliado</p>
-            <h1 class="h2 mb-2">Saldo, comissoes e solicitacoes de saque</h1>
-            <p class="mb-0 text-secondary">Acompanhe a evolucao financeira do seu workspace e registre o pedido de saque quando houver saldo disponivel acima do minimo configurado.</p>
+            <h1 class="h2 mb-2">Saldo, comissões e solicitações de saque</h1>
+            <p class="mb-0 text-secondary">Acompanhe a evolução financeira do seu workspace e registre o pedido de saque quando houver saldo disponível acima do mínimo configurado.</p>
           </div>
           <div class="col-12 col-xl-4">
             <div class="d-grid gap-2 d-sm-flex justify-content-xl-end page-header-actions">
@@ -38,12 +38,12 @@
         </div>
       </section>
 
-      <section class="workspace-menu" aria-label="Navegacao do sistema">
+      <section class="workspace-menu" aria-label="Navegação do sistema">
         <div class="workspace-menu-shell">
           <a href="dashboard-afiliado.html" class="workspace-menu-link">Painel</a>
           <a href="perfil.html" class="workspace-menu-link">Perfil</a>
           <a href="links.html" class="workspace-menu-link">Links</a>
-          <a href="comissoes.html" class="workspace-menu-link is-active" aria-current="page">Comissoes</a>
+          <a href="comissoes.html" class="workspace-menu-link is-active" aria-current="page">Comissões</a>
         </div>
       </section>
 
@@ -61,14 +61,14 @@
           <div class="card border-0 shadow-sm">
             <div class="card-body p-4">
               <p class="store-settings-kicker mb-1">Solicitar saque</p>
-              <h2 class="h4 mb-2">Use o saldo disponivel integral</h2>
+              <h2 class="h4 mb-2">Use o saldo disponível integral</h2>
               <p id="payoutHint" class="text-secondary small mb-4">Carregando regras do saque...</p>
               <form id="payoutRequestForm" novalidate>
                 <div class="mb-3">
                   <label for="payoutAmount" class="form-label">Valor do saque</label>
                   <input id="payoutAmount" type="number" class="form-control" min="0" step="0.01" readonly />
                 </div>
-                <p class="text-secondary small mb-3">O valor e preenchido automaticamente com todo o saldo disponivel nesta fase inicial.</p>
+                <p class="text-secondary small mb-3">O valor e preenchido automaticamente com todo o saldo disponível nesta fase inicial.</p>
                 <button id="requestPayoutBtn" type="submit" class="btn btn-primary w-100">Solicitar saque</button>
               </form>
             </div>
@@ -80,18 +80,18 @@
             <div class="card-body p-4">
               <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-3">
                 <div>
-                  <h2 class="h5 mb-1">Comissoes</h2>
-                  <p class="text-secondary small mb-0">Cada conversao gera ou atualiza a comissao correspondente dentro do fluxo financeiro.</p>
+                  <h2 class="h5 mb-1">Comissões</h2>
+                  <p class="text-secondary small mb-0">Cada conversao gera ou atualiza a comissão correspondente dentro do fluxo financeiro.</p>
                 </div>
                 <button id="reloadFinanceBtn" type="button" class="btn btn-sm btn-outline-primary">Atualizar</button>
               </div>
               <div class="table-responsive">
                 <table class="table admin-table align-middle">
-                  <thead><tr><th>Comissao</th><th>Status</th><th>Conversao</th><th>Data</th></tr></thead>
+                  <thead><tr><th>Comissão</th><th>Status</th><th>Conversao</th><th>Data</th></tr></thead>
                   <tbody id="commissionsTableBody"></tbody>
                 </table>
               </div>
-              <div id="commissionsEmptyState" class="text-center py-4 text-secondary d-none">Nenhuma comissao registrada ainda.</div>
+              <div id="commissionsEmptyState" class="text-center py-4 text-secondary d-none">Nenhuma comissão registrada ainda.</div>
             </div>
           </div>
         </div>
@@ -103,17 +103,17 @@
             <div class="card-body p-4">
               <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-3">
                 <div>
-                  <h2 class="h5 mb-1">Historico de saques</h2>
-                  <p class="text-secondary small mb-0">Pedidos abertos, em processamento e pagos aparecem aqui para facilitar conciliacao e auditoria.</p>
+                  <h2 class="h5 mb-1">Histórico de saques</h2>
+                  <p class="text-secondary small mb-0">Pedidos abertos, em processamento e pagos aparecem aqui para facilitar conciliação e auditoria.</p>
                 </div>
               </div>
               <div class="table-responsive">
                 <table class="table admin-table align-middle">
-                  <thead><tr><th>Solicitacao</th><th>Status</th><th>Processamento</th><th>Observacoes</th></tr></thead>
+                  <thead><tr><th>Solicitação</th><th>Status</th><th>Processamento</th><th>Observações</th></tr></thead>
                   <tbody id="payoutsTableBody"></tbody>
                 </table>
               </div>
-              <div id="payoutsEmptyState" class="text-center py-4 text-secondary d-none">Nenhuma solicitacao de saque registrada.</div>
+              <div id="payoutsEmptyState" class="text-center py-4 text-secondary d-none">Nenhuma solicitação de saque registrada.</div>
             </div>
           </div>
         </div>

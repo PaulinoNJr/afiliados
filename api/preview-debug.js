@@ -44,7 +44,7 @@ function getOpenClawConfig() {
 }
 
 function extractAssistantTextFromChatCompletion(payload) {
-  const content = payload?.choices?.[0]?.message?.content;
+  const content = payload?.choicesó.[0]?.message?.content;
 
   if (typeof content === 'string') {
     return content.trim();
@@ -104,13 +104,13 @@ function buildProbePayload({ model, url }) {
         {
           role: 'system',
           content: [
-            'Voce extrai dados de produto a partir de links de afiliado.',
+            'Você extrai dados de produto a partir de links de afiliado.',
             'Abra o link informado, siga redirecionamentos ate a pagina do produto e responda somente com JSON valido.',
             'Campos obrigatorios do JSON: title, image, price, description, source_url, resolved_product_url.',
-            'Use null quando um campo nao puder ser obtido com confianca.',
+            'Use null quando um campo não puder ser obtido com confiança.',
             'Em price, retorne apenas numero decimal sem simbolo de moeda.',
             'Em image, retorne uma URL absoluta da imagem principal.',
-            'Nao inclua markdown, comentarios ou texto fora do JSON.'
+            'Não inclua markdown, comentários ou texto fora do JSON.'
           ].join(' ')
         },
         {
@@ -156,7 +156,7 @@ async function ensureDebugAccess(req) {
 
 module.exports = async (req, res) => {
   if (String(process.env.PREVIEW_DEBUG_ENABLED || '').trim() !== '1') {
-    return res.status(404).json({ ok: false, error: 'Endpoint indisponivel.' });
+    return res.status(404).json({ ok: false, error: 'Endpoint indisponível.' });
   }
 
   setJsonSecurityHeaders(res);
@@ -170,7 +170,7 @@ module.exports = async (req, res) => {
   }
 
   if (req.method !== 'GET') {
-    return res.status(405).json({ ok: false, error: 'Metodo nao permitido.' });
+    return res.status(405).json({ ok: false, error: 'Método não permitido.' });
   }
 
   try {
@@ -229,8 +229,8 @@ module.exports = async (req, res) => {
             attempted: false,
             ok: false,
             reason: config.missing.length
-              ? `Configuracao incompleta: ${config.missing.join(', ')}`
-              : 'Probe nao solicitado.'
+              ? `Configuração incompleta: ${config.missing.join(', ')}`
+              : 'Probe não solicitado.'
           }
         : null
     });

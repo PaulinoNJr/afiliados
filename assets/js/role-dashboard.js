@@ -90,7 +90,7 @@
   }
 
   function applyHeader(profile) {
-    refs.userEmail.textContent = state.session.user.email || 'Usuario autenticado';
+    refs.userEmail.textContent = state.session.user.email || 'Usuário autenticado';
     refs.userRoleBadge.textContent = window.Auth.getRoleLabel(profile?.role);
     refs.userRoleBadge.className = profile?.role === 'admin' ? 'badge text-bg-primary' : 'badge text-bg-secondary';
     window.Auth.applyProfileAccess(profile);
@@ -158,7 +158,7 @@
       return new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime();
     })[0];
 
-    refs.dashboardDescription.textContent = 'Seu workspace ja conecta catalogo e campanhas, deixando a base pronta para operacao de afiliados, tracking e comissoes.';
+    refs.dashboardDescription.textContent = 'Seu workspace já conecta catálogo e campanhas, deixando a base pronta para operação de afiliados, tracking e comissões.';
     refs.metricOneValue.textContent = String(products.length);
     refs.metricTwoValue.textContent = String(activeCampaigns);
     refs.metricThreeValue.textContent = String(linkedProducts);
@@ -173,7 +173,7 @@
           : `${Number(campaign.commission_value || 0).toFixed(2)}%`;
 
         return [
-          `<div class="fw-semibold">${escapeHtml(campaign.name || 'Campanha sem nome')}</div><div class="small text-secondary">Comissao ${escapeHtml(commissionLabel)}</div>`,
+          `<div class="fw-semibold">${escapeHtml(campaign.name || 'Campanha sem nome')}</div><div class="small text-secondary">Comissão ${escapeHtml(commissionLabel)}</div>`,
           `<span class="badge ${getStatusBadge(campaign.status)}">${escapeHtml(campaign.status || 'draft')}</span>`,
           `<span class="fw-semibold">${productCount}</span>`,
           `<span class="small text-secondary">${formatDate(campaign.updated_at || campaign.created_at)}</span>`
@@ -183,16 +183,16 @@
 
     renderActivities([
       {
-        title: 'Campanhas em operacao',
-        description: campaigns.length ? `${campaigns.length} campanha(s) estruturadas para distribuir aos afiliados.` : 'Crie a primeira campanha para transformar o catalogo em oferta distribuivel.'
+        title: 'Campanhas em operação',
+        description: campaigns.length ? `${campaigns.length} campanha(s) estruturadas para distribuir aos afiliados.` : 'Crie a primeira campanha para transformar o catálogo em oferta distribuível.'
       },
       {
         title: 'Base comercial pronta',
-        description: products.length ? `${products.length} produto(s) cadastrados e ${categories.length} categoria(s) organizadas no workspace.` : 'Cadastre produtos e categorias antes de abrir a operacao para afiliados.'
+        description: products.length ? `${products.length} produto(s) cadastrados e ${categories.length} categoria(s) organizadas no workspace.` : 'Cadastre produtos e categorias antes de abrir a operação para afiliados.'
       },
       {
         title: 'Tracking preparado',
-        description: activeCampaigns ? 'Com campanhas ativas, o modulo de links rastreaveis ja consegue apoiar a distribuicao das ofertas.' : 'Ative pelo menos uma campanha para destravar o uso pelos afiliados.'
+        description: activeCampaigns ? 'Com campanhas ativas, o módulo de links rastreáveis já consegue apoiar a distribuição das ofertas.' : 'Ative pelo menos uma campanha para destravar o uso pelos afiliados.'
       }
     ]);
   }
@@ -226,7 +226,7 @@
     const openPayouts = payouts.filter((item) => ['requested', 'approved', 'processing'].includes(item.status)).length;
     const pendingActivation = profiles.filter((item) => item.activation_status !== 'active').length;
 
-    refs.dashboardDescription.textContent = 'O backoffice agora concentra usuarios, aprovacao de conversoes e a fila de payouts em uma operacao unica.';
+    refs.dashboardDescription.textContent = 'O backoffice agora concentra usuários, aprovação de conversões e a fila de payouts em uma operação única.';
     refs.metricOneValue.textContent = String(profiles.length);
     refs.metricTwoValue.textContent = String(advertisers);
     refs.metricThreeValue.textContent = String(pendingConversions);
@@ -245,15 +245,15 @@
     renderActivities([
       {
         title: 'Ativacoes pendentes',
-        description: pendingActivation ? `${pendingActivation} conta(s) ainda nao concluiram ativacao por email.` : 'Nenhuma ativacao pendente no momento.'
+        description: pendingActivation ? `${pendingActivation} conta(s) ainda não concluíram ativação por e-mail.` : 'Nenhuma ativação pendente no momento.'
       },
       {
-        title: 'Conversoes aguardando decisao',
-        description: pendingConversions ? `${pendingConversions} conversao(oes) pendentes esperando aprovacao ou rejeicao do backoffice.` : 'Nenhuma conversao pendente aguardando decisao.'
+        title: 'Conversões aguardando decisão',
+        description: pendingConversions ? `${pendingConversions} conversão(?es) pendentes esperando aprovação ou rejeição do backoffice.` : 'Nenhuma conversão pendente aguardando decisão.'
       },
       {
         title: 'Fila de saques',
-        description: openPayouts ? `${openPayouts} solicitacao(oes) de saque seguem abertas para aprovacao, processamento ou pagamento.` : 'Nenhum saque aberto no momento.'
+        description: openPayouts ? `${openPayouts} solicitação(?es) de saque seguem abertas para aprovação, processamento ou pagamento.` : 'Nenhum saque aberto no momento.'
       }
     ]);
   }
@@ -291,7 +291,7 @@
     }, {});
     const totalClicks = Object.values(clickCountByLink).reduce((sum, value) => sum + value, 0);
 
-    refs.dashboardDescription.textContent = 'Seu workspace ja recebe campanhas liberadas, gera links rastreaveis e acompanha cliques reais por oferta.';
+    refs.dashboardDescription.textContent = 'Seu workspace já recebe campanhas liberadas, gera links rastreáveis e acompanha cliques reais por oferta.';
     refs.metricOneValue.textContent = String(uniqueCampaigns);
     refs.metricTwoValue.textContent = String(links.length);
     refs.metricThreeValue.textContent = String(totalClicks);
@@ -313,18 +313,18 @@
 
     renderActivities([
       {
-        title: 'Catalogo liberado',
+        title: 'Catálogo liberado',
         description: catalog.length ? `${catalog.length} oferta(s) prontas para gerar link e distribuir.` : 'Nenhuma oferta liberada ainda. Assim que o anunciante ativar campanhas, elas aparecerao aqui.'
       },
       {
-        title: 'Links em operacao',
-        description: links.length ? `${links.length} link(s) rastreaveis ja foram gerados na sua conta.` : 'Gere seu primeiro link rastreavel para iniciar historico de cliques.'
+        title: 'Links em operação',
+        description: links.length ? `${links.length} link(s) rastreáveis já foram gerados na sua conta.` : 'Gere seu primeiro link rastreável para iniciar histórico de cliques.'
       },
       {
-        title: 'Comissao e saque',
+        title: 'Comissão e saque',
         description: Number(summary.available_amount || 0) > 0
-          ? `Voce ja tem ${formatCurrency(summary.available_amount || 0)} disponivel no modulo financeiro.`
-          : 'O modulo financeiro ja acompanha saldo, comissoes e solicitacao inicial de payout.'
+          ? `Você já tem ${formatCurrency(summary.available_amount || 0)} disponível no módulo financeiro.`
+          : 'O módulo financeiro já acompanha saldo, comissões e solicitação inicial de payout.'
       }
     ]);
   }

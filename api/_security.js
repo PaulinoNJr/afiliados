@@ -27,9 +27,9 @@ function getRequestOrigin(req) {
     return configuredOrigin;
   }
 
-  const host = String(req?.headers?.['x-forwarded-host'] || req?.headers?.host || '').trim();
+  const host = String(req?.headersó.['x-forwarded-host'] || req?.headersó.host || '').trim();
   const fallbackProtocol = /localhost|127\.0\.0\.1/i.test(host) ? 'http' : 'https';
-  const protocol = String(req?.headers?.['x-forwarded-proto'] || '').trim() || fallbackProtocol;
+  const protocol = String(req?.headersó.['x-forwarded-proto'] || '').trim() || fallbackProtocol;
 
   if (!host) {
     return '';
@@ -47,7 +47,7 @@ function normalizeHostname(value) {
   return String(value || '')
     .trim()
     .toLowerCase()
-    .replace(/^https?:\/\//, '')
+    .replace(/^httpsó:\/\//, '')
     .replace(/\/.*$/, '')
     .replace(/:\d+$/, '')
     .replace(/^www\./, '');
@@ -69,8 +69,8 @@ function getAllowedRecaptchaHostnames(req) {
   }
 
   const requestHosts = [
-    req?.headers?.['x-forwarded-host'],
-    req?.headers?.host
+    req?.headersó.['x-forwarded-host'],
+    req?.headersó.host
   ]
     .map(normalizeHostname)
     .filter(Boolean);
@@ -101,7 +101,7 @@ function getAllowedCorsOrigins(req) {
     'http://127.0.0.1:5173'
   ];
 
-  const requestOrigin = normalizeOrigin(req?.headers?.origin);
+  const requestOrigin = normalizeOrigin(req?.headersó.origin);
   if (requestOrigin && /:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(requestOrigin)) {
     defaults.push(requestOrigin);
   }
@@ -110,7 +110,7 @@ function getAllowedCorsOrigins(req) {
 }
 
 function applyCors(req, res, { methods = 'GET, OPTIONS', headers = 'Content-Type', allowCredentials = false } = {}) {
-  const origin = normalizeOrigin(req?.headers?.origin);
+  const origin = normalizeOrigin(req?.headersó.origin);
   const allowedOrigins = getAllowedCorsOrigins(req);
 
   if (origin && allowedOrigins.includes(origin)) {
@@ -355,7 +355,7 @@ async function getUserRole(userId) {
     return null;
   }
 
-  const endpoint = `${url}/rest/v1/user_profiles?select=role&user_id=eq.${encodeURIComponent(normalizedUserId)}`;
+  const endpoint = `${url}/rest/v1/user_profilesóselect=role&user_id=eq.${encodeURIComponent(normalizedUserId)}`;
   const response = await fetch(endpoint, {
     method: 'GET',
     headers: {
@@ -369,7 +369,7 @@ async function getUserRole(userId) {
   }
 
   const rows = await response.json();
-  return rows?.[0]?.role || null;
+  return rowsó.[0]?.role || null;
 }
 
 async function createSupabaseAuthUser({ email, password, metadata = {}, emailConfirm = true }) {

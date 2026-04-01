@@ -50,7 +50,7 @@
   }
 
   function applyHeader() {
-    refs.userEmail.textContent = state.session.user.email || 'Usuario autenticado';
+    refs.userEmail.textContent = state.session.user.email || 'Usuário autenticado';
     refs.userRoleBadge.textContent = window.Auth.getRoleLabel(state.profile?.role);
     refs.userRoleBadge.className = window.Auth.normalizeRole(state.profile?.role) === 'admin' ? 'badge text-bg-primary' : 'badge text-bg-secondary';
     window.Auth.applyProfileAccess(state.profile);
@@ -88,7 +88,7 @@
             <h2 class="h5">${escapeHtml(item.product_title)}</h2>
             <p class="text-secondary small mb-3">${escapeHtml(item.campaign_name)}${item.campaign_description ? ` - ${escapeHtml(item.campaign_description)}` : ''}</p>
             <div class="d-flex flex-wrap gap-2 mb-3">
-              <span class="badge text-bg-light">${item.commission_type === 'fixed' ? 'Comissao fixa' : 'Comissao percentual'}</span>
+              <span class="badge text-bg-light">${item.commission_type === 'fixed' ? 'Comissão fixa' : 'Comissão percentual'}</span>
               <span class="badge text-bg-secondary">${item.commission_type === 'fixed' ? formatCurrency(item.commission_value) : `${Number(item.commission_value || 0).toFixed(2)}%`}</span>
             </div>
             <p class="fw-semibold mb-4">${formatCurrency(item.product_price)}</p>
@@ -177,7 +177,7 @@
       await navigator.clipboard.writeText(value);
       showStatus('Link rastreavel copiado com sucesso.', 'success');
     } catch {
-      showStatus('Nao foi possivel copiar o link automaticamente.', 'warning');
+      showStatus('Não foi possóvel copiar o link automaticamente.', 'warning');
     }
   }
 

@@ -83,7 +83,7 @@
   }
 
   function applyHeader() {
-    refs.userEmail.textContent = state.session.user.email || 'Usuario autenticado';
+    refs.userEmail.textContent = state.session.user.email || 'Usuário autenticado';
     refs.userRoleBadge.textContent = window.Auth.getRoleLabel(state.profile?.role);
     refs.userRoleBadge.className = 'badge text-bg-primary';
     window.Auth.applyProfileAccess(state.profile);
@@ -284,7 +284,7 @@
 
     if (!filteredPayouts.length) {
       refs.payoutsEmptyState.classList.remove('d-none');
-      refs.payoutsEmptyState.textContent = 'Nenhuma solicitacao de saque encontrada para este filtro.';
+      refs.payoutsEmptyState.textContent = 'Nenhuma solicitação de saque encontrada para este filtro.';
       return;
     }
 
@@ -458,7 +458,7 @@
       });
       if (error) throw error;
 
-      showStatus(`Conversao atualizada para ${status}.`, 'success');
+      showStatus(`Conversão atualizada para ${status}.`, 'success');
       await loadData();
     } catch (err) {
       showStatus(`Erro ao revisar conversao: ${err.message}`, 'danger');
@@ -478,7 +478,7 @@
       });
       if (error) throw error;
 
-      showStatus(`Solicitacao de saque atualizada para ${status}.`, 'success');
+      showStatus(`Solicitação de saque atualizada para ${status}.`, 'success');
       await loadData();
     } catch (err) {
       showStatus(`Erro ao revisar saque: ${err.message}`, 'danger');

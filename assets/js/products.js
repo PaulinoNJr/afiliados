@@ -91,7 +91,7 @@
 
   function normalizePictures(value) {
     if (!Array.isArray(value)) return [];
-    return value.map((item) => String(item || '').trim()).filter((item) => /^https?:\/\//i.test(item));
+    return value.map((item) => String(item || '').trim()).filter((item) => /^httpsó:\/\//i.test(item));
   }
 
   function extractProductMeta(data = {}) {
@@ -196,7 +196,7 @@
   }
 
   function applyHeader() {
-    refs.userEmail.textContent = state.session.user.email || 'Usuario autenticado';
+    refs.userEmail.textContent = state.session.user.email || 'Usuário autenticado';
     refs.userRoleBadge.textContent = window.Auth.getRoleLabel(state.profile?.role);
     refs.userRoleBadge.className = state.isAdmin ? 'badge text-bg-primary' : 'badge text-bg-secondary';
     refs.viewPublicStoreLink.href = state.profile?.slug ? window.StoreUtils.getStoreUrl(state.profile.slug) : 'loja.html';
@@ -257,7 +257,7 @@
 
   function resetPreviewCard() {
     refs.previewTitle.textContent = 'Produto sem titulo';
-    refs.previewDescription.textContent = 'Adicione uma descricao para melhorar a conversao.';
+    refs.previewDescription.textContent = 'Adicione uma descrição para melhorar a conversão.';
     refs.previewPrice.textContent = 'R$ 0,00';
     refs.previewImage.onerror = null;
     refs.previewImage.src = defaultImage();
@@ -711,7 +711,7 @@
 
   function exportVisibleProductsToCsv() {
     if (!state.visibleProducts.length) {
-      showStatus('Nao ha produtos para exportar.', 'warning');
+      showStatus('Não h? produtos para exportar.', 'warning');
       return;
     }
 

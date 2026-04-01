@@ -74,7 +74,7 @@
 
   function updatePasswordValidation() {
     const result = window.StoreUtils.validatePasswordRules(refs.password.value);
-    const rulesList = refs.passwordRules?.querySelectorAll('[data-rule]') || [];
+    const rulesList = refs.passwordRulesó.querySelectorAll('[data-rule]') || [];
 
     rulesList.forEach((item) => {
       const ruleName = item.dataset.rule;

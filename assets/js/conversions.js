@@ -76,7 +76,7 @@
   }
 
   function applyHeader() {
-    refs.userEmail.textContent = state.session.user.email || 'Usuario autenticado';
+    refs.userEmail.textContent = state.session.user.email || 'Usuário autenticado';
     refs.userRoleBadge.textContent = window.Auth.getRoleLabel(state.profile?.role);
     refs.userRoleBadge.className = state.isAdmin ? 'badge text-bg-primary' : 'badge text-bg-secondary';
     window.Auth.applyProfileAccess(state.profile);
@@ -96,7 +96,7 @@
     refs.conversionClickId.innerHTML = '';
 
     if (!state.clicks.length) {
-      refs.conversionClickId.innerHTML = '<option value="">Nenhum clique disponivel</option>';
+      refs.conversionClickId.innerHTML = '<option value="">Nenhum clique disponível</option>';
       return;
     }
 
@@ -304,7 +304,7 @@
       });
       if (error) throw error;
 
-      showStatus('Conversao registrada com sucesso. A comissao foi recalculada automaticamente.', 'success');
+      showStatus('Conversão registrada com sucesso. A comissão foi recalculada automaticamente.', 'success');
       clearForm();
       await loadData();
     } catch (err) {

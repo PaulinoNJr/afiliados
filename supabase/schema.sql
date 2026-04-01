@@ -373,7 +373,7 @@ begin
   if tg_op = 'UPDATE' then
     if new.slug is distinct from old.slug then
       if old.slug_changed_at is not null and old.slug_changed_at > now() - interval '7 days' then
-        raise exception 'O slug so pode ser alterado uma vez a cada 7 dias.';
+        raise exception 'O slug só pode ser alterado uma vez a cada 7 dias.';
       end if;
 
       new.slug_changed_at := now();
@@ -747,7 +747,7 @@ begin
   where user_id = auth.uid();
 
   if current_profile.user_id is null then
-    raise exception 'Perfil do usuario nao encontrado.';
+    raise exception 'Perfil do usuário não encontrado.';
   end if;
 
   if current_profile.activation_status = 'active' then
@@ -839,7 +839,7 @@ declare
   suffix integer := 1;
 begin
   if target_profile_id is null then
-    raise exception 'Perfil da categoria nao informado.';
+    raise exception 'Perfil da categoria não informado.';
   end if;
 
   if normalized_base is null or normalized_base = '' then
@@ -875,7 +875,7 @@ begin
   new.slug := nullif(trim(coalesce(new.slug, '')), '');
 
   if new.profile_id is null then
-    raise exception 'Perfil da categoria nao informado.';
+    raise exception 'Perfil da categoria não informado.';
   end if;
 
   if new.name is null then
@@ -916,7 +916,7 @@ declare
   existing_category_id uuid;
 begin
   if target_profile_id is null then
-    raise exception 'Perfil da categoria nao informado.';
+    raise exception 'Perfil da categoria não informado.';
   end if;
 
   select category_item.id
@@ -1079,14 +1079,14 @@ begin
     where category_item.id = new.category_id;
 
     if category_profile_id is null then
-      raise exception 'Categoria nao encontrada.';
+      raise exception 'Categoria não encontrada.';
     end if;
 
     if new.profile_id is null then
       new.profile_id := category_profile_id;
       new.created_by := category_profile_id;
     elsif category_profile_id <> new.profile_id then
-      raise exception 'A categoria selecionada nao pertence ao perfil informado.';
+      raise exception 'A categoria selecionada não pertence ao perfil informado.';
     end if;
   end if;
 
@@ -1129,7 +1129,7 @@ begin
     from public.produtos product
     where product.category_id = old.id
   ) then
-    raise exception 'Nao e possivel excluir uma categoria com produtos vinculados.';
+    raise exception 'Não ? possóvel excluir uma categoria com produtos vinculados.';
   end if;
 
   return old;
@@ -1574,7 +1574,7 @@ begin
   new.commission_type := lower(nullif(trim(coalesce(new.commission_type, '')), ''));
 
   if new.advertiser_id is null then
-    raise exception 'Anunciante da campanha nao informado.';
+    raise exception 'Anunciante da campanha não informado.';
   end if;
 
   if new.name is null then
@@ -1620,7 +1620,7 @@ begin
   where campaign.id = new.campaign_id;
 
   if campaign_owner_id is null then
-    raise exception 'Campanha nao encontrada.';
+    raise exception 'Campanha não encontrada.';
   end if;
 
   select product.profile_id
@@ -1629,7 +1629,7 @@ begin
   where product.id = new.product_id;
 
   if product_owner_id is null then
-    raise exception 'Produto nao encontrado.';
+    raise exception 'Produto não encontrado.';
   end if;
 
   if campaign_owner_id <> product_owner_id then
@@ -1669,7 +1669,7 @@ begin
   where campaign.id = new.campaign_id;
 
   if campaign_row.id is null then
-    raise exception 'Campanha nao encontrada.';
+    raise exception 'Campanha não encontrada.';
   end if;
 
   if campaign_row.status <> 'active' then
@@ -1677,7 +1677,7 @@ begin
   end if;
 
   if campaign_row.starts_at is not null and campaign_row.starts_at > now() then
-    raise exception 'A campanha ainda nao iniciou.';
+    raise exception 'A campanha ainda não iniciou.';
   end if;
 
   if campaign_row.ends_at is not null and campaign_row.ends_at < now() then
@@ -1690,7 +1690,7 @@ begin
     where campaign_product.campaign_id = new.campaign_id
       and campaign_product.product_id = new.product_id
   ) then
-    raise exception 'O produto nao esta vinculado a campanha.';
+    raise exception 'O produto não está vinculado à campanha.';
   end if;
 
   select *
@@ -1699,12 +1699,12 @@ begin
   where product.id = new.product_id;
 
   if product_row.id is null then
-    raise exception 'Produto nao encontrado.';
+    raise exception 'Produto não encontrado.';
   end if;
 
   new.destination_url := nullif(trim(coalesce(new.destination_url, product_row.link_afiliado)), '');
   if new.destination_url is null then
-    raise exception 'URL de destino do link nao informada.';
+    raise exception 'URL de destino do link não informada.';
   end if;
 
   new.status := lower(nullif(trim(coalesce(new.status, '')), ''));
@@ -1789,11 +1789,11 @@ begin
   where profile.user_id = auth.uid();
 
   if current_profile.user_id is null then
-    raise exception 'Perfil autenticado nao encontrado.';
+    raise exception 'Perfil autenticado não encontrado.';
   end if;
 
   if current_profile.role not in ('affiliate', 'admin') then
-    raise exception 'Somente afiliados podem gerar links rastreaveis.';
+    raise exception 'Somente afiliados podem gerar links rastreáveis.';
   end if;
 
   insert into public.affiliate_links (
@@ -1871,7 +1871,7 @@ begin
   where profile.user_id = auth.uid();
 
   if current_profile.user_id is null then
-    raise exception 'Perfil autenticado nao encontrado.';
+    raise exception 'Perfil autenticado não encontrado.';
   end if;
 
   if current_profile.role <> 'admin' then
@@ -1916,7 +1916,7 @@ begin
   where profile.user_id = auth.uid();
 
   if current_profile.user_id is null then
-    raise exception 'Perfil autenticado nao encontrado.';
+    raise exception 'Perfil autenticado não encontrado.';
   end if;
 
   if current_profile.role <> 'admin' then
@@ -1999,7 +1999,7 @@ begin
   new.status := lower(nullif(trim(coalesce(new.status, '')), ''));
 
   if new.affiliate_id is null then
-    raise exception 'Afiliado da conversao nao informado.';
+    raise exception 'Afiliado da conversão não informado.';
   end if;
 
   if new.gross_amount is null or new.gross_amount < 0 then
@@ -2036,7 +2036,7 @@ begin
   new.notes := nullif(trim(coalesce(new.notes, '')), '');
 
   if new.affiliate_id is null then
-    raise exception 'Afiliado do saque nao informado.';
+    raise exception 'Afiliado do saque não informado.';
   end if;
 
   if new.amount is null or new.amount <= 0 then
@@ -2219,7 +2219,7 @@ begin
   where profile.user_id = auth.uid();
 
   if current_profile.user_id is null then
-    raise exception 'Perfil autenticado nao encontrado.';
+    raise exception 'Perfil autenticado não encontrado.';
   end if;
 
   if current_profile.role not in ('affiliate', 'admin') then
@@ -2230,13 +2230,13 @@ begin
   minimum_amount := public.get_numeric_setting('payout.minimum_amount', 100);
 
   if available_balance <= 0 then
-    raise exception 'Nao ha saldo disponivel para saque.';
+    raise exception 'Não h? saldo disponível para saque.';
   end if;
 
   final_amount := coalesce(request_amount, available_balance);
 
   if final_amount <> available_balance then
-    raise exception 'Nesta etapa inicial, a solicitacao deve usar o saldo disponivel integral.';
+    raise exception 'Nesta etapa inicial, a solicitação deve usar o saldo disponível integral.';
   end if;
 
   if final_amount < minimum_amount then
@@ -2293,15 +2293,15 @@ begin
   where profile.user_id = auth.uid();
 
   if current_profile.user_id is null then
-    raise exception 'Perfil autenticado nao encontrado.';
+    raise exception 'Perfil autenticado não encontrado.';
   end if;
 
   if current_profile.role <> 'admin' then
-    raise exception 'Somente administradores podem revisar conversoes.';
+    raise exception 'Somente administradores podem revisar conversões.';
   end if;
 
   if target_conversion_id is null then
-    raise exception 'Conversao nao informada.';
+    raise exception 'Conversão não informada.';
   end if;
 
   if normalized_status not in ('approved', 'rejected', 'refunded') then
@@ -2314,7 +2314,7 @@ begin
   where conversion_item.id = target_conversion_id;
 
   if current_conversion.id is null then
-    raise exception 'Conversao nao encontrada.';
+    raise exception 'Conversão não encontrada.';
   end if;
 
   select *
@@ -2324,7 +2324,7 @@ begin
 
   if current_commission.status = 'paid'
      and normalized_status in ('rejected', 'refunded') then
-    raise exception 'Nao e possivel reverter uma conversao com comissao ja paga.';
+    raise exception 'Não ? possóvel reverter uma conversão com comissão já paga.';
   end if;
 
   update public.conversions
@@ -2381,7 +2381,7 @@ begin
   where profile.user_id = auth.uid();
 
   if current_profile.user_id is null then
-    raise exception 'Perfil autenticado nao encontrado.';
+    raise exception 'Perfil autenticado não encontrado.';
   end if;
 
   if current_profile.role <> 'admin' then
@@ -2389,7 +2389,7 @@ begin
   end if;
 
   if target_payout_request_id is null then
-    raise exception 'Solicitacao de saque nao informada.';
+    raise exception 'Solicitação de saque não informada.';
   end if;
 
   if normalized_status not in ('approved', 'processing', 'paid', 'rejected') then
@@ -2402,12 +2402,12 @@ begin
   where payout_request_item.id = target_payout_request_id;
 
   if current_request.id is null then
-    raise exception 'Solicitacao de saque nao encontrada.';
+    raise exception 'Solicitação de saque não encontrada.';
   end if;
 
   if current_request.status in ('paid', 'rejected')
      and current_request.status is distinct from normalized_status then
-    raise exception 'Nao e possivel alterar uma solicitacao finalizada.';
+    raise exception 'Não ? possóvel alterar uma solicitação finalizada.';
   end if;
 
   generated_note := coalesce(
@@ -2475,15 +2475,15 @@ begin
   where profile.user_id = auth.uid();
 
   if current_profile.user_id is null then
-    raise exception 'Perfil autenticado nao encontrado.';
+    raise exception 'Perfil autenticado não encontrado.';
   end if;
 
   if current_profile.role not in ('admin', 'advertiser') then
-    raise exception 'Somente admin ou anunciante podem registrar conversoes.';
+    raise exception 'Somente admin ou anunciante podem registrar conversões.';
   end if;
 
   if target_click_id is null then
-    raise exception 'Clique da conversao nao informado.';
+    raise exception 'Clique da conversão não informado.';
   end if;
 
   if gross_amount_value is null or gross_amount_value <= 0 then
@@ -2500,7 +2500,7 @@ begin
   where click_item.id = target_click_id;
 
   if click_row.id is null then
-    raise exception 'Clique informado nao encontrado.';
+    raise exception 'Clique informado não encontrado.';
   end if;
 
   select *
@@ -2509,11 +2509,11 @@ begin
   where campaign.id = click_row.campaign_id;
 
   if campaign_row.id is null then
-    raise exception 'Campanha vinculada ao clique nao encontrada.';
+    raise exception 'Campanha vinculada ao clique não encontrada.';
   end if;
 
   if current_profile.role = 'advertiser' and campaign_row.advertiser_id <> auth.uid() then
-    raise exception 'Voce nao tem permissao para registrar conversoes desta campanha.';
+    raise exception 'Você não tem permissão para registrar conversões desta campanha.';
   end if;
 
   insert into public.conversions (
@@ -2783,16 +2783,16 @@ create policy "Perfil proprio ou admin pode ler"
   to authenticated
   using (auth.uid() = user_id or public.is_admin());
 
-drop policy if exists "Usuario autenticado pode inserir proprio perfil" on public.user_profiles;
-create policy "Usuario autenticado pode inserir proprio perfil"
+drop policy if exists "Usuário autenticado pode inserir próprio perfil" on public.user_profiles;
+create policy "Usuário autenticado pode inserir próprio perfil"
   on public.user_profiles
   for insert
   to authenticated
   with check (auth.uid() = user_id);
 
-drop policy if exists "Usuario ou admin pode atualizar perfil" on public.user_profiles;
+drop policy if exists "Usuário ou admin pode atualizar perfil" on public.user_profiles;
 drop policy if exists "Admin pode atualizar perfil" on public.user_profiles;
-create policy "Usuario ou admin pode atualizar perfil"
+create policy "Usuário ou admin pode atualizar perfil"
   on public.user_profiles
   for update
   to authenticated
@@ -2836,7 +2836,7 @@ create policy "Leitura de produtos por dono ou admin"
   to authenticated
   using (public.is_advertiser_or_admin(profile_id) or public.is_admin());
 
-drop policy if exists "Insercao por usuario autenticado" on public.produtos;
+drop policy if exists "Inserção por usuário autenticado" on public.produtos;
 drop policy if exists "Insercao por dono ou admin" on public.produtos;
 create policy "Insercao por dono ou admin"
   on public.produtos

@@ -58,7 +58,7 @@
   }
 
   function applyHeader() {
-    const email = state.session.user.email || 'Usuario autenticado';
+    const email = state.session.user.email || 'Usuário autenticado';
     refs.userEmail.textContent = email;
     refs.userEmailReadonly.value = email;
     refs.userRoleBadge.textContent = window.Auth.getRoleLabel(state.profile?.role);
@@ -90,7 +90,7 @@
   }
 
   async function handlePhotoUpload() {
-    if (!refs.photoUpload.files?.length) return;
+    if (!refs.photoUpload.filesó.length) return;
 
     setUploadStatus('Enviando foto...', 'secondary');
 

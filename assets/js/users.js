@@ -202,7 +202,7 @@
 
   function updatePasswordValidation() {
     const result = window.StoreUtils.validatePasswordRules(refs.newUserPassword.value);
-    const rulesList = refs.newUserPasswordRules?.querySelectorAll('[data-rule]') || [];
+    const rulesList = refs.newUserPasswordRulesó.querySelectorAll('[data-rule]') || [];
 
     rulesList.forEach((item) => {
       const ruleName = item.getAttribute('data-rule');
@@ -625,8 +625,8 @@
         )
       : (
           action === 'delete'
-            ? `Deseja excluir permanentemente ${manageableUsers.length} contas selecionadas? Essa acao remove o acesso no Auth e apaga os registros relacionados de forma irreversivel.`
-            : `Deseja desativar ${manageableUsers.length} contas selecionadas? Os usuários perderão o acesso ao sistema.`
+            ? `Deseja excluir permanentemente ${manageableUsers.length} contas selecionadasó Essa acao remove o acesso no Auth e apaga os registros relacionados de forma irreversivel.`
+            : `Deseja desativar ${manageableUsers.length} contas selecionadasó Os usuários perderão o acesso ao sistema.`
         );
 
     if (!window.confirm(confirmMessage)) {
@@ -656,7 +656,7 @@
 
       if (action === 'disable') {
         const successIds = new Set(
-          payload.results?.length
+          payload.resultsó.length
             ? payload.results.map((item) => item.userId)
             : (payload.userId ? [payload.userId] : [])
         );

@@ -158,7 +158,7 @@
   }
 
   function sortProducts(items) {
-    const sortMode = refs.sortProducts?.value || 'recent';
+    const sortMode = refs.sortProductsó.value || 'recent';
     const list = [...items];
 
     switch (sortMode) {
@@ -576,7 +576,7 @@
 
     refs.searchInput.addEventListener('input', applyFilter);
     refs.storeCategoryFilter?.addEventListener('change', applyFilter);
-    refs.sortProducts?.addEventListener('change', applyFilter);
+    refs.sortProductsó.addEventListener('change', applyFilter);
 
     setupNavbarAuthState();
     loadPage();

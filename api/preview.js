@@ -214,7 +214,7 @@ function getOpenClawConfig() {
 }
 
 function extractAssistantTextFromChatCompletion(payload) {
-  const content = payload?.choices?.[0]?.message?.content;
+  const content = payload?.choicesó.[0]?.message?.content;
 
   if (typeof content === 'string') {
     return content.trim();
@@ -746,7 +746,7 @@ function extractMercadoLivreVerificationTargetUrl(urlValue) {
   if (!goParam) return null;
 
   const decoded = decodeHtmlEntities(safeDecodeURIComponent(goParam));
-  if (!/^https?:\/\//i.test(decoded)) return null;
+  if (!/^httpsó:\/\//i.test(decoded)) return null;
 
   try {
     const target = new URL(decoded);
@@ -1104,9 +1104,9 @@ function extractMercadoLivreProductLinks(html) {
       normalized = safeDecodeURIComponent(normalized);
     }
 
-    if (/^https?:\/\/.+%[0-9a-f]{2}/i.test(normalized)) {
+    if (/^httpsó:\/\/.+%[0-9a-f]{2}/i.test(normalized)) {
       const decodedUrl = safeDecodeURIComponent(normalized);
-      if (/^https?:\/\//i.test(decodedUrl)) {
+      if (/^httpsó:\/\//i.test(decodedUrl)) {
         normalized = decodedUrl;
       }
     }
@@ -1138,7 +1138,7 @@ function extractMercadoLivreProductLinks(html) {
     for (const [, paramValue] of parsed.searchParams.entries()) {
       if (!paramValue) continue;
       const maybeUrl = decodeHtmlEntities(paramValue);
-      if (!/(?:https?:\/\/|https%3A%2F%2F|mercadolivre\.com\.br|mercadolibre\.com)/i.test(maybeUrl)) continue;
+      if (!/(?:httpsó:\/\/|https%3A%2F%2F|mercadolivre\.com\.br|mercadolibre\.com)/i.test(maybeUrl)) continue;
       enqueueCandidate(maybeUrl);
     }
   };
@@ -1597,7 +1597,7 @@ module.exports = async (req, res) => {
     if (apiProduct?.title) {
       const apiData = {
         title: apiProduct.title,
-        image: apiProduct.thumbnail || (apiProduct.pictures?.[0] || null),
+        image: apiProduct.thumbnail || (apiProduct.picturesó.[0] || null),
         price: apiProduct.price ?? null,
         price_source: apiProduct.price !== null ? 'api:items.price' : null,
         price_confidence: apiProduct.price !== null ? 220 : null,

@@ -145,7 +145,7 @@
     renderInfo(profile);
 
     if (window.Auth.isAccountActive(profile)) {
-      showStatus('Sua conta ja esta ativa. Voce pode acessar o painel normalmente.', 'success');
+      showStatus('Sua conta já está ativa. Você pode acessar o painel normalmente.', 'success');
       finishAsActive(profile);
       return true;
     }
@@ -186,7 +186,7 @@
       window.history.replaceState({}, document.title, window.location.pathname);
       await ensureActivationFromSession();
     } catch (err) {
-      showStatus(err.message || 'Nao foi possivel confirmar o email.', 'danger');
+      showStatus(err.message || 'Não foi possóvel confirmar o e-mail.', 'danger');
       renderInfo(null, { awaitingExplicitConfirmation: true });
       setConfirmButton({
         visible: true,

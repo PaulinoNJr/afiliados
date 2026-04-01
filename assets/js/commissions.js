@@ -62,7 +62,7 @@
   }
 
   function applyHeader() {
-    refs.userEmail.textContent = state.session.user.email || 'Usuario autenticado';
+    refs.userEmail.textContent = state.session.user.email || 'Usuário autenticado';
     refs.userRoleBadge.textContent = window.Auth.getRoleLabel(state.profile?.role);
     refs.userRoleBadge.className = window.Auth.normalizeRole(state.profile?.role) === 'admin' ? 'badge text-bg-primary' : 'badge text-bg-secondary';
     window.Auth.applyProfileAccess(state.profile);
@@ -81,8 +81,8 @@
     refs.payoutAmount.value = availableAmount ? availableAmount.toFixed(2) : '';
     refs.requestPayoutBtn.disabled = !canRequest;
     refs.payoutHint.textContent = canRequest
-      ? `Saldo disponivel ${formatCurrency(availableAmount)}. Nesta etapa, o pedido usa o saldo integral. Saque minimo atual: ${formatCurrency(payoutMinimum)}.`
-      : `Voce precisa ter ao menos ${formatCurrency(payoutMinimum)} disponivel para solicitar saque.`;
+      ? `Saldo disponível ${formatCurrency(availableAmount)}. Nesta etapa, o pedido usa o saldo integral. Saque mínimo atual: ${formatCurrency(payoutMinimum)}.`
+      : `Você precisa ter ao menos ${formatCurrency(payoutMinimum)} disponível para solicitar saque.`;
   }
 
   function renderCommissions() {
@@ -169,7 +169,7 @@
       });
       if (error) throw error;
 
-      showStatus('Solicitacao de saque registrada com sucesso.', 'success');
+      showStatus('Solicitação de saque registrada com sucesso.', 'success');
       await loadFinance();
     } catch (err) {
       showStatus(`Erro ao solicitar saque: ${err.message}`, 'danger');

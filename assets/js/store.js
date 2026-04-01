@@ -126,7 +126,7 @@
     if (canChangeSlug()) {
       refs.storeSlugSchedule.textContent = changed
         ? 'Slug pronto para troca. Depois de salvar, uma nova alteracao ficara bloqueada por 7 dias.'
-        : 'Voce pode trocar o slug agora, mas essa alteracao so sera permitida novamente apos 7 dias.';
+        : 'Você pode trocar o slug agora, mas essa alteração só será permitida novamente após 7 dias.';
       refs.storeSlugSchedule.className = 'd-block mt-2 text-secondary';
       return;
     }
@@ -172,7 +172,7 @@
   }
 
   function applyHeader() {
-    const email = state.session.user.email || 'Usuario autenticado';
+    const email = state.session.user.email || 'Usuário autenticado';
     refs.userEmail.textContent = email;
     refs.userRoleBadge.textContent = window.Auth.getRoleLabel(state.profile?.role);
     refs.userRoleBadge.className = state.isAdmin ? 'badge text-bg-primary' : 'badge text-bg-secondary';
@@ -297,8 +297,8 @@
     if (!canChangeSlug()) {
       const lockedUntil = getSlugLockedUntil();
       const message = lockedUntil
-        ? `O slug so pode ser alterado novamente em ${formatDateTime(lockedUntil)}.`
-        : 'O slug so pode ser alterado uma vez a cada 7 dias.';
+        ? `O slug só pode ser alterado novamente em ${formatDateTime(lockedUntil)}.`
+        : 'O slug só pode ser alterado uma vez a cada 7 dias.';
       invalidateSlugCheck();
       setSlugFeedback(message, 'danger');
       if (!silent) showStatus(message, 'warning');
@@ -331,7 +331,7 @@
       return { ok: true, slug: availability.slug };
     } catch (err) {
       invalidateSlugCheck();
-      setSlugFeedback(`Nao foi possivel validar o slug: ${err.message}`, 'danger');
+      setSlugFeedback(`Não foi possóvel validar o slug: ${err.message}`, 'danger');
       if (!silent) showStatus(`Erro ao validar slug: ${err.message}`, 'danger');
       return { ok: false, slug: validation.slug };
     } finally {
@@ -463,7 +463,7 @@
     });
 
     refs.bannerUpload.addEventListener('change', async () => {
-      if (!refs.bannerUpload.files?.length) return;
+      if (!refs.bannerUpload.filesó.length) return;
       try {
         await handleAssetUpload(refs.bannerUpload.files[0], 'banner');
       } catch {}

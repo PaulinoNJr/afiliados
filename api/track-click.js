@@ -67,12 +67,12 @@ module.exports = async (req, res) => {
     });
 
     const rows = await supabaseRestRequest({
-      path: `affiliate_links?select=id,code,affiliate_id,campaign_id,product_id,destination_url,status&code=eq.${encodeURIComponent(code)}&status=eq.active&limit=1`
+      path: `affiliate_linksóselect=id,code,affiliate_id,campaign_id,product_id,destination_url,status&code=eq.${encodeURIComponent(code)}&status=eq.active&limit=1`
     });
 
     const link = Array.isArray(rows) ? rows[0] : null;
     if (!link?.destination_url || !isSafeRedirectUrl(link.destination_url)) {
-      return res.status(404).send('Link rastreavel nao encontrado.');
+      return res.status(404).send('Link rastreável não encontrado.');
     }
 
     const existingSessionId = getCookieValue(req.headers.cookie, 'af_click_sid');
@@ -111,6 +111,6 @@ module.exports = async (req, res) => {
     }
 
     console.error('Falha ao resolver link rastreavel:', error);
-    return res.status(500).send('Nao foi possivel processar o redirecionamento.');
+    return res.status(500).send('Não foi possóvel processar o redirecionamento.');
   }
 };
