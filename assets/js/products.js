@@ -39,7 +39,8 @@
     categoryRequirementHint: document.getElementById('categoryRequirementHint'),
     imagemUrl: document.getElementById('imagemUrl'),
     preco: document.getElementById('preco'),
-    descricao: document.getElementById('descricao'),
+    // Some older HTML revisions left the textarea id with broken encoding.
+    descricao: document.getElementById('descricao') || document.querySelector('textarea[id*="descri"]'),
     previewImage: document.getElementById('previewImage'),
     previewTitle: document.getElementById('previewTitle'),
     previewDescription: document.getElementById('previewDescription'),
