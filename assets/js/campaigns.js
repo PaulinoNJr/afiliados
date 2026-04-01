@@ -122,7 +122,7 @@
 
   function renderStats() {
     const activeCampaigns = state.campaigns.filter((campaign) => campaign.status === 'active').length;
-    const linkedProducts = state.campaigns.reduce((sum, campaign) => sum + (campaign.productIdsó.length || 0), 0);
+    const linkedProducts = state.campaigns.reduce((sum, campaign) => sum + (campaign.productIds?.length || 0), 0);
     const latestCampaign = [...state.campaigns].sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at))[0];
 
     refs.statTotalCampaigns.textContent = String(state.campaigns.length);
@@ -147,7 +147,7 @@
         <td><div class="fw-semibold">${escapeHtml(campaign.name)}</div><div class="small text-secondary">${escapeHtml(campaign.description || 'Sem descrição')}</div></td>
         <td><span class="badge text-bg-${campaign.status === 'active' ? 'success' : campaign.status === 'paused' ? 'warning' : campaign.status === 'closed' ? 'dark' : 'secondary'}">${escapeHtml(campaign.status)}</span></td>
         <td>${campaign.commission_type === 'fixed' ? 'R$' : '%'} ${Number(campaign.commission_value || 0).toFixed(2)}</td>
-        <td>${campaign.productIdsó.length || 0}</td>
+        <td>${campaign.productIds?.length || 0}</td>
         <td>${campaign.starts_at ? String(campaign.starts_at).slice(0, 10) : '-'} / ${campaign.ends_at ? String(campaign.ends_at).slice(0, 10) : '-'}</td>
         <td class="text-end">
           <button type="button" class="btn btn-sm btn-outline-primary me-2" data-action="edit" data-id="${campaign.id}">Editar</button>

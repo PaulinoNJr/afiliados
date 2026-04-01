@@ -9,7 +9,7 @@ function setJsonSecurityHeaders(res) {
 const rateLimitStore = new Map();
 
 function getClientIp(req) {
-  const forwardedFor = String(req.headers['x-forwarded-for'] || '').trim();
+  const forwardedFor = String(req?.headers?.['x-forwarded-for'] || '').trim();
   return forwardedFor.split(',')[0]?.trim() || '';
 }
 
@@ -21,15 +21,25 @@ function getConfiguredAppOrigin() {
   return String(process.env.APP_URL || process.env.SITE_URL || '').trim().replace(/\/+$/, '');
 }
 
+function normalizeHostname(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/\/.*$/, '')
+    .replace(/:\d+$/, '')
+    .replace(/^www\./, '');
+}
+
 function getRequestOrigin(req) {
   const configuredOrigin = getConfiguredAppOrigin();
   if (configuredOrigin) {
     return configuredOrigin;
   }
 
-  const host = String(req?.headersó.['x-forwarded-host'] || req?.headersó.host || '').trim();
+  const host = String(req?.headers?.['x-forwarded-host'] || req?.headers?.host || '').trim();
   const fallbackProtocol = /localhost|127\.0\.0\.1/i.test(host) ? 'http' : 'https';
-  const protocol = String(req?.headersó.['x-forwarded-proto'] || '').trim() || fallbackProtocol;
+  const protocol = String(req?.headers?.['x-forwarded-proto'] || '').trim() || fallbackProtocol;
 
   if (!host) {
     return '';
@@ -41,16 +51,6 @@ function getRequestOrigin(req) {
   }
 
   return `${protocol}://${host}`;
-}
-
-function normalizeHostname(value) {
-  return String(value || '')
-    .trim()
-    .toLowerCase()
-    .replace(/^httpsó:\/\//, '')
-    .replace(/\/.*$/, '')
-    .replace(/:\d+$/, '')
-    .replace(/^www\./, '');
 }
 
 function getAllowedRecaptchaHostnames(req) {
@@ -69,8 +69,8 @@ function getAllowedRecaptchaHostnames(req) {
   }
 
   const requestHosts = [
-    req?.headersó.['x-forwarded-host'],
-    req?.headersó.host
+    req?.headers?.['x-forwarded-host'],
+    req?.headers?.host
   ]
     .map(normalizeHostname)
     .filter(Boolean);
@@ -101,7 +101,7 @@ function getAllowedCorsOrigins(req) {
     'http://127.0.0.1:5173'
   ];
 
-  const requestOrigin = normalizeOrigin(req?.headersó.origin);
+  const requestOrigin = normalizeOrigin(req?.headers?.origin);
   if (requestOrigin && /:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(requestOrigin)) {
     defaults.push(requestOrigin);
   }
@@ -110,7 +110,7 @@ function getAllowedCorsOrigins(req) {
 }
 
 function applyCors(req, res, { methods = 'GET, OPTIONS', headers = 'Content-Type', allowCredentials = false } = {}) {
-  const origin = normalizeOrigin(req?.headersó.origin);
+  const origin = normalizeOrigin(req?.headers?.origin);
   const allowedOrigins = getAllowedCorsOrigins(req);
 
   if (origin && allowedOrigins.includes(origin)) {
@@ -200,7 +200,7 @@ async function callSupabaseAuthAdminUserEndpoint({ userId, method, body } = {}) 
   const normalizedUserId = String(userId || '').trim();
 
   if (!normalizedUserId) {
-    throw new Error('ID do usuário ausente para operação no Auth.');
+    throw new Error('ID do usuario ausente para operacao no Auth.');
   }
 
   const endpointCandidates = [
@@ -211,13 +211,17 @@ async function callSupabaseAuthAdminUserEndpoint({ userId, method, body } = {}) 
   let lastError = null;
 
   for (const endpoint of endpointCandidates) {
+    const headers = {
+      apikey: serviceRoleKey,
+      authorization: `Bearer ${serviceRoleKey}`
+    };
+    if (body) {
+      headers['content-type'] = 'application/json';
+    }
+
     const response = await fetch(endpoint, {
       method,
-      headers: {
-        'content-type': body ? 'application/json' : undefined,
-        apikey: serviceRoleKey,
-        authorization: `Bearer ${serviceRoleKey}`
-      },
+      headers,
       body: body ? JSON.stringify(body) : undefined
     });
 
@@ -254,7 +258,7 @@ async function verifyRecaptchaToken({ token, req }) {
   ).trim();
 
   if (!secret) {
-    throw new Error('RECAPTCHA_SECRET_KEY não configurada no backend.');
+    throw new Error('RECAPTCHA_SECRET_KEY nao configurada no backend.');
   }
 
   const normalizedToken = String(token || '').trim();
@@ -295,7 +299,7 @@ async function verifyRecaptchaToken({ token, req }) {
   const allowedHostnames = getAllowedRecaptchaHostnames(req);
 
   if (allowedHostnames.length && (!responseHostname || !allowedHostnames.includes(responseHostname))) {
-    throw new Error('Verificação reCAPTCHA recusada: domínio inválido.');
+    throw new Error('Verificacao reCAPTCHA recusada: dominio invalido.');
   }
 
   return payload;
@@ -307,7 +311,7 @@ function validateRecaptchaV3Payload({ payload, expectedAction, minScore = 0.5 })
   const normalizedExpectedAction = String(expectedAction || '').trim();
 
   if (normalizedExpectedAction && action !== normalizedExpectedAction) {
-    throw new Error('Verificação reCAPTCHA recusada: ação inválida.');
+    throw new Error('Verificacao reCAPTCHA recusada: acao invalida.');
   }
 
   if (!Number.isFinite(score)) {
@@ -355,7 +359,7 @@ async function getUserRole(userId) {
     return null;
   }
 
-  const endpoint = `${url}/rest/v1/user_profilesóselect=role&user_id=eq.${encodeURIComponent(normalizedUserId)}`;
+  const endpoint = `${url}/rest/v1/user_profiles?select=role&user_id=eq.${encodeURIComponent(normalizedUserId)}`;
   const response = await fetch(endpoint, {
     method: 'GET',
     headers: {
@@ -365,11 +369,11 @@ async function getUserRole(userId) {
   });
 
   if (!response.ok) {
-    throw new Error('Não foi possível consultar o papel do usuário.');
+    throw new Error('Nao foi possivel consultar o papel do usuario.');
   }
 
   const rows = await response.json();
-  return rowsó.[0]?.role || null;
+  return rows?.[0]?.role || null;
 }
 
 async function createSupabaseAuthUser({ email, password, metadata = {}, emailConfirm = true }) {
@@ -393,7 +397,7 @@ async function createSupabaseAuthUser({ email, password, metadata = {}, emailCon
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const message = payload?.msg || payload?.message || payload?.error_description || payload?.error || 'Falha ao criar usuário no Auth.';
+    const message = payload?.msg || payload?.message || payload?.error_description || payload?.error || 'Falha ao criar usuario no Auth.';
     throw new Error(message);
   }
 
@@ -404,7 +408,7 @@ async function updateSupabaseAuthUserById(userId, attributes = {}) {
   const normalizedUserId = String(userId || '').trim();
 
   if (!normalizedUserId) {
-    throw new Error('ID do usuário ausente para atualização no Auth.');
+    throw new Error('ID do usuario ausente para atualizacao no Auth.');
   }
 
   return callSupabaseAuthAdminUserEndpoint({
@@ -418,7 +422,7 @@ async function deleteSupabaseAuthUserById(userId) {
   const normalizedUserId = String(userId || '').trim();
 
   if (!normalizedUserId) {
-    throw new Error('ID do usuário ausente para exclusão no Auth.');
+    throw new Error('ID do usuario ausente para exclusao no Auth.');
   }
 
   return callSupabaseAuthAdminUserEndpoint({
@@ -484,7 +488,7 @@ async function createSupabasePendingSignup({ email, password, metadata = {}, ema
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const message = payload?.msg || payload?.message || payload?.error_description || payload?.error || 'Falha ao iniciar o cadastro com confirmação por email.';
+    const message = payload?.msg || payload?.message || payload?.error_description || payload?.error || 'Falha ao iniciar o cadastro com confirmacao por email.';
     throw new Error(message);
   }
 

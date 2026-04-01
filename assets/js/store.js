@@ -463,7 +463,7 @@
     });
 
     refs.bannerUpload.addEventListener('change', async () => {
-      if (!refs.bannerUpload.filesó.length) return;
+      if (!refs.bannerUpload.files?.length) return;
       try {
         await handleAssetUpload(refs.bannerUpload.files[0], 'banner');
       } catch {}

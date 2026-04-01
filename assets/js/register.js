@@ -143,7 +143,7 @@
 
   function updatePasswordValidation() {
     const result = window.StoreUtils.validatePasswordRules(refs.password.value);
-    const rulesList = refs.passwordRulesó.querySelectorAll('[data-rule]') || [];
+    const rulesList = refs.passwordRules?.querySelectorAll('[data-rule]') || [];
 
     rulesList.forEach((item) => {
       const ruleName = item.getAttribute('data-rule');
@@ -300,7 +300,7 @@
 
       return new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = `https://www.google.com/recaptcha/api.jsórender=${encodeURIComponent(siteKey)}`;
+        script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(siteKey)}`;
         script.async = true;
         script.defer = true;
         script.onload = () => {

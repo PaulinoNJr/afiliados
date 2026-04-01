@@ -90,7 +90,7 @@
   }
 
   async function handlePhotoUpload() {
-    if (!refs.photoUpload.filesó.length) return;
+    if (!refs.photoUpload.files?.length) return;
 
     setUploadStatus('Enviando foto...', 'secondary');
 

@@ -67,7 +67,7 @@ module.exports = async (req, res) => {
     });
 
     const rows = await supabaseRestRequest({
-      path: `affiliate_linksóselect=id,code,affiliate_id,campaign_id,product_id,destination_url,status&code=eq.${encodeURIComponent(code)}&status=eq.active&limit=1`
+      path: `affiliate_links?select=id,code,affiliate_id,campaign_id,product_id,destination_url,status&code=eq.${encodeURIComponent(code)}&status=eq.active&limit=1`
     });
 
     const link = Array.isArray(rows) ? rows[0] : null;

@@ -92,7 +92,7 @@
 
   function normalizePictures(value) {
     if (!Array.isArray(value)) return [];
-    return value.map((item) => String(item || '').trim()).filter((item) => /^httpsó:\/\//i.test(item));
+    return value.map((item) => String(item || '').trim()).filter((item) => /^https?:\/\//i.test(item));
   }
 
   function extractProductMeta(data = {}) {
