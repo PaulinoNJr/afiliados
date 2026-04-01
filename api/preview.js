@@ -159,6 +159,15 @@ function normalizeText(raw, maxLength = 500) {
   return `${plain.slice(0, maxLength - 3).trim()}...`;
 }
 
+function normalizeComparisonText(raw) {
+  return String(raw || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function normalizeMultilineText(raw, maxLength = 6000) {
   if (raw === null || raw === undefined) return null;
 
@@ -630,12 +639,26 @@ function parseMercadoLivreSocialFeaturedData(html) {
 }
 
 function parseMercadoLivrePdpDescription(html) {
-  const match =
-    html.match(/<p[^>]*class=["'][^"']*ui-pdp-description__content[^"']*["'][^>]*>([\s\S]*?)<\/p>/i) ||
-    html.match(/<div[^>]*class=["'][^"']*ui-pdp-description__content[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
+  const patterns = [
+    /<p[^>]*class=["'][^"']*ui-pdp-description__content[^"']*["'][^>]*>([\s\S]*?)<\/p>/gi,
+    /<div[^>]*class=["'][^"']*ui-pdp-description__content[^"']*["'][^>]*>([\s\S]*?)<\/div>/gi,
+    /<section[^>]*class=["'][^"']*ui-pdp-description[^"']*["'][^>]*>([\s\S]*?)<\/section>/gi,
+    /<div[^>]*data-testid=["']description[^"']*["'][^>]*>([\s\S]*?)<\/div>/gi
+  ];
 
-  if (!match?.[1]) return null;
-  return normalizeMultilineText(match[1], 6000);
+  const candidates = [];
+  for (const pattern of patterns) {
+    for (const match of html.matchAll(pattern)) {
+      const normalized = normalizeMultilineText(match?.[1], 6000);
+      if (normalized) {
+        candidates.push(normalized);
+      }
+    }
+  }
+
+  if (!candidates.length) return null;
+  candidates.sort((a, b) => b.length - a.length);
+  return candidates[0];
 }
 
 function parseMoneyValue(raw) {
@@ -689,12 +712,36 @@ function collectJsonLdItems(root, output = []) {
 function parseDescription(html) {
   const candidates = [];
 
+  const scoreDescriptionCandidate = (text, baseScore) => {
+    const normalized = normalizeComparisonText(text);
+    let score = baseScore;
+
+    const isMarketplaceSummary =
+      normalized.startsWith('vendido por ') ||
+      normalized.includes('frete gratis por ser sua primeira compra') ||
+      normalized.includes('frete gratis') ||
+      normalized.includes('chegara gratis') ||
+      normalized.includes('compra garantida') ||
+      normalized.includes('devolucao gratis') ||
+      normalized.includes('parcelamento sem juros') ||
+      normalized.includes('retire gratis') ||
+      normalized.includes('full');
+
+    if (isMarketplaceSummary) score -= 120;
+    if (text.length >= 280) score += 55;
+    else if (text.length >= 160) score += 25;
+    else if (text.length <= 90) score -= 20;
+    if ((text.match(/\n/g) || []).length >= 2) score += 18;
+
+    return score;
+  };
+
   const socialFeatured = parseMercadoLivreSocialFeaturedData(html);
   if (socialFeatured?.description) {
     candidates.push({
       value: socialFeatured.description,
       source: 'html:social.featured.summary',
-      score: 88
+      score: scoreDescriptionCandidate(socialFeatured.description, 88)
     });
   }
 
@@ -703,7 +750,7 @@ function parseDescription(html) {
     candidates.push({
       value: pdpDescription,
       source: 'html:pdp.description',
-      score: 190
+      score: scoreDescriptionCandidate(pdpDescription, 190)
     });
   }
 
@@ -726,7 +773,7 @@ function parseDescription(html) {
     candidates.push({
       value: text,
       source: candidate.source,
-      score: candidate.score - (isEcommerceGeneric ? 60 : 0)
+      score: scoreDescriptionCandidate(text, candidate.score - (isEcommerceGeneric ? 60 : 0))
     });
   }
 
@@ -747,7 +794,7 @@ function parseDescription(html) {
         candidates.push({
           value: text,
           source: type.includes('product') ? 'jsonld:product.description' : 'jsonld:item.description',
-          score: type.includes('product') ? 125 : 85
+          score: scoreDescriptionCandidate(text, type.includes('product') ? 125 : 85)
         });
       }
     } catch {
