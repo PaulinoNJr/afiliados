@@ -28,6 +28,7 @@
     storeBannerSection: document.getElementById('storeBannerSection'),
     storeBannerImage: document.getElementById('storeBannerImage'),
     storeTopBar: document.getElementById('storeTopBar'),
+    storeFiltersSection: document.getElementById('storeFiltersSection'),
     storeCategoryFilter: document.getElementById('storeCategoryFilter'),
     searchInput: document.getElementById('searchInput'),
     sortProducts: document.getElementById('sortProducts'),
@@ -209,6 +210,7 @@
   function resetStoreUi() {
     refs.storeBannerSection.classList.add('d-none');
     refs.storeTopBar.classList.add('d-none');
+    refs.storeFiltersSection.classList.add('d-none');
     refs.productsSection.classList.add('d-none');
     refs.emptyState.classList.add('d-none');
     refs.notFoundState.classList.add('d-none');
@@ -290,6 +292,7 @@
     refs.marketingCardContent.classList.add('d-none');
     refs.homeMarketingSection.classList.add('d-none');
     refs.storeTopBar.classList.remove('d-none');
+    refs.storeFiltersSection.classList.remove('d-none');
     refs.productsSection.classList.remove('d-none');
     refs.notFoundState.classList.add('d-none');
     finishResolvingPage();
@@ -621,7 +624,27 @@
     }
   }
 
+  function detachStoreFilters() {
+    const heroColumn = document.getElementById('storeHeroColumn');
+    const filtersColumn = document.getElementById('storeFiltersColumn');
+    const filtersCard = document.getElementById('storeFiltersCard');
+
+    if (!heroColumn || !filtersColumn || !filtersCard || filtersCard.children.length) {
+      return;
+    }
+
+    const filtersContent = filtersColumn.firstElementChild;
+    if (filtersContent) {
+      filtersCard.appendChild(filtersContent);
+    }
+
+    filtersColumn.remove();
+    heroColumn.classList.remove('col-xl-4');
+    heroColumn.classList.add('col-xl-12');
+  }
+
   function init() {
+    detachStoreFilters();
     refs.searchInput.addEventListener('input', applyFilter);
     refs.storeCategoryFilter?.addEventListener('change', applyFilter);
     refs.sortProducts.addEventListener('change', applyFilter);

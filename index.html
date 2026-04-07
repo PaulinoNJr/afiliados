@@ -236,13 +236,12 @@
       <div class="container">
         <div class="store-topbar-card">
           <div class="row g-4 align-items-end">
-            <div class="col-12 col-xl-4">
-              <p class="store-topbar-kicker mb-1">Loja pública</p>
+            <div id="storeHeroColumn" class="col-12 col-xl-4">
               <h1 id="heroTitle" class="h2 mb-2">Loja</h1>
               <p id="heroHeadline" class="fs-5 fw-semibold mb-2 d-none"></p>
               <p id="heroBio" class="text-secondary mb-0 d-none"></p>
             </div>
-            <div class="col-12 col-xl-8">
+            <div id="storeFiltersColumn" class="col-12 col-xl-8">
               <div class="row g-3">
                 <div class="col-12 col-md-4">
                   <label for="storeCategoryFilter" class="form-label">Categoria</label>
@@ -276,6 +275,12 @@
       <div id="notFoundState" class="store-feedback-card d-none mt-4"><h2 class="h4 mb-2">Loja não encontrada</h2><p class="text-secondary mb-0">Esse endereço não existe ou não está disponível no momento.</p></div>
       <div id="emptyState" class="store-feedback-card d-none mt-4"><h2 id="emptyStateTitle" class="h4 mb-2">Nenhum produto publicado ainda</h2><p id="emptyStateDescription" class="text-secondary mb-0">Esta loja ainda não publicou produtos.</p></div>
     </div>
+
+    <section id="storeFiltersSection" class="store-filters-section d-none">
+      <div class="container">
+        <div id="storeFiltersCard" class="store-filters-card"></div>
+      </div>
+    </section>
 
     <section id="productsSection" class="py-4 py-lg-5 d-none">
       <div class="container"><div id="productsGrid" class="row g-4"></div></div>

@@ -1703,6 +1703,20 @@ body.bg-light {
   box-shadow: 0 1.2rem 2.8rem rgba(15, 23, 42, 0.08);
 }
 
+.store-filters-section {
+  padding-top: 0.75rem;
+}
+
+.store-filters-card {
+  padding: 1.05rem 1.15rem;
+  border-radius: 1.35rem;
+  border: 1px solid rgba(219, 229, 243, 0.88);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(37, 99, 235, 0.08), transparent 28%),
+    rgba(255, 255, 255, 0.95);
+  box-shadow: 0 1rem 2.2rem rgba(15, 23, 42, 0.06);
+}
+
 .store-feedback-card {
   display: flex;
   align-items: center;
