@@ -2352,6 +2352,9 @@ body.page-resolving #dynamicStorePageSection {
 }
 
 .affiliate-product-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   overflow: hidden;
   transition: transform 180ms ease, box-shadow 180ms ease;
 }
@@ -2380,10 +2383,14 @@ body.page-resolving #dynamicStorePageSection {
 
 .affiliate-product-badges {
   padding: 0.9rem 0.9rem 0;
+  min-height: 6.3rem;
+  align-content: start;
 }
 
 .affiliate-product-body {
-  display: grid;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   gap: 0.75rem;
   padding: 0.95rem 0.95rem 1rem;
 }
@@ -2393,6 +2400,21 @@ body.page-resolving #dynamicStorePageSection {
   margin: 0;
   color: var(--page-secondary);
   font-size: 1.04rem;
+  line-height: 1.35;
+}
+
+.affiliate-product-title {
+  display: -webkit-box;
+  min-height: calc(1.35em * 4);
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.affiliate-product-copy {
+  margin: 0;
+  line-height: 1.7;
+  min-height: 1.7em;
 }
 
 .affiliate-product-copy.is-collapsed {
@@ -2418,6 +2440,7 @@ body.page-resolving #dynamicStorePageSection {
 }
 
 .affiliate-price-tag {
+  margin-top: auto;
   font-size: 1.2rem;
   font-weight: 800;
   color: var(--page-primary);
