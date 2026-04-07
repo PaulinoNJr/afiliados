@@ -390,6 +390,7 @@ create table if not exists public.produtos (
   preco numeric(12,2) not null check (preco > 0),
   imagem_url text,
   product_url text not null,
+  is_featured boolean not null default false,
   descricao text,
   source_url text,
   ml_item_id text,
@@ -425,6 +426,21 @@ begin
       'alter table public.produtos rename column %I to product_url',
       legacy_product_column
     );
+  end if;
+end;
+$$;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'produtos'
+      and column_name = 'is_featured'
+  ) then
+    alter table public.produtos
+      add column is_featured boolean not null default false;
   end if;
 end;
 $$;
@@ -517,7 +533,49 @@ as $$
   join public.product_categories category_item
     on category_item.id = product.category_id
   where product.profile_id = store_profile_id
-  order by category_item.sort_order asc, lower(category_item.name) asc, product.created_at desc;
+  order by product.is_featured desc, category_item.sort_order asc, lower(category_item.name) asc, product.created_at desc;
+$$;
+
+create or replace function public.get_public_products_featured_by_profile(store_profile_id uuid)
+returns table (
+  id uuid,
+  profile_id uuid,
+  category_id uuid,
+  category_name text,
+  category_slug text,
+  category_sort_order integer,
+  titulo text,
+  preco numeric,
+  imagem_url text,
+  product_url text,
+  is_featured boolean,
+  descricao text,
+  created_at timestamptz
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    product.id,
+    product.profile_id,
+    category_item.id as category_id,
+    category_item.name as category_name,
+    category_item.slug as category_slug,
+    category_item.sort_order as category_sort_order,
+    product.titulo,
+    product.preco,
+    product.imagem_url,
+    product.product_url,
+    product.is_featured,
+    product.descricao,
+    product.created_at
+  from public.produtos product
+  join public.product_categories category_item
+    on category_item.id = product.category_id
+  where product.profile_id = store_profile_id
+  order by product.is_featured desc, category_item.sort_order asc, lower(category_item.name) asc, product.created_at desc;
 $$;
 
 create or replace function public.check_public_slug_availability(store_slug text, current_profile_id uuid default null)
@@ -644,6 +702,7 @@ grant execute on function public.is_advertiser_or_admin(uuid) to authenticated;
 grant execute on function public.finalize_account_activation() to authenticated;
 grant execute on function public.get_public_store_by_slug(text) to anon, authenticated;
 grant execute on function public.get_public_products_by_profile(uuid) to anon, authenticated;
+grant execute on function public.get_public_products_featured_by_profile(uuid) to anon, authenticated;
 grant execute on function public.check_public_slug_availability(text, uuid) to anon, authenticated;
 grant select, insert, update on public.user_profiles to authenticated;
 grant select, insert, update, delete on public.product_categories to authenticated;

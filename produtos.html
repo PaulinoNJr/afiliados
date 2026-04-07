@@ -159,6 +159,16 @@
                       <label for="descricao" class="form-label">Descrição</label>
                       <textarea id="descricao" class="form-control" rows="5" placeholder="Explique de forma objetiva o que torna este produto interessante para compra."></textarea>
                     </div>
+
+                    <div class="col-12">
+                      <label class="product-featured-toggle" for="isFeatured">
+                        <input id="isFeatured" type="checkbox" class="form-check-input mt-0" />
+                        <span>
+                          <strong>Colocar em destaque na loja</strong>
+                          <small>O produto marcado aparece primeiro na pagina publica, mesmo quando houver filtros ativos.</small>
+                        </span>
+                      </label>
+                    </div>
                   </div>
                 </div>
 
@@ -186,6 +196,7 @@
                 <div class="product-preview">
                   <div class="card border-0 bg-light-subtle">
                     <div class="card-body">
+                      <span id="previewFeaturedBadge" class="product-highlight-badge d-none mb-3">Destaque</span>
                       <img id="previewImage" class="preview-image mb-3" alt="Prévia do produto" />
                       <h3 id="previewTitle" class="h6 mb-2">Produto sem título</h3>
                       <p id="previewDescription" class="small text-secondary mb-2">Adicione uma descrição para melhorar a conversão.</p>

@@ -7,6 +7,7 @@
     role: 'advertiser',
     isAdmin: false,
     productUrlField: 'product_url',
+    supportsFeatured: true,
     categories: [],
     products: [],
     visibleProducts: [],
@@ -40,8 +41,10 @@
     categoryRequirementHint: document.getElementById('categoryRequirementHint'),
     imagemUrl: document.getElementById('imagemUrl'),
     preco: document.getElementById('preco'),
+    isFeatured: document.getElementById('isFeatured'),
     // Some older HTML revisions left the textarea id with broken encoding.
     descricao: document.getElementById('descricao') || document.querySelector('textarea[id*="descri"]'),
+    previewFeaturedBadge: document.getElementById('previewFeaturedBadge'),
     previewImage: document.getElementById('previewImage'),
     previewTitle: document.getElementById('previewTitle'),
     previewDescription: document.getElementById('previewDescription'),
@@ -192,13 +195,25 @@
   function normalizeProductRecord(item = {}) {
     return {
       ...item,
-      product_url: getProductUrlValue(item)
+      product_url: getProductUrlValue(item),
+      is_featured: Boolean(item.is_featured)
     };
   }
 
   function isMissingProductUrlColumnError(error) {
     const message = String(error?.message || '').toLowerCase();
     return message.includes('product_url') && message.includes('does not exist');
+  }
+
+  function isMissingFeaturedColumnError(error) {
+    const message = String(error?.message || '').toLowerCase();
+    return message.includes('is_featured') && message.includes('does not exist');
+  }
+
+  function prioritizeFeaturedProducts(items = []) {
+    const featured = items.filter((item) => item.is_featured);
+    const regular = items.filter((item) => !item.is_featured);
+    return [...featured, ...regular];
   }
 
   function hydrateProducts(items = []) {
@@ -254,10 +269,12 @@
     const image = refs.imagemUrl.value.trim();
     const price = parsePrice(refs.preco.value);
     const link = refs.productUrl.value.trim();
+    const isFeatured = refs.isFeatured.checked;
 
     refs.previewTitle.textContent = title;
     refs.previewDescription.textContent = description;
     refs.previewPrice.textContent = Number.isFinite(price) && price > 0 ? formatPrice(price) : 'R$ 0,00';
+    refs.previewFeaturedBadge.classList.toggle('d-none', !isFeatured);
     refs.previewImage.src = image || defaultImage();
     refs.previewImage.onerror = () => {
       refs.previewImage.src = defaultImage();
@@ -284,6 +301,7 @@
     refs.previewLink.classList.add('disabled', 'text-secondary');
     refs.previewSourceTag.classList.add('d-none');
     refs.previewSourceTag.textContent = '';
+    refs.previewFeaturedBadge.classList.add('d-none');
   }
 
   function clearDraft() {
@@ -301,11 +319,15 @@
       category_id: refs.categoriaId.value.trim(),
       imagem_url: refs.imagemUrl.value.trim(),
       preco: refs.preco.value.trim(),
-      descricao: refs.descricao.value.trim()
+      descricao: refs.descricao.value.trim(),
+      is_featured: refs.isFeatured.checked
     };
 
     try {
-      if (Object.values(draft).some((value) => isFilled(value))) {
+      const hasDraftContent = draft.is_featured || Object.entries(draft)
+        .some(([key, value]) => key !== 'is_featured' && isFilled(value));
+
+      if (hasDraftContent) {
         localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
       } else {
         localStorage.removeItem(DRAFT_KEY);
@@ -324,6 +346,7 @@
       refs.imagemUrl.value = draft.imagem_url || '';
       refs.preco.value = formatPriceInput(draft.preco) || draft.preco || '';
       refs.descricao.value = draft.descricao || '';
+      refs.isFeatured.checked = Boolean(draft.is_featured);
       if (draft.category_id && getCategoryById(draft.category_id)) {
         refs.categoriaId.value = draft.category_id;
       }
@@ -388,6 +411,7 @@
     updateFormHeader();
     updateProductFormAvailability();
     if (state.categories.length) refs.categoriaId.value = getDefaultCategoryId();
+    refs.isFeatured.checked = false;
     setSaveLoading(false);
     resetPreviewCard();
     if (clearStoredDraft) clearDraft();
@@ -402,6 +426,7 @@
     refs.imagemUrl.value = item.imagem_url || '';
     refs.preco.value = formatPriceInput(item.preco);
     refs.descricao.value = item.descricao || '';
+    refs.isFeatured.checked = Boolean(item.is_featured);
     refs.cancelEditBtn.classList.remove('d-none');
     updateFormHeader();
     updatePreview();
@@ -449,6 +474,7 @@
 
       const tdProduct = document.createElement('td');
       tdProduct.innerHTML = `
+        ${item.is_featured ? '<span class="product-highlight-badge mb-2">Destaque</span>' : ''}
         <div class="fw-semibold mb-1">${escapeHtml(item.titulo || 'Produto sem titulo')}</div>
         <div class="small text-secondary mb-1">${escapeHtml(descriptionPreview)}</div>
       `;
@@ -541,7 +567,7 @@
       return new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at);
     });
 
-    state.visibleProducts = products;
+    state.visibleProducts = prioritizeFeaturedProducts(products);
 
     const selectedCategory = categoryFilter !== 'all' ? getCategoryName(categoryFilter) : 'todas as categorias';
     refs.listSummary.textContent = `${products.length} de ${state.products.length} produtos exibidos em ${selectedCategory}.`;
@@ -562,33 +588,71 @@
     populateCategoryOptions();
   }
 
+  async function queryProductsForWorkspace({ urlField, includeFeatured }) {
+    const selectFields = [
+      'id',
+      'titulo',
+      'preco',
+      'imagem_url',
+      urlField,
+      'descricao',
+      'source_url',
+      'created_at',
+      'updated_at',
+      'profile_id',
+      'category_id',
+      'ml_item_id',
+      'ml_currency',
+      'ml_permalink',
+      'ml_thumbnail',
+      'ml_pictures'
+    ];
+
+    if (includeFeatured) {
+      selectFields.push('is_featured');
+    }
+
+    return window.db
+      .from('produtos')
+      .select(selectFields.join(', '))
+      .eq('profile_id', state.session.user.id)
+      .order('updated_at', { ascending: false });
+  }
+
   async function loadProducts() {
     setListLoading(true);
     try {
       let data = null;
       let error = null;
+      const attempts = [
+        { urlField: 'product_url', includeFeatured: true },
+        { urlField: 'link_afiliado', includeFeatured: true },
+        { urlField: 'product_url', includeFeatured: false },
+        { urlField: 'link_afiliado', includeFeatured: false }
+      ];
 
-      const currentQuery = await window.db
-        .from('produtos')
-        .select('id, titulo, preco, imagem_url, product_url, descricao, source_url, created_at, updated_at, profile_id, category_id, ml_item_id, ml_currency, ml_permalink, ml_thumbnail, ml_pictures')
-        .eq('profile_id', state.session.user.id)
-        .order('updated_at', { ascending: false });
+      for (const attempt of attempts) {
+        const result = await queryProductsForWorkspace(attempt);
+        data = result.data;
+        error = result.error;
 
-      data = currentQuery.data;
-      error = currentQuery.error;
+        if (!error) {
+          state.productUrlField = attempt.urlField;
+          state.supportsFeatured = attempt.includeFeatured;
+          break;
+        }
 
-      if (error && isMissingProductUrlColumnError(error)) {
-        const legacyQuery = await window.db
-          .from('produtos')
-          .select('id, titulo, preco, imagem_url, link_afiliado, descricao, source_url, created_at, updated_at, profile_id, category_id, ml_item_id, ml_currency, ml_permalink, ml_thumbnail, ml_pictures')
-          .eq('profile_id', state.session.user.id)
-          .order('updated_at', { ascending: false });
+        const missingProductUrl = isMissingProductUrlColumnError(error);
+        const missingFeatured = isMissingFeaturedColumnError(error);
+        const usingLegacyUrl = attempt.urlField === 'link_afiliado';
 
-        data = legacyQuery.data;
-        error = legacyQuery.error;
-        if (!error) state.productUrlField = 'link_afiliado';
-      } else if (!error) {
-        state.productUrlField = 'product_url';
+        if (!missingProductUrl && !missingFeatured) {
+          break;
+        }
+
+        if (missingProductUrl && usingLegacyUrl && !missingFeatured) {
+          continue;
+        }
       }
 
       if (error) throw error;
@@ -658,6 +722,23 @@
     }
   }
 
+  async function clearFeaturedProductFlag(excludeId = null) {
+    if (!state.supportsFeatured) return;
+
+    let query = window.db
+      .from('produtos')
+      .update({ is_featured: false })
+      .eq('profile_id', state.session.user.id)
+      .eq('is_featured', true);
+
+    if (excludeId) {
+      query = query.neq('id', excludeId);
+    }
+
+    const { error } = await query;
+    if (error) throw error;
+  }
+
   async function saveProduct(event) {
     event.preventDefault();
     hideStatus();
@@ -668,6 +749,7 @@
     const imagemUrl = refs.imagemUrl.value.trim();
     const preco = parsePrice(refs.preco.value);
     const descricao = refs.descricao.value.trim();
+    const isFeatured = refs.isFeatured.checked;
 
     if (!state.categories.length) {
       showStatus('Crie pelo menos uma categoria antes de cadastrar produtos.', 'warning');
@@ -681,6 +763,11 @@
 
     if (!isValidHttpUrl(productUrl) || !titulo || Number.isNaN(preco) || preco <= 0) {
       showStatus('Preencha uma URL válida, nome e preço maior que zero.', 'warning');
+      return;
+    }
+
+    if (isFeatured && !state.supportsFeatured) {
+      showStatus('Atualize o schema do Supabase para habilitar o destaque de produtos.', 'warning');
       return;
     }
 
@@ -699,6 +786,10 @@
       ml_pictures: state.productMeta.ml_pictures.length ? state.productMeta.ml_pictures : []
     };
 
+    if (state.supportsFeatured) {
+      payload.is_featured = isFeatured;
+    }
+
     setSaveLoading(true);
     try {
       if (state.editingId) {
@@ -708,14 +799,20 @@
           .eq('id', state.editingId)
           .eq('profile_id', state.session.user.id);
         if (error) throw error;
+        if (isFeatured) {
+          await clearFeaturedProductFlag(state.editingId);
+        }
         showStatus('Produto atualizado com sucesso.', 'success');
       } else {
-        const { error } = await window.db.from('produtos').insert({
+        const { data, error } = await window.db.from('produtos').insert({
           ...payload,
           profile_id: state.session.user.id,
           created_by: state.session.user.id
-        });
+        }).select('id').single();
         if (error) throw error;
+        if (isFeatured) {
+          await clearFeaturedProductFlag(data?.id || null);
+        }
         showStatus('Produto cadastrado com sucesso.', 'success');
       }
 
@@ -755,11 +852,12 @@
     }
 
     const rows = [
-      ['titulo', 'categoria', 'categoria_ordem', 'preco', 'product_url', 'imagem_url', 'descricao', 'created_at'],
+      ['titulo', 'categoria', 'categoria_ordem', 'destaque', 'preco', 'product_url', 'imagem_url', 'descricao', 'created_at'],
       ...state.visibleProducts.map((item) => [
         item.titulo || '',
         item.category_name || '',
         item.category_sort_order ?? '',
+        item.is_featured ? 'sim' : 'nao',
         Number(item.preco || 0).toFixed(2),
         getProductUrlValue(item),
         item.imagem_url || '',
@@ -787,6 +885,11 @@
         updatePreview();
         saveDraft();
       });
+    });
+
+    refs.isFeatured.addEventListener('change', () => {
+      updatePreview();
+      saveDraft();
     });
 
     refs.categoriaId.addEventListener('change', saveDraft);

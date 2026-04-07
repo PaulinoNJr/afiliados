@@ -63,6 +63,14 @@
     return String(item.product_url || item.link_afiliado || '').trim();
   }
 
+  function normalizeStoreProduct(item = {}) {
+    return {
+      ...item,
+      product_url: getProductUrl(item),
+      is_featured: Boolean(item.is_featured)
+    };
+  }
+
   function normalizeAccentColor(value) {
     const raw = String(value || '').trim().toLowerCase();
     return /^#([0-9a-f]{6}|[0-9a-f]{3})$/.test(raw) ? raw : DEFAULT_ACCENT;
@@ -181,6 +189,18 @@
       default:
         return list.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
     }
+  }
+
+  function prioritizeFeaturedProduct(items = []) {
+    const featured = state.products.find((item) => item.is_featured) || null;
+    const regularItems = items.filter((item) => !item.is_featured);
+    const sortedRegularItems = sortProducts(regularItems);
+
+    if (!featured) {
+      return sortedRegularItems;
+    }
+
+    return [featured, ...sortedRegularItems.filter((item) => item.id !== featured.id)];
   }
 
   function resetStoreUi() {
@@ -389,9 +409,20 @@
       title.className = 'h6 mb-2';
       title.textContent = item.titulo || 'Produto sem titulo';
 
+      const badges = document.createElement('div');
+      badges.className = 'product-card-badges';
+
+      if (item.is_featured) {
+        const featuredBadge = document.createElement('span');
+        featuredBadge.className = 'product-highlight-badge';
+        featuredBadge.textContent = 'Destaque';
+        badges.appendChild(featuredBadge);
+      }
+
       const categoryBadge = document.createElement('div');
-      categoryBadge.className = 'store-category-pill mb-2';
+      categoryBadge.className = 'store-category-pill';
       categoryBadge.textContent = item.category_name || 'Geral';
+      badges.appendChild(categoryBadge);
 
       const descriptionText = item.descricao || 'Sem descricao.';
       const desc = document.createElement('p');
@@ -446,7 +477,9 @@
         link.style.color = buttonTextColor;
       }
 
-      card.append(image, categoryBadge, title, desc);
+      card.append(image);
+      if (badges.childNodes.length) card.appendChild(badges);
+      card.append(title, desc);
       if (shouldShowToggle) card.append(descMeta);
       card.append(price, link);
       col.appendChild(card);
@@ -470,8 +503,28 @@
       return title.includes(term) || desc.includes(term) || categoryName.includes(term);
     });
 
-    state.filteredProducts = sortProducts(filteredBase);
+    state.filteredProducts = prioritizeFeaturedProduct(filteredBase);
     renderProducts(state.filteredProducts);
+  }
+
+  async function loadPublicProducts(storeId) {
+    const primaryResult = await window.db.rpc('get_public_products_featured_by_profile', {
+      store_profile_id: storeId
+    });
+
+    if (!primaryResult.error) {
+      return (primaryResult.data || []).map(normalizeStoreProduct);
+    }
+
+    const fallbackResult = await window.db.rpc('get_public_products_by_profile', {
+      store_profile_id: storeId
+    });
+
+    if (fallbackResult.error) {
+      throw fallbackResult.error;
+    }
+
+    return (fallbackResult.data || []).map(normalizeStoreProduct);
   }
 
   async function loadHome() {
@@ -500,13 +553,7 @@
 
     applyStoreHero(store);
 
-    const { data: products, error: productsError } = await window.db.rpc('get_public_products_by_profile', {
-      store_profile_id: store.id
-    });
-
-    if (productsError) throw productsError;
-
-    state.products = products || [];
+    state.products = await loadPublicProducts(store.id);
     state.categories = buildStoreCategories(state.products);
     renderCategoryFilter();
     refs.loading.classList.add('d-none');

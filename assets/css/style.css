@@ -495,6 +495,23 @@ body.storefront-mode {
   white-space: nowrap;
 }
 
+.product-highlight-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 1.55rem;
+  padding: 0.18rem 0.7rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  box-shadow: 0 0.5rem 1rem rgba(249, 115, 22, 0.22);
+}
+
 .preview-image {
   width: 100%;
   height: 170px;
@@ -838,6 +855,32 @@ body.storefront-mode .price-tag {
   line-height: 1.55;
 }
 
+.product-featured-toggle {
+  display: grid;
+  grid-template-columns: 1.1rem minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: start;
+  padding: 0.95rem 1rem;
+  border: 1px solid #dfe8f4;
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(245, 158, 11, 0.12), transparent 28%),
+    linear-gradient(180deg, #fffaf0 0%, #ffffff 100%);
+  cursor: pointer;
+}
+
+.product-featured-toggle strong {
+  display: block;
+  margin-bottom: 0.2rem;
+  color: #9a3412;
+}
+
+.product-featured-toggle small {
+  display: block;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
 .product-form-section {
   padding: 1.1rem;
   border: 1px solid #dfe8f4;
@@ -892,6 +935,13 @@ body.storefront-mode .price-tag {
   font-size: 0.74rem;
   font-weight: 700;
   letter-spacing: 0.02em;
+}
+
+.product-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.7rem;
 }
 
 @media (max-width: 991.98px) {
