@@ -944,6 +944,13 @@ body.storefront-mode .price-tag {
   margin-bottom: 0.7rem;
 }
 
+.product-row-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
 @media (max-width: 991.98px) {
   .navbar > .container {
     align-items: flex-start;

@@ -17,6 +17,7 @@
   const refs = {
     navAdmin: document.getElementById('navAdmin'),
     navLogout: document.getElementById('navLogout'),
+    guestNavLinks: document.querySelectorAll('[data-guest-nav="true"]'),
     homeHeroBadge: document.getElementById('homeHeroBadge'),
     homeHeroTitle: document.getElementById('homeHeroTitle'),
     homeHeroDescription: document.getElementById('homeHeroDescription'),
@@ -594,6 +595,7 @@
       if (!session) return;
 
       const profile = await window.Auth.getProfile();
+      refs.guestNavLinks.forEach((link) => link.classList.add('d-none'));
       refs.navAdmin.textContent = `Painel ${window.Auth.getRoleLabel(profile?.role)}`;
       refs.navAdmin.href = window.Auth.getDashboardRoute(profile?.role);
       refs.navLogout.classList.remove('d-none');

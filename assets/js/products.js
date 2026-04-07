@@ -503,11 +503,28 @@
       tdCreatedAt.className = 'small text-secondary';
       tdCreatedAt.textContent = formatDate(item.updated_at || item.created_at);
 
+      const tdFeatured = document.createElement('td');
+      tdFeatured.className = 'text-nowrap';
+      if (state.supportsFeatured) {
+        const featuredBtn = document.createElement('button');
+        featuredBtn.type = 'button';
+        featuredBtn.className = item.is_featured
+          ? 'btn btn-sm btn-warning'
+          : 'btn btn-sm btn-outline-warning';
+        featuredBtn.textContent = item.is_featured ? 'Em destaque' : 'Destacar';
+        featuredBtn.addEventListener('click', () => toggleFeaturedProduct(item));
+        tdFeatured.appendChild(featuredBtn);
+      } else {
+        tdFeatured.innerHTML = '<span class="small text-secondary">Indisponível</span>';
+      }
+
       const tdActions = document.createElement('td');
       tdActions.className = 'text-end';
+      const actionsWrap = document.createElement('div');
+      actionsWrap.className = 'product-row-actions';
       const editBtn = document.createElement('button');
       editBtn.type = 'button';
-      editBtn.className = 'btn btn-sm btn-outline-primary me-2';
+      editBtn.className = 'btn btn-sm btn-outline-primary';
       editBtn.textContent = 'Editar';
       editBtn.addEventListener('click', () => beginEdit(item));
       const deleteBtn = document.createElement('button');
@@ -515,9 +532,10 @@
       deleteBtn.className = 'btn btn-sm btn-outline-danger';
       deleteBtn.textContent = 'Excluir';
       deleteBtn.addEventListener('click', () => deleteProduct(item.id));
-      tdActions.append(editBtn, deleteBtn);
+      actionsWrap.append(editBtn, deleteBtn);
+      tdActions.appendChild(actionsWrap);
 
-      tr.append(tdProduct, tdCategory, tdQuality, tdPrice, tdCreatedAt, tdActions);
+      tr.append(tdProduct, tdCategory, tdQuality, tdPrice, tdCreatedAt, tdFeatured, tdActions);
       refs.tableBody.appendChild(tr);
     });
   }
@@ -842,6 +860,40 @@
       await loadProducts();
     } catch (err) {
       showStatus(`Erro ao excluir produto: ${err.message}`, 'danger');
+    }
+  }
+
+  async function toggleFeaturedProduct(item) {
+    if (!state.supportsFeatured) {
+      showStatus('Atualize o schema do Supabase para habilitar o destaque de produtos.', 'warning');
+      return;
+    }
+
+    const shouldFeature = !item.is_featured;
+
+    try {
+      if (shouldFeature) {
+        await clearFeaturedProductFlag(item.id);
+      }
+
+      const { error } = await window.db
+        .from('produtos')
+        .update({ is_featured: shouldFeature })
+        .eq('id', item.id)
+        .eq('profile_id', state.session.user.id);
+
+      if (error) throw error;
+
+      showStatus(
+        shouldFeature
+          ? `Produto "${item.titulo}" colocado em destaque.`
+          : `Destaque removido de "${item.titulo}".`,
+        'success'
+      );
+
+      await loadProducts();
+    } catch (err) {
+      showStatus(`Erro ao atualizar destaque: ${err.message}`, 'danger');
     }
   }
 
