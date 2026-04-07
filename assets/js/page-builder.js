@@ -177,6 +177,38 @@
     return element;
   }
 
+  function getProductIdentity(product = {}, index = 0) {
+    return String(
+      product.id
+      || product.product_id
+      || product.product_url
+      || product.link_afiliado
+      || `${product.titulo || 'produto'}-${index}`
+    ).trim();
+  }
+
+  function dedupeProducts(items = []) {
+    const seen = new Set();
+    return items.filter((item, index) => {
+      const key = getProductIdentity(item, index);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  function dedupeBlocksByType(blocks = []) {
+    const seen = new Set();
+    return [...blocks]
+      .sort((a, b) => a.position - b.position)
+      .filter((block) => {
+        if (!block?.type || seen.has(block.type)) return false;
+        seen.add(block.type);
+        return true;
+      })
+      .map((block, index) => ({ ...block, position: index }));
+  }
+
   function normalizeThemeKey(value) {
     const key = String(value || '').trim().toLowerCase();
     return VALID_THEME_KEYS.includes(key) ? key : DEFAULT_THEME_KEY;
@@ -407,9 +439,9 @@
         ...base.pageSettings,
         ...(rawPage.page_settings || rawPage.pageSettings || {})
       },
-      blocks: blocksSource
-        .map((block, index) => normalizeBlock(block, index, store))
-        .sort((a, b) => a.position - b.position)
+      blocks: dedupeBlocksByType(
+        blocksSource.map((block, index) => normalizeBlock(block, index, store))
+      )
     };
   }
 
@@ -635,7 +667,7 @@
     );
     section.appendChild(header);
 
-    const products = Array.isArray(context.products) ? [...context.products] : [];
+    const products = Array.isArray(context.products) ? dedupeProducts([...context.products]) : [];
     const categories = Array.from(new Map(products.map((item) => [item.category_id, item.category_name || 'Geral'])).entries())
       .filter(([key]) => Boolean(key))
       .map(([id, name]) => ({ id, name }));

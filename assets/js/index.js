@@ -91,6 +91,23 @@
     };
   }
 
+  function dedupeStoreProducts(items = []) {
+    const seen = new Set();
+    return items.filter((item, index) => {
+      const key = String(
+        item.id
+        || item.product_id
+        || item.product_url
+        || item.link_afiliado
+        || `${item.titulo || 'produto'}-${index}`
+      ).trim();
+
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
   function resetStoreUi() {
     refs.dynamicStorePageSection.classList.add('d-none');
     refs.loading.classList.add('d-none');
@@ -242,7 +259,7 @@
     });
 
     if (!primaryResult.error) {
-      return (primaryResult.data || []).map(normalizeStoreProduct);
+      return dedupeStoreProducts((primaryResult.data || []).map(normalizeStoreProduct));
     }
 
     const fallbackResult = await window.db.rpc('get_public_products_by_profile', {
@@ -253,7 +270,7 @@
       throw fallbackResult.error;
     }
 
-    return (fallbackResult.data || []).map(normalizeStoreProduct);
+    return dedupeStoreProducts((fallbackResult.data || []).map(normalizeStoreProduct));
   }
 
   async function getStorePagePayload(slug) {

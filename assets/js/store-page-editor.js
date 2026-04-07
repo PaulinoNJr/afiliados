@@ -108,6 +108,22 @@
       .join('\n');
   }
 
+  function dedupePreviewProducts(items = []) {
+    const seen = new Set();
+    return items.filter((item, index) => {
+      const key = String(
+        item.id
+        || item.product_id
+        || item.product_url
+        || `${item.titulo || 'produto'}-${index}`
+      ).trim();
+
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
   function getCurrentPageFromInputs() {
     if (!state.page) {
       state.page = window.PageBuilder.createDefaultPage(getPreviewStore());
@@ -517,7 +533,7 @@
     if (categoriesResult.error) throw categoriesResult.error;
 
     const categoryMap = new Map((categoriesResult.data || []).map((category) => [category.id, category]));
-    state.products = (productsResult.data || []).map((product) => {
+    state.products = dedupePreviewProducts((productsResult.data || []).map((product) => {
       const category = categoryMap.get(product.category_id) || {};
       return {
         ...product,
@@ -525,7 +541,7 @@
         category_slug: category.slug || '',
         category_sort_order: category.sort_order || 0
       };
-    });
+    }));
   }
 
   async function loadPageBuilder(userId) {
