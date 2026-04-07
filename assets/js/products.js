@@ -1,5 +1,5 @@
 (() => {
-  const DRAFT_KEY = 'afiliados_products_form_draft_v2';
+  const DRAFT_KEY = 'vitrine_products_form_draft_v3';
 
   const state = {
     session: null,
@@ -32,7 +32,7 @@
     saveBtn: document.getElementById('saveBtn'),
     cancelEditBtn: document.getElementById('cancelEditBtn'),
     clearFormBtn: document.getElementById('clearFormBtn'),
-    linkAfiliado: document.getElementById('linkAfiliado'),
+    productUrl: document.getElementById('productUrl'),
     autoFillBtn: document.getElementById('autoFillBtn'),
     titulo: document.getElementById('titulo'),
     categoriaId: document.getElementById('categoriaId'),
@@ -235,7 +235,7 @@
     const description = refs.descricao.value.trim() || 'Adicione uma descrição para melhorar a conversão.';
     const image = refs.imagemUrl.value.trim();
     const price = parsePrice(refs.preco.value);
-    const link = refs.linkAfiliado.value.trim();
+    const link = refs.productUrl.value.trim();
 
     refs.previewTitle.textContent = title;
     refs.previewDescription.textContent = description;
@@ -278,7 +278,7 @@
     if (state.editingId) return;
 
     const draft = {
-      link_afiliado: refs.linkAfiliado.value.trim(),
+      product_url: refs.productUrl.value.trim(),
       titulo: refs.titulo.value.trim(),
       category_id: refs.categoriaId.value.trim(),
       imagem_url: refs.imagemUrl.value.trim(),
@@ -301,7 +301,7 @@
       const raw = localStorage.getItem(DRAFT_KEY);
       if (!raw) return;
       const draft = JSON.parse(raw);
-      refs.linkAfiliado.value = draft.link_afiliado || '';
+      refs.productUrl.value = draft.product_url || '';
       refs.titulo.value = draft.titulo || '';
       refs.imagemUrl.value = draft.imagem_url || '';
       refs.preco.value = formatPriceInput(draft.preco) || draft.preco || '';
@@ -378,7 +378,7 @@
   function beginEdit(item) {
     state.editingId = item.id;
     state.productMeta = extractProductMeta(item);
-    refs.linkAfiliado.value = item.link_afiliado || '';
+    refs.productUrl.value = item.product_url || '';
     refs.titulo.value = item.titulo || '';
     refs.categoriaId.value = item.category_id || getDefaultCategoryId();
     refs.imagemUrl.value = item.imagem_url || '';
@@ -435,7 +435,7 @@
         <div class="small text-secondary mb-1">${escapeHtml(descriptionPreview)}</div>
       `;
       const link = document.createElement('a');
-      link.href = item.link_afiliado;
+      link.href = item.product_url;
       link.target = '_blank';
       link.rel = 'noopener noreferrer nofollow';
       link.className = 'small text-decoration-none';
@@ -500,7 +500,7 @@
       products = products.filter((item) => [
         item.titulo,
         item.descricao,
-        item.link_afiliado,
+        item.product_url,
         item.category_name
       ].map(normalizeForSearch).join(' ').includes(term));
     }
@@ -549,7 +549,7 @@
     try {
       const { data, error } = await window.db
         .from('produtos')
-        .select('id, titulo, preco, imagem_url, link_afiliado, descricao, source_url, created_at, updated_at, profile_id, category_id, ml_item_id, ml_currency, ml_permalink, ml_thumbnail, ml_pictures')
+        .select('id, titulo, preco, imagem_url, product_url, descricao, source_url, created_at, updated_at, profile_id, category_id, ml_item_id, ml_currency, ml_permalink, ml_thumbnail, ml_pictures')
         .eq('profile_id', state.session.user.id)
         .order('updated_at', { ascending: false });
 
@@ -593,9 +593,9 @@
   }
 
   async function fillFromLink({ silent = false, overwrite = true, force = false } = {}) {
-    const url = refs.linkAfiliado.value.trim();
+    const url = refs.productUrl.value.trim();
     if (!url) {
-      if (!silent) showStatus('Informe o link de afiliado para preencher automaticamente.', 'warning');
+      if (!silent) showStatus('Informe a URL do produto para preencher automaticamente.', 'warning');
       return;
     }
     if (!isValidHttpUrl(url)) {
@@ -624,7 +624,7 @@
     event.preventDefault();
     hideStatus();
 
-    const linkAfiliado = refs.linkAfiliado.value.trim();
+    const productUrl = refs.productUrl.value.trim();
     const titulo = refs.titulo.value.trim();
     const categoryId = refs.categoriaId.value.trim();
     const imagemUrl = refs.imagemUrl.value.trim();
@@ -641,19 +641,19 @@
       return;
     }
 
-    if (!isValidHttpUrl(linkAfiliado) || !titulo || Number.isNaN(preco) || preco <= 0) {
-      showStatus('Preencha um link válido, nome e preço maior que zero.', 'warning');
+    if (!isValidHttpUrl(productUrl) || !titulo || Number.isNaN(preco) || preco <= 0) {
+      showStatus('Preencha uma URL válida, nome e preço maior que zero.', 'warning');
       return;
     }
 
     const payload = {
-      link_afiliado: linkAfiliado,
+      product_url: productUrl,
       titulo,
       category_id: categoryId,
       imagem_url: imagemUrl || null,
       preco,
       descricao: descricao || null,
-      source_url: state.productMeta.source_url || linkAfiliado,
+      source_url: state.productMeta.source_url || productUrl,
       ml_item_id: state.productMeta.ml_item_id || null,
       ml_currency: state.productMeta.ml_currency || null,
       ml_permalink: state.productMeta.ml_permalink || null,
@@ -717,13 +717,13 @@
     }
 
     const rows = [
-      ['titulo', 'categoria', 'categoria_ordem', 'preco', 'link_afiliado', 'imagem_url', 'descricao', 'created_at'],
+      ['titulo', 'categoria', 'categoria_ordem', 'preco', 'product_url', 'imagem_url', 'descricao', 'created_at'],
       ...state.visibleProducts.map((item) => [
         item.titulo || '',
         item.category_name || '',
         item.category_sort_order ?? '',
         Number(item.preco || 0).toFixed(2),
-        item.link_afiliado || '',
+        item.product_url || '',
         item.imagem_url || '',
         item.descricao || '',
         item.created_at || ''
@@ -744,7 +744,7 @@
   }
 
   function bindEvents() {
-    [refs.linkAfiliado, refs.titulo, refs.imagemUrl, refs.preco, refs.descricao].forEach((field) => {
+    [refs.productUrl, refs.titulo, refs.imagemUrl, refs.preco, refs.descricao].forEach((field) => {
       field.addEventListener('input', () => {
         updatePreview();
         saveDraft();
@@ -759,9 +759,9 @@
       updatePreview();
     });
 
-    refs.linkAfiliado.addEventListener('blur', async () => {
-      const shouldAutoFill = isFilled(refs.linkAfiliado.value) &&
-        refs.linkAfiliado.value.trim() !== state.lastAutoFillUrl &&
+    refs.productUrl.addEventListener('blur', async () => {
+      const shouldAutoFill = isFilled(refs.productUrl.value) &&
+        refs.productUrl.value.trim() !== state.lastAutoFillUrl &&
         (!isFilled(refs.titulo.value) || !isFilled(refs.preco.value) || !isFilled(refs.descricao.value));
       if (shouldAutoFill) await fillFromLink({ silent: true, overwrite: false });
     });

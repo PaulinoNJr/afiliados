@@ -1,19 +1,14 @@
 (() => {
   const COPY_BY_TYPE = {
     advertiser: {
-      eyebrow: 'Área do anunciante',
-      title: 'Entre para gerenciar produtos, campanhas e afiliados',
-      description: 'Acesse sua operação comercial com visão de performance, aprovações e governança.'
-    },
-    affiliate: {
-      eyebrow: 'Área do afiliado',
-      title: 'Entre para gerar links, acompanhar cliques e ver comissões',
-      description: 'Acesse suas campanhas liberadas, materiais, conversões e histórico de ganhos.'
+      eyebrow: 'Area da loja',
+      title: 'Entre para organizar produtos, categorias e a vitrine publica',
+      description: 'Acesse seu espaco de gestao com foco em catalogo, marca e pagina publica.'
     },
     default: {
-      eyebrow: 'Workspace Afiliados',
-      title: 'Entre na sua operação com visibilidade comercial',
-      description: 'Acesse campanhas, links, produtos, aprovações, comissões e métricas em um ambiente com cara de produto SaaS.'
+      eyebrow: 'Workspace da loja',
+      title: 'Entre para continuar a gestao do seu catalogo',
+      description: 'Acesse produtos, categorias, identidade visual e administracao em um unico lugar.'
     }
   };
 

@@ -2,40 +2,24 @@
   const FIXED_ROLE_BY_PAGE = {
     'dashboard-admin.html': 'admin',
     'dashboard-anunciante.html': 'advertiser',
-    'dashboard-afiliado.html': 'affiliate',
-    'users.html': 'admin',
-    'operacoes.html': 'admin',
-    'campanhas.html': 'advertiser',
-    'links.html': 'affiliate',
-    'comissoes.html': 'affiliate'
+    'users.html': 'admin'
   };
 
   const MENUS = {
     admin: [
       { href: 'dashboard-admin.html', label: 'Painel' },
-      { href: 'operacoes.html', label: 'Operações' },
       { href: 'users.html', label: 'Usuários' },
       { href: 'loja.html', label: 'Loja' },
       { href: 'perfil.html', label: 'Perfil' },
       { href: 'produtos.html', label: 'Produtos' },
-      { href: 'categorias.html', label: 'Categorias' },
-      { href: 'campanhas.html', label: 'Campanhas' },
-      { href: 'conversoes.html', label: 'Conversões' }
+      { href: 'categorias.html', label: 'Categorias' }
     ],
     advertiser: [
       { href: 'dashboard-anunciante.html', label: 'Painel' },
       { href: 'loja.html', label: 'Loja' },
       { href: 'perfil.html', label: 'Perfil' },
       { href: 'produtos.html', label: 'Produtos' },
-      { href: 'categorias.html', label: 'Categorias' },
-      { href: 'campanhas.html', label: 'Campanhas' },
-      { href: 'conversoes.html', label: 'Conversões' }
-    ],
-    affiliate: [
-      { href: 'dashboard-afiliado.html', label: 'Painel' },
-      { href: 'perfil.html', label: 'Perfil' },
-      { href: 'links.html', label: 'Links' },
-      { href: 'comissoes.html', label: 'Comissões' }
+      { href: 'categorias.html', label: 'Categorias' }
     ]
   };
 

@@ -15,10 +15,10 @@
       const activation = await window.Auth.ensureActivatedSession('ativacao.html');
       if (!activation) return;
 
-      setStatus('Perfil identificado. Redirecionando para a área correta do workspace...');
+      setStatus('Conta identificada. Abrindo o painel correto da sua area...');
       window.Auth.redirectToDashboard(activation.profile);
     } catch (err) {
-      setStatus(err.message || 'Não foi possível direcionar o painel.');
+      setStatus(err.message || 'Nao foi possivel direcionar o painel.');
       window.setTimeout(() => {
         window.location.href = 'login.html';
       }, 1200);

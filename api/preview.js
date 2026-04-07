@@ -516,12 +516,12 @@ async function getOpenClawProduct(link) {
       body: JSON.stringify({
         model: config.model,
         temperature: 0,
-        user: 'affiliate-preview',
+        user: 'product-preview',
         messages: [
           {
             role: 'system',
             content: [
-              'Você extrai dados de produto a partir de links de afiliado.',
+              'Você extrai dados de produto a partir de URLs de produto.',
               'Abra o link informado, siga redirecionamentos até a página do produto e responda somente com JSON válido.',
               'Campos obrigatórios do JSON: title, image, price, description, source_url, resolved_product_url.',
               'Use null quando um campo não puder ser obtido com confiança.',
@@ -532,7 +532,7 @@ async function getOpenClawProduct(link) {
           },
           {
             role: 'user',
-            content: `Extraia os dados do produto deste link de afiliado: ${link}`
+            content: `Extraia os dados do produto desta URL: ${link}`
           }
         ]
       }),
@@ -1722,7 +1722,7 @@ module.exports = async (req, res) => {
     }
 
     const requestHeaders = {
-      'user-agent': 'Mozilla/5.0 (compatible; AffiliateCatalogBot/1.0; +https://vercel.com)',
+      'user-agent': 'Mozilla/5.0 (compatible; ProductCatalogBot/1.0; +https://vercel.com)',
       'accept-language': 'pt-BR,pt;q=0.9,en;q=0.8'
     };
 

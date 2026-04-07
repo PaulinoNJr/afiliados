@@ -111,12 +111,12 @@ function buildProbePayload({ model, url }) {
     return {
       model,
       temperature: 0,
-      user: 'affiliate-preview-debug',
+      user: 'product-preview-debug',
       messages: [
         {
           role: 'system',
           content: [
-            'Voce extrai dados de produto a partir de links de afiliado.',
+            'Voce extrai dados de produto a partir de URLs de produto.',
             'Abra o link informado, siga redirecionamentos ate a pagina do produto e responda somente com JSON valido.',
             'Campos obrigatorios do JSON: title, image, price, description, source_url, resolved_product_url.',
             'Use null quando um campo nao puder ser obtido com confianca.',
@@ -127,7 +127,7 @@ function buildProbePayload({ model, url }) {
         },
         {
           role: 'user',
-          content: `Extraia os dados do produto deste link de afiliado: ${url}`
+          content: `Extraia os dados do produto desta URL: ${url}`
         }
       ]
     };
@@ -136,7 +136,7 @@ function buildProbePayload({ model, url }) {
   return {
     model,
     temperature: 0,
-    user: 'affiliate-preview-debug',
+    user: 'product-preview-debug',
     messages: [
       {
         role: 'user',

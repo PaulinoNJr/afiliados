@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Painel do Anunciante | Afiliados</title>
-  <meta name="description" content="Acompanhe catálogo, campanhas e a operação comercial do seu programa de afiliados." />
+  <title>Painel da Loja | Vitrine</title>
+  <meta name="description" content="Acompanhe catálogo, categorias e a prontidão da sua página pública." />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body data-dashboard-role="advertiser">
   <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm sticky-top">
     <div class="container">
-      <a class="navbar-brand fw-bold" href="index.html">Afiliados</a>
+      <a class="navbar-brand fw-bold" href="index.html">Vitrine</a>
       <div class="ms-auto d-flex align-items-center gap-3 app-nav-actions">
         <span id="userRoleBadge" class="badge text-bg-secondary">perfil</span>
         <small id="userEmail" class="text-secondary d-none d-md-inline"></small>
@@ -25,8 +25,8 @@
       <section class="admin-hero-panel p-4 p-lg-5 mb-4">
         <div class="row g-4 align-items-center">
           <div class="col-12 col-xl-8">
-            <p class="admin-eyebrow mb-2">Painel do anunciante</p>
-            <h1 class="h2 mb-2">Sua operação comercial em um só lugar</h1>
+            <p class="admin-eyebrow mb-2">Painel da loja</p>
+            <h1 class="h2 mb-2">Seu catálogo em um fluxo mais direto</h1>
             <p id="dashboardDescription" class="mb-0 text-secondary"></p>
           </div>
           <div class="col-12 col-xl-4">
@@ -40,21 +40,18 @@
           </div>
         </div>
         <div class="d-flex flex-wrap gap-2 mt-4">
-          <a href="campanhas.html" class="btn btn-primary">Gerenciar campanhas</a>
-          <a href="produtos.html" class="btn btn-outline-primary">Gerenciar produtos</a>
-          <a href="conversoes.html" class="btn btn-outline-primary">Registrar conversões</a>
-          <a href="loja.html" class="btn btn-outline-dark">Configurar marca</a>
+          <a href="produtos.html" class="btn btn-primary">Gerenciar produtos</a>
+          <a href="categorias.html" class="btn btn-outline-primary">Organizar categorias</a>
+          <a href="loja.html" class="btn btn-outline-dark">Ajustar vitrine</a>
         </div>
       </section>
 
       <section class="workspace-menu" aria-label="Navegação do sistema">
         <div class="workspace-menu-shell">
           <a href="dashboard-anunciante.html" class="workspace-menu-link is-active" aria-current="page">Painel</a>
-          <a href="loja.html" class="workspace-menu-link">Marca</a>
+          <a href="loja.html" class="workspace-menu-link">Loja</a>
           <a href="perfil.html" class="workspace-menu-link">Perfil</a>
           <a href="produtos.html" class="workspace-menu-link">Produtos</a>
-          <a href="campanhas.html" class="workspace-menu-link">Campanhas</a>
-          <a href="conversoes.html" class="workspace-menu-link">Conversões</a>
           <a href="categorias.html" class="workspace-menu-link">Categorias</a>
           <a href="users.html" class="workspace-menu-link d-none" data-admin-only="true">Usuários</a>
         </div>
@@ -63,16 +60,16 @@
       <div id="statusMessage" class="alert d-none" role="alert"></div>
 
       <section class="row g-3 mb-4">
-        <div class="col-12 col-sm-6 col-xl-3"><article class="card stat-card border-0 shadow-sm h-100"><div class="card-body"><p class="stat-label mb-1">Produtos cadastrados</p><p id="metricOneValue" class="stat-value mb-0">0</p></div></article></div>
-        <div class="col-12 col-sm-6 col-xl-3"><article class="card stat-card border-0 shadow-sm h-100"><div class="card-body"><p class="stat-label mb-1">Campanhas ativas</p><p id="metricTwoValue" class="stat-value mb-0">0</p></div></article></div>
-        <div class="col-12 col-sm-6 col-xl-3"><article class="card stat-card border-0 shadow-sm h-100"><div class="card-body"><p class="stat-label mb-1">Produtos em campanhas</p><p id="metricThreeValue" class="stat-value mb-0">0</p></div></article></div>
+        <div class="col-12 col-sm-6 col-xl-3"><article class="card stat-card border-0 shadow-sm h-100"><div class="card-body"><p class="stat-label mb-1">Produtos</p><p id="metricOneValue" class="stat-value mb-0">0</p></div></article></div>
+        <div class="col-12 col-sm-6 col-xl-3"><article class="card stat-card border-0 shadow-sm h-100"><div class="card-body"><p class="stat-label mb-1">Categorias</p><p id="metricTwoValue" class="stat-value mb-0">0</p></div></article></div>
+        <div class="col-12 col-sm-6 col-xl-3"><article class="card stat-card border-0 shadow-sm h-100"><div class="card-body"><p class="stat-label mb-1">Com descrição</p><p id="metricThreeValue" class="stat-value mb-0">0%</p></div></article></div>
         <div class="col-12 col-sm-6 col-xl-3"><article class="card stat-card border-0 shadow-sm h-100"><div class="card-body"><p class="stat-label mb-1">Última atualização</p><p id="metricFourValue" class="stat-value-sm mb-0">Sem registros</p></div></article></div>
       </section>
 
       <section class="row g-4 mb-4">
-        <div class="col-12 col-lg-4"><article class="card border-0 shadow-sm dashboard-link-card h-100"><div class="card-body p-4"><p class="dashboard-link-label">Catálogo</p><h2 class="h5">Estruture produtos com qualidade comercial</h2><p class="text-secondary mb-4">Mantenha descrição, categoria, preço e destino prontos para virar campanhas rastreáveis.</p><a href="produtos.html" class="btn btn-primary">Abrir catálogo</a></div></article></div>
-        <div class="col-12 col-lg-4"><article class="card border-0 shadow-sm dashboard-link-card h-100"><div class="card-body p-4"><p class="dashboard-link-label">Campanhas</p><h2 class="h5">Publique ofertas com regra comercial clara</h2><p class="text-secondary mb-4">Defina comissão, vigência e produtos vinculados para liberar a operação dos afiliados.</p><a href="campanhas.html" class="btn btn-outline-primary">Abrir campanhas</a></div></article></div>
-        <div class="col-12 col-lg-4"><article class="card border-0 shadow-sm dashboard-link-card h-100"><div class="card-body p-4"><p class="dashboard-link-label">Conversões</p><h2 class="h5">Feche o ciclo comercial da campanha</h2><p class="text-secondary mb-4">Registre vendas a partir dos cliques rastreados e alimente automaticamente o financeiro do afiliado.</p><a href="conversoes.html" class="btn btn-outline-dark">Abrir conversões</a></div></article></div>
+        <div class="col-12 col-lg-4"><article class="card border-0 shadow-sm dashboard-link-card h-100"><div class="card-body p-4"><p class="dashboard-link-label">Catálogo</p><h2 class="h5">Cadastre produtos com mais consistência</h2><p class="text-secondary mb-4">Mantenha preço, imagem, descrição e destino organizados para publicar uma vitrine mais clara.</p><a href="produtos.html" class="btn btn-primary">Abrir catálogo</a></div></article></div>
+        <div class="col-12 col-lg-4"><article class="card border-0 shadow-sm dashboard-link-card h-100"><div class="card-body p-4"><p class="dashboard-link-label">Categorias</p><h2 class="h5">Estruture a navegação da loja</h2><p class="text-secondary mb-4">Crie e ordene categorias para facilitar cadastro, busca e leitura da página pública.</p><a href="categorias.html" class="btn btn-outline-primary">Abrir categorias</a></div></article></div>
+        <div class="col-12 col-lg-4"><article class="card border-0 shadow-sm dashboard-link-card h-100"><div class="card-body p-4"><p class="dashboard-link-label">Vitrine</p><h2 class="h5">Ajuste a presença visual da loja</h2><p class="text-secondary mb-4">Cuide do nome, banner, bio, cores e endereço público sem sair do fluxo principal.</p><a href="loja.html" class="btn btn-outline-dark">Abrir vitrine</a></div></article></div>
       </section>
 
       <section class="row g-4">
@@ -82,9 +79,9 @@
               <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                 <div>
                   <p class="small text-uppercase fw-semibold text-secondary mb-1">Resumo operacional</p>
-                  <h2 class="h5 mb-0">Campanhas recentes</h2>
+                  <h2 class="h5 mb-0">Produtos recentes</h2>
                 </div>
-                <a href="campanhas.html" class="btn btn-sm btn-outline-primary">Abrir gestão</a>
+                <a href="produtos.html" class="btn btn-sm btn-outline-primary">Abrir gestão</a>
               </div>
               <div class="table-responsive">
                 <table class="table admin-table align-middle mb-0">
@@ -100,7 +97,7 @@
           <div class="card border-0 shadow-sm dashboard-surface h-100">
             <div class="card-body p-4">
               <p class="small text-uppercase fw-semibold text-secondary mb-1">Próximos passos</p>
-              <h2 class="h5 mb-3">Checklist do produto</h2>
+              <h2 class="h5 mb-3">Checklist da loja</h2>
               <div id="activityList" class="dashboard-activity-list"></div>
             </div>
           </div>

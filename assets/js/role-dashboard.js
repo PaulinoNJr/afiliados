@@ -57,6 +57,7 @@
       th.textContent = column;
       refs.performanceTableHead.appendChild(th);
     });
+
     refs.performanceTableBody.innerHTML = '';
 
     if (!rows.length) {
@@ -65,6 +66,7 @@
     }
 
     refs.emptyTableState.classList.add('d-none');
+
     rows.forEach((row) => {
       const tr = document.createElement('tr');
       row.forEach((cell) => {
@@ -109,133 +111,99 @@
     }
   }
 
-  function getStatusBadge(status) {
-    if (status === 'active') return 'text-bg-success';
-    if (status === 'paused') return 'text-bg-warning';
-    if (status === 'closed') return 'text-bg-dark';
-    return 'text-bg-secondary';
-  }
-
   async function loadAdvertiserDashboard() {
-    const [
-      productsResult,
-      categoriesResult,
-      campaignsResult,
-      campaignProductsResult
-    ] = await Promise.all([
+    const [{ data: products, error: productsError }, { data: categories, error: categoriesError }] = await Promise.all([
       window.db
         .from('produtos')
-        .select('id, titulo, preco, created_at, updated_at')
+        .select('id, titulo, preco, descricao, created_at, updated_at, category_id')
         .eq('profile_id', state.session.user.id)
         .order('updated_at', { ascending: false }),
       window.db
         .from('product_categories')
-        .select('id, name, created_at, updated_at')
+        .select('id, name, sort_order, created_at, updated_at')
         .eq('profile_id', state.session.user.id)
-        .order('sort_order', { ascending: true }),
-      window.db
-        .from('campaigns')
-        .select('id, name, status, commission_type, commission_value, starts_at, ends_at, created_at, updated_at')
-        .eq('advertiser_id', state.session.user.id)
-        .order('updated_at', { ascending: false }),
-      window.db
-        .from('campaign_products')
-        .select('campaign_id, product_id')
+        .order('sort_order', { ascending: true })
     ]);
 
-    if (productsResult.error) throw productsResult.error;
-    if (categoriesResult.error) throw categoriesResult.error;
-    if (campaignsResult.error) throw campaignsResult.error;
-    if (campaignProductsResult.error) throw campaignProductsResult.error;
+    if (productsError) throw productsError;
+    if (categoriesError) throw categoriesError;
 
-    const products = productsResult.data || [];
-    const categories = categoriesResult.data || [];
-    const campaigns = campaignsResult.data || [];
-    const campaignProducts = campaignProductsResult.data || [];
-    const activeCampaigns = campaigns.filter((campaign) => campaign.status === 'active').length;
-    const linkedProducts = new Set(campaignProducts.map((item) => item.product_id).filter(Boolean)).size;
-    const latestItem = [...products, ...categories, ...campaigns].sort((a, b) => {
+    const productList = products || [];
+    const categoryList = categories || [];
+    const withDescription = productList.filter((item) => String(item.descricao || '').trim()).length;
+    const lastItem = [...productList, ...categoryList].sort((a, b) => {
       return new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime();
     })[0];
 
-    refs.dashboardDescription.textContent = 'Seu workspace já conecta catálogo e campanhas, deixando a base pronta para operação de afiliados, tracking e comissões.';
-    refs.metricOneValue.textContent = String(products.length);
-    refs.metricTwoValue.textContent = String(activeCampaigns);
-    refs.metricThreeValue.textContent = String(linkedProducts);
-    refs.metricFourValue.textContent = formatDate(latestItem?.updated_at || latestItem?.created_at);
+    refs.dashboardDescription.textContent = 'Acompanhe o que já está pronto na loja, o que ainda falta completar e onde vale investir o próximo ajuste.';
+    refs.metricOneValue.textContent = String(productList.length);
+    refs.metricTwoValue.textContent = String(categoryList.length);
+    refs.metricThreeValue.textContent = productList.length ? `${Math.round((withDescription / productList.length) * 100)}%` : '0%';
+    refs.metricFourValue.textContent = formatDate(lastItem?.updated_at || lastItem?.created_at);
 
     renderTable(
-      ['Campanha', 'Status', 'Produtos', 'Atualizada'],
-      campaigns.slice(0, 5).map((campaign) => {
-        const productCount = campaignProducts.filter((item) => item.campaign_id === campaign.id).length;
-        const commissionLabel = campaign.commission_type === 'fixed'
-          ? formatCurrency(campaign.commission_value)
-          : `${Number(campaign.commission_value || 0).toFixed(2)}%`;
-
-        return [
-          `<div class="fw-semibold">${escapeHtml(campaign.name || 'Campanha sem nome')}</div><div class="small text-secondary">Comissão ${escapeHtml(commissionLabel)}</div>`,
-          `<span class="badge ${getStatusBadge(campaign.status)}">${escapeHtml(campaign.status || 'draft')}</span>`,
-          `<span class="fw-semibold">${productCount}</span>`,
-          `<span class="small text-secondary">${formatDate(campaign.updated_at || campaign.created_at)}</span>`
-        ];
-      })
+      ['Produto', 'Categoria', 'Preço', 'Atualizado'],
+      productList.slice(0, 5).map((item) => [
+        `<div class="fw-semibold">${escapeHtml(item.titulo || 'Produto sem nome')}</div><div class="small text-secondary">${String(item.descricao || '').trim() ? 'Descrição preenchida' : 'Sem descrição'}</div>`,
+        `<span class="badge text-bg-light">${escapeHtml(categoryList.find((category) => category.id === item.category_id)?.name || 'Sem categoria')}</span>`,
+        `<span class="fw-semibold">${formatCurrency(item.preco)}</span>`,
+        `<span class="small text-secondary">${formatDate(item.updated_at || item.created_at)}</span>`
+      ])
     );
 
     renderActivities([
       {
-        title: 'Campanhas em operação',
-        description: campaigns.length ? `${campaigns.length} campanha(s) estruturadas para distribuir aos afiliados.` : 'Crie a primeira campanha para transformar o catálogo em oferta distribuível.'
+        title: 'Catálogo publicado',
+        description: productList.length ? `${productList.length} produto(s) já fazem parte da sua base.` : 'Cadastre seu primeiro produto para começar a montar a loja.'
       },
       {
-        title: 'Base comercial pronta',
-        description: products.length ? `${products.length} produto(s) cadastrados e ${categories.length} categoria(s) organizadas no workspace.` : 'Cadastre produtos e categorias antes de abrir a operação para afiliados.'
+        title: 'Navegação da loja',
+        description: categoryList.length ? `${categoryList.length} categoria(s) ajudam a organizar a vitrine.` : 'Crie ao menos uma categoria para estruturar melhor a página pública.'
       },
       {
-        title: 'Tracking preparado',
-        description: activeCampaigns ? 'Com campanhas ativas, o módulo de links rastreáveis já consegue apoiar a distribuição das ofertas.' : 'Ative pelo menos uma campanha para destravar o uso pelos afiliados.'
+        title: 'Qualidade do conteúdo',
+        description: productList.length
+          ? `${withDescription} de ${productList.length} produto(s) já têm descrição preenchida.`
+          : 'Preencha descrição, imagem e preço com consistência desde os primeiros cadastros.'
       }
     ]);
   }
 
   async function loadAdminDashboard() {
-    const [profilesResult, conversionsResult, payoutsResult] = await Promise.all([
+    const [profilesResult, productsResult, categoriesResult] = await Promise.all([
       window.db
         .from('user_profiles')
-        .select('user_id, user_email, role, activation_status, store_name, created_at')
+        .select('user_id, user_email, role, activation_status, store_name, slug, created_at')
         .order('created_at', { ascending: false }),
       window.db
-        .from('conversions')
-        .select('id, status'),
+        .from('produtos')
+        .select('id'),
       window.db
-        .from('payout_requests')
-        .select('id, status')
+        .from('product_categories')
+        .select('id')
     ]);
 
     if (profilesResult.error) throw profilesResult.error;
-    if (conversionsResult.error) throw conversionsResult.error;
-    if (payoutsResult.error) throw payoutsResult.error;
+    if (productsResult.error) throw productsResult.error;
+    if (categoriesResult.error) throw categoriesResult.error;
 
     const profiles = (profilesResult.data || []).map((item) => ({
       ...item,
       role: window.Auth.normalizeRole(item.role)
     }));
-    const conversions = conversionsResult.data || [];
-    const payouts = payoutsResult.data || [];
-    const advertisers = profiles.filter((item) => item.role === 'advertiser').length;
-    const pendingConversions = conversions.filter((item) => item.status === 'pending').length;
-    const openPayouts = payouts.filter((item) => ['requested', 'approved', 'processing'].includes(item.status)).length;
+    const stores = profiles.filter((item) => String(item.store_name || '').trim()).length;
     const pendingActivation = profiles.filter((item) => item.activation_status !== 'active').length;
 
-    refs.dashboardDescription.textContent = 'O backoffice agora concentra usuários, aprovação de conversões e a fila de payouts em uma operação única.';
+    refs.dashboardDescription.textContent = 'O backoffice ficou concentrado em gestão de acesso, lojas e base de catálogo, sem os módulos extras que desviavam o foco do produto.';
     refs.metricOneValue.textContent = String(profiles.length);
-    refs.metricTwoValue.textContent = String(advertisers);
-    refs.metricThreeValue.textContent = String(pendingConversions);
-    refs.metricFourValue.textContent = String(openPayouts);
+    refs.metricTwoValue.textContent = String(stores);
+    refs.metricThreeValue.textContent = String((productsResult.data || []).length);
+    refs.metricFourValue.textContent = String((categoriesResult.data || []).length);
 
     renderTable(
       ['Conta', 'Perfil', 'Status', 'Criado em'],
       profiles.slice(0, 6).map((item) => [
-        `<div class="fw-semibold">${escapeHtml(item.user_email || item.user_id)}</div><div class="small text-secondary">${escapeHtml(item.store_name || 'Sem marca definida')}</div>`,
+        `<div class="fw-semibold">${escapeHtml(item.user_email || item.user_id)}</div><div class="small text-secondary">${escapeHtml(item.store_name || 'Loja ainda sem nome')}</div>`,
         `<span class="badge ${item.role === 'admin' ? 'text-bg-primary' : 'text-bg-secondary'}">${window.Auth.getRoleLabel(item.role)}</span>`,
         `<span class="badge ${item.activation_status === 'active' ? 'text-bg-success' : 'text-bg-warning'}">${escapeHtml(item.activation_status || 'pending')}</span>`,
         `<span class="small text-secondary">${formatDate(item.created_at)}</span>`
@@ -244,87 +212,16 @@
 
     renderActivities([
       {
-        title: 'Ativacoes pendentes',
-        description: pendingActivation ? `${pendingActivation} conta(s) ainda não concluíram ativação por e-mail.` : 'Nenhuma ativação pendente no momento.'
+        title: 'Ativações pendentes',
+        description: pendingActivation ? `${pendingActivation} conta(s) ainda aguardam confirmação por email.` : 'Nenhuma ativação pendente no momento.'
       },
       {
-        title: 'Conversões aguardando decisão',
-        description: pendingConversions ? `${pendingConversions} conversão(?es) pendentes esperando aprovação ou rejeição do backoffice.` : 'Nenhuma conversão pendente aguardando decisão.'
+        title: 'Lojas configuradas',
+        description: stores ? `${stores} conta(s) já têm loja ou marca definida.` : 'As contas ainda podem melhorar o preenchimento da loja.'
       },
       {
-        title: 'Fila de saques',
-        description: openPayouts ? `${openPayouts} solicitação(?es) de saque seguem abertas para aprovação, processamento ou pagamento.` : 'Nenhum saque aberto no momento.'
-      }
-    ]);
-  }
-
-  async function loadAffiliateDashboard() {
-    const [catalogResult, linksResult, clicksResult, summaryResult] = await Promise.all([
-      window.db.rpc('get_affiliate_campaign_catalog'),
-      window.db
-        .from('affiliate_links')
-        .select('id, code, campaign_id, product_id, created_at')
-        .eq('affiliate_id', state.session.user.id)
-        .order('created_at', { ascending: false }),
-      window.db
-        .from('clicks')
-        .select('affiliate_link_id')
-        .eq('affiliate_id', state.session.user.id),
-      window.db.rpc('get_affiliate_financial_summary', {
-        target_affiliate_id: state.session.user.id
-      })
-    ]);
-
-    if (catalogResult.error) throw catalogResult.error;
-    if (linksResult.error) throw linksResult.error;
-    if (clicksResult.error) throw clicksResult.error;
-    if (summaryResult.error) throw summaryResult.error;
-
-    const catalog = Array.isArray(catalogResult.data) ? catalogResult.data : [];
-    const links = linksResult.data || [];
-    const clicks = clicksResult.data || [];
-    const summary = Array.isArray(summaryResult.data) ? (summaryResult.data[0] || {}) : (summaryResult.data || {});
-    const uniqueCampaigns = new Set(catalog.map((item) => item.campaign_id).filter(Boolean)).size;
-    const clickCountByLink = clicks.reduce((acc, item) => {
-      acc[item.affiliate_link_id] = (acc[item.affiliate_link_id] || 0) + 1;
-      return acc;
-    }, {});
-    const totalClicks = Object.values(clickCountByLink).reduce((sum, value) => sum + value, 0);
-
-    refs.dashboardDescription.textContent = 'Seu workspace já recebe campanhas liberadas, gera links rastreáveis e acompanha cliques reais por oferta.';
-    refs.metricOneValue.textContent = String(uniqueCampaigns);
-    refs.metricTwoValue.textContent = String(links.length);
-    refs.metricThreeValue.textContent = String(totalClicks);
-    refs.metricFourValue.textContent = formatCurrency(summary.available_amount || 0);
-
-    renderTable(
-      ['Oferta', 'Link', 'Cliques', 'Criado em'],
-      links.slice(0, 5).map((link) => {
-        const offer = catalog.find((item) => item.campaign_id === link.campaign_id && item.product_id === link.product_id);
-        const trackingUrl = window.StoreUtils.getTrackingUrl(link.code);
-        return [
-          `<div class="fw-semibold">${escapeHtml(offer ? `${offer.product_title} - ${offer.campaign_name}` : 'Oferta vinculada')}</div>`,
-          `<a href="${trackingUrl}" target="_blank" rel="noopener noreferrer" class="small text-decoration-none">${escapeHtml(trackingUrl)}</a>`,
-          `<span class="fw-semibold">${clickCountByLink[link.id] || 0}</span>`,
-          `<span class="small text-secondary">${formatDate(link.created_at)}</span>`
-        ];
-      })
-    );
-
-    renderActivities([
-      {
-        title: 'Catálogo liberado',
-        description: catalog.length ? `${catalog.length} oferta(s) prontas para gerar link e distribuir.` : 'Nenhuma oferta liberada ainda. Assim que o anunciante ativar campanhas, elas aparecerao aqui.'
-      },
-      {
-        title: 'Links em operação',
-        description: links.length ? `${links.length} link(s) rastreáveis já foram gerados na sua conta.` : 'Gere seu primeiro link rastreável para iniciar histórico de cliques.'
-      },
-      {
-        title: 'Comissão e saque',
-        description: Number(summary.available_amount || 0) > 0
-          ? `Você já tem ${formatCurrency(summary.available_amount || 0)} disponível no módulo financeiro.`
-          : 'O módulo financeiro já acompanha saldo, comissões e solicitação inicial de payout.'
+        title: 'Base atual',
+        description: `${(productsResult.data || []).length} produto(s) e ${(categoriesResult.data || []).length} categoria(s) cadastrados na plataforma.`
       }
     ]);
   }
@@ -342,9 +239,9 @@
       state.session = activation.session;
       state.profile = activation.profile;
 
-      const allowedRoles = DASHBOARD_ROLE === 'advertiser'
-        ? ['admin', 'advertiser']
-        : [DASHBOARD_ROLE];
+      const allowedRoles = DASHBOARD_ROLE === 'admin'
+        ? ['admin']
+        : ['admin', 'advertiser'];
       const allowed = await window.Auth.ensureRoleAccess(state.profile, allowedRoles);
       if (!allowed) return;
 
@@ -358,11 +255,6 @@
 
       if (DASHBOARD_ROLE === 'admin') {
         await loadAdminDashboard();
-        return;
-      }
-
-      if (DASHBOARD_ROLE === 'affiliate') {
-        await loadAffiliateDashboard();
         return;
       }
 

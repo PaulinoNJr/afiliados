@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ ok: false, error: 'Método não permitido.' });
+    return res.status(405).json({ ok: false, error: 'Metodo nao permitido.' });
   }
 
   const authorization = String(req.headers.authorization || '').trim();
@@ -37,7 +37,7 @@ module.exports = async (req, res) => {
     if (!currentUser?.id) {
       return res.status(401).json({
         ok: false,
-        error: 'Sessão inválida para criar usuários.'
+        error: 'Sessao invalida para criar usuarios.'
       });
     }
 
@@ -45,14 +45,12 @@ module.exports = async (req, res) => {
     if (role !== 'admin') {
       return res.status(403).json({
         ok: false,
-        error: 'Apenas administradores podem criar usuários.'
+        error: 'Apenas administradores podem criar usuarios.'
       });
     }
 
     const email = String(req.body?.email || '').trim().toLowerCase();
     const password = String(req.body?.password || '');
-    const requestedRole = String(req.body?.role || 'advertiser').trim().toLowerCase();
-    const roleToCreate = ['advertiser', 'affiliate'].includes(requestedRole) ? requestedRole : 'advertiser';
 
     if (!email || !password) {
       return res.status(400).json({
@@ -65,7 +63,7 @@ module.exports = async (req, res) => {
     if (!passwordValidation.ok) {
       return res.status(400).json({
         ok: false,
-        error: 'A senha não atende aos requisitos mínimos de segurança.'
+        error: 'A senha nao atende aos requisitos minimos de seguranca.'
       });
     }
 
@@ -73,7 +71,7 @@ module.exports = async (req, res) => {
       email,
       password,
       metadata: {
-        account_type: roleToCreate
+        account_type: 'advertiser'
       },
       emailConfirm: true
     });

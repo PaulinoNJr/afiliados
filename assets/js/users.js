@@ -109,7 +109,7 @@
   }
 
   function getAccountTypeForRole(role) {
-    return window.Auth.normalizeRole(role) === 'affiliate' ? 'affiliate' : 'advertiser';
+    return 'advertiser';
   }
 
   function setSlugFeedback(message, tone = 'secondary') {
@@ -466,7 +466,7 @@
       return;
     }
 
-    if (!['admin', 'advertiser', 'affiliate'].includes(role)) {
+    if (!['admin', 'advertiser'].includes(role)) {
       showStatus('Perfil inválido.', 'warning');
       return;
     }
@@ -774,5 +774,4 @@
 
   document.addEventListener('DOMContentLoaded', init);
 })();
-
 

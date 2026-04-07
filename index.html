@@ -1,21 +1,21 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Programa de Afiliados | Plataforma para Anunciantes e Afiliados</title>
-  <meta name="description" content="Crie, gerencie e amplie seu programa de afiliados com uma plataforma para campanhas, links rastreáveis, cliques, conversões e comissões." />
+  <title>Vitrine | Catálogo, Loja e Página Pública</title>
+  <meta name="description" content="Organize produtos, categorias e uma página pública personalizada em um fluxo mais simples." />
   <meta name="robots" content="index,follow,max-image-preview:large" />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Programa de Afiliados | Plataforma para Anunciantes e Afiliados" />
-  <meta property="og:description" content="Uma plataforma para empresas criarem seu próprio programa de afiliados, ativarem parceiros e acompanharem resultados em tempo real." />
-  <meta property="og:image" content="https://via.placeholder.com/1200x630?text=Programa+de+Afiliados" />
-  <meta property="og:url" content="https://afiliados-three.vercel.app/" />
-  <meta property="og:site_name" content="Afiliados" />
+  <meta property="og:title" content="Vitrine | Catálogo, Loja e Página Pública" />
+  <meta property="og:description" content="Uma base enxuta para cadastrar produtos, organizar categorias e publicar uma loja com identidade própria." />
+  <meta property="og:image" content="https://via.placeholder.com/1200x630?text=Vitrine" />
+  <meta property="og:url" content="https://vitrine.vercel.app/" />
+  <meta property="og:site_name" content="Vitrine" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Programa de Afiliados | Plataforma para Anunciantes e Afiliados" />
-  <meta name="twitter:description" content="Centralize produtos, campanhas, links, afiliados e comissões em uma plataforma pronta para operação comercial." />
-  <link rel="canonical" href="https://afiliados-three.vercel.app/" />
+  <meta name="twitter:title" content="Vitrine | Catálogo, Loja e Página Pública" />
+  <meta name="twitter:description" content="Centralize produtos, categorias, identidade visual e uma página pública em um único fluxo." />
+  <link rel="canonical" href="https://vitrine.vercel.app/" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
   <link rel="stylesheet" href="assets/css/style.css" />
   <script id="structuredData" type="application/ld+json"></script>
@@ -23,14 +23,14 @@
 <body class="page-resolving">
   <nav class="navbar navbar-expand-lg landing-navbar sticky-top">
     <div class="container">
-      <a class="navbar-brand fw-bold" href="index.html">Afiliados</a>
+      <a class="navbar-brand fw-bold" href="index.html">Vitrine</a>
       <div class="ms-auto d-flex align-items-center gap-2 app-nav-actions">
         <a href="#como-funciona" class="btn btn-link text-decoration-none">Como funciona</a>
-        <a href="#solucoes" class="btn btn-link text-decoration-none">Soluções</a>
-        <a href="#planos" class="btn btn-link text-decoration-none">Planos</a>
+        <a href="#recursos" class="btn btn-link text-decoration-none">Recursos</a>
+        <a href="#organizacao" class="btn btn-link text-decoration-none">Organização</a>
         <a href="#faq" class="btn btn-link text-decoration-none">Perguntas</a>
         <a id="navAdmin" href="login.html" class="btn btn-outline-primary btn-sm">Entrar</a>
-        <a href="cadastro.html?type=advertiser" class="btn btn-primary btn-sm">Criar conta</a>
+        <a href="cadastro.html" class="btn btn-primary btn-sm">Criar conta</a>
         <button id="navLogout" class="btn btn-outline-danger btn-sm d-none" type="button">Sair</button>
       </div>
     </div>
@@ -41,23 +41,23 @@
       <div class="container">
         <div class="row align-items-center g-4 g-xl-5">
           <div class="col-12 col-lg-6">
-            <span id="homeHeroBadge" class="landing-eyebrow">Plataforma para programas de afiliados</span>
-            <h1 id="homeHeroTitle" class="landing-display mt-3 mb-3">Crie, gerencie e amplie seu programa de afiliados em um só lugar</h1>
-            <p id="homeHeroDescription" class="landing-subtitle mb-4">Publique campanhas, organize produtos, aprove parceiros, gere links rastreáveis e acompanhe cliques, conversões e comissões com clareza.</p>
+            <span id="homeHeroBadge" class="landing-eyebrow">Catálogo, loja e página pública</span>
+            <h1 id="homeHeroTitle" class="landing-display mt-3 mb-3">Monte sua vitrine sem carregar módulos que não fazem parte do foco</h1>
+            <p id="homeHeroDescription" class="landing-subtitle mb-4">Cadastre produtos, organize categorias, ajuste o visual da loja e publique uma página limpa para compartilhar seus itens.</p>
             <div class="landing-actions d-flex flex-column flex-sm-row gap-3 mb-4">
-              <a href="cadastro.html?type=advertiser" class="btn btn-primary btn-lg">Quero ser anunciante</a>
-              <a href="cadastro.html?type=affiliate" class="btn btn-outline-primary btn-lg">Quero ser afiliado</a>
+              <a href="cadastro.html" class="btn btn-primary btn-lg">Criar minha loja</a>
+              <a href="login.html" class="btn btn-outline-primary btn-lg">Entrar</a>
             </div>
             <div class="saas-inline-proof mb-4">
-              <span>Campanhas e produtos</span>
-              <span>Links rastreáveis</span>
-              <span>Comissões e saques</span>
-              <span>Marca própria no futuro</span>
+              <span>Produtos organizados</span>
+              <span>Categorias ordenadas</span>
+              <span>Página pública personalizada</span>
+              <span>Gestão simples</span>
             </div>
             <div class="saas-metric-strip">
-              <article><strong>1,2 mi</strong><span>cliques rastreados por mês</span></article>
-              <article><strong>384</strong><span>afiliados aprovados</span></article>
-              <article><strong>R$ 4,8 mi</strong><span>vendas atribuídas</span></article>
+              <article><strong>1</strong><span>fluxo central de gestão</span></article>
+              <article><strong>3</strong><span>áreas principais: produtos, categorias e loja</span></article>
+              <article><strong>100%</strong><span>foco em catálogo e vitrine</span></article>
             </div>
           </div>
           <div class="col-12 col-lg-6">
@@ -66,35 +66,35 @@
                 <div class="hero-mockup-toolbar"><span></span><span></span><span></span></div>
                 <div class="hero-mockup-layout">
                   <aside class="hero-mockup-sidebar">
-                    <div class="hero-mockup-brand">Afiliados Pro</div>
+                    <div class="hero-mockup-brand">Vitrine</div>
                     <div class="hero-mockup-menu">
                       <span>Painel</span>
-                      <span>Campanhas</span>
-                      <span>Afiliados</span>
-                      <span>Comissões</span>
+                      <span>Produtos</span>
+                      <span>Categorias</span>
+                      <span>Loja</span>
                     </div>
                   </aside>
                   <div class="hero-mockup-body">
                     <div class="hero-mockup-panel">
-                      <p class="hero-mockup-kicker">Área do anunciante</p>
-                      <h2>Operação comercial, rastreamento e gestão em um só lugar</h2>
-                      <p>Cadastre produtos, aprove parceiros e acompanhe resultados com governança.</p>
+                      <p class="hero-mockup-kicker">Área de gestão</p>
+                      <h2>Uma base direta para organizar o que realmente importa</h2>
+                      <p>Cadastre itens, ajuste categorias e publique uma página com identidade própria.</p>
                     </div>
                     <div class="hero-mockup-grid">
-                      <article class="hero-mockup-card"><p>Campanhas</p><strong>12 ativas</strong></article>
-                      <article class="hero-mockup-card"><p>Afiliados</p><strong>384 aprovados</strong></article>
-                      <article class="hero-mockup-card"><p>Conversões</p><strong>146 hoje</strong></article>
+                      <article class="hero-mockup-card"><p>Produtos</p><strong>48 cadastrados</strong></article>
+                      <article class="hero-mockup-card"><p>Categorias</p><strong>7 ativas</strong></article>
+                      <article class="hero-mockup-card"><p>Vitrine</p><strong>online</strong></article>
                     </div>
                     <div class="saas-flow-rail">
-                      <div class="saas-flow-step"><span>1</span><div><strong>Produto</strong><p>Catálogo validado</p></div></div>
-                      <div class="saas-flow-step"><span>2</span><div><strong>Link</strong><p>/r/joao-prod/campanha-q2</p></div></div>
-                      <div class="saas-flow-step"><span>3</span><div><strong>Comissão</strong><p>8% por conversão</p></div></div>
+                      <div class="saas-flow-step"><span>1</span><div><strong>Produto</strong><p>Preço, imagem e descrição</p></div></div>
+                      <div class="saas-flow-step"><span>2</span><div><strong>Categoria</strong><p>Ordem da navegação</p></div></div>
+                      <div class="saas-flow-step"><span>3</span><div><strong>Página</strong><p>Loja pública personalizada</p></div></div>
                     </div>
                     <div class="hero-mockup-store">
                       <div class="hero-mockup-store-card">
                         <div>
-                          <p class="mb-1 fw-semibold">Resultados em tempo real</p>
-                          <p class="mb-0 text-secondary small">Cliques, conversões, saques e antifraude na mesma visão.</p>
+                          <p class="mb-1 fw-semibold">Publicação simplificada</p>
+                          <p class="mb-0 text-secondary small">Menos distração no painel, mais clareza para manter a loja atualizada.</p>
                         </div>
                         <span class="hero-mockup-cta">Abrir painel</span>
                       </div>
@@ -112,11 +112,11 @@
       <div class="container">
         <section class="section-shell pt-4">
           <div class="saas-logo-cloud">
-            <span>Operação com vários perfis</span>
-            <span>Rastreamento como prioridade</span>
+            <span>HTML + JS puro</span>
             <span>Supabase + Vercel</span>
-            <span>Preparado para marca própria</span>
             <span>Fluxos em português do Brasil</span>
+            <span>Loja pública por slug</span>
+            <span>Painel administrativo direto</span>
           </div>
         </section>
 
@@ -124,23 +124,23 @@
           <div class="row g-4 align-items-end">
             <div class="col-12 col-lg-7">
               <span class="section-kicker">Como funciona</span>
-              <h2 class="section-title">Uma operação de afiliados em 3 etapas claras</h2>
-              <p class="section-copy">A plataforma organiza o processo de ponta a ponta para que o anunciante configure o programa, o afiliado trabalhe com autonomia e a gestão acompanhe resultados, riscos e repasses.</p>
+              <h2 class="section-title">Uma rotina simples em 3 etapas</h2>
+              <p class="section-copy">A proposta volta ao essencial: organizar a base, deixar a loja clara e publicar uma página pronta para compartilhar.</p>
             </div>
           </div>
           <div class="row g-4 mt-1">
-            <div class="col-12 col-md-4"><article class="card border-0 shadow-sm feature-card step-card h-100"><div class="card-body p-4"><span class="feature-index">01</span><h3 class="h5 mb-2">Estruture o programa</h3><p class="text-secondary mb-0">Cadastre produtos, campanhas, comissões, regras e materiais.</p></div></article></div>
-            <div class="col-12 col-md-4"><article class="card border-0 shadow-sm feature-card step-card h-100"><div class="card-body p-4"><span class="feature-index">02</span><h3 class="h5 mb-2">Ative os afiliados certos</h3><p class="text-secondary mb-0">Aprove parceiros e entregue campanhas com governança.</p></div></article></div>
-            <div class="col-12 col-md-4"><article class="card border-0 shadow-sm feature-card step-card h-100"><div class="card-body p-4"><span class="feature-index">03</span><h3 class="h5 mb-2">Meça, atribua e pague</h3><p class="text-secondary mb-0">Registre cliques, acompanhe conversões e organize comissões e saques.</p></div></article></div>
+            <div class="col-12 col-md-4"><article class="card border-0 shadow-sm feature-card step-card h-100"><div class="card-body p-4"><span class="feature-index">01</span><h3 class="h5 mb-2">Cadastre os produtos</h3><p class="text-secondary mb-0">Preencha link, preço, imagem, título e descrição com mais agilidade.</p></div></article></div>
+            <div class="col-12 col-md-4"><article class="card border-0 shadow-sm feature-card step-card h-100"><div class="card-body p-4"><span class="feature-index">02</span><h3 class="h5 mb-2">Organize por categorias</h3><p class="text-secondary mb-0">Estruture a vitrine para facilitar cadastro, busca e leitura da página.</p></div></article></div>
+            <div class="col-12 col-md-4"><article class="card border-0 shadow-sm feature-card step-card h-100"><div class="card-body p-4"><span class="feature-index">03</span><h3 class="h5 mb-2">Publique a loja</h3><p class="text-secondary mb-0">Ajuste o visual, confira o endereço público e compartilhe sua vitrine.</p></div></article></div>
           </div>
         </section>
 
-        <section id="solucoes" class="section-shell">
+        <section id="recursos" class="section-shell">
           <div class="row g-4">
             <div class="col-12 col-lg-5">
-              <span class="section-kicker">Soluções por perfil</span>
-              <h2 class="section-title">Dois lados do mercado, uma plataforma coerente</h2>
-              <p class="section-copy">O produto separa painéis, permissões, rotinas e objetivos para anunciante, afiliado e operação interna.</p>
+              <span class="section-kicker">Recursos</span>
+              <h2 class="section-title">Tudo concentrado no que sustenta a loja</h2>
+              <p class="section-copy">O produto ficou mais leve e coerente, sem páginas paralelas que desviam do objetivo principal.</p>
             </div>
             <div class="col-12 col-lg-7">
               <div class="row g-3">
@@ -149,17 +149,17 @@
                     <div class="card-body p-4">
                       <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
                         <div>
-                          <span class="section-kicker mb-3">Para anunciantes</span>
-                          <h3 class="h4 mb-2">Crie seu programa de afiliados com controle comercial</h3>
-                          <p class="text-secondary mb-4">Gerencie catálogo, campanhas, aprovações, metas, materiais e resultados por produto, campanha e parceiro.</p>
+                          <span class="section-kicker mb-3">Catálogo</span>
+                          <h3 class="h4 mb-2">Produtos bem preenchidos desde o início</h3>
+                          <p class="text-secondary mb-4">Use captura automática como apoio e mantenha título, preço, descrição e destino em um só formulário.</p>
                         </div>
-                        <a href="cadastro.html?type=advertiser" class="btn btn-primary">Criar conta de anunciante</a>
+                        <a href="produtos.html" class="btn btn-primary">Ver produtos</a>
                       </div>
                       <div class="saas-bullet-grid">
-                        <span>Cadastro de produtos e campanhas</span>
-                        <span>Comissão fixa ou percentual</span>
-                        <span>Aprovação manual de afiliados</span>
-                        <span>Relatórios de desempenho</span>
+                        <span>Cadastro e edição rápida</span>
+                        <span>Prévia do card</span>
+                        <span>Lista com filtros</span>
+                        <span>Exportação CSV</span>
                       </div>
                     </div>
                   </article>
@@ -169,17 +169,17 @@
                     <div class="card-body p-4">
                       <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
                         <div>
-                          <span class="section-kicker mb-3">Para afiliados</span>
-                          <h3 class="h4 mb-2">Promova ofertas com links rastreáveis e visão de ganhos</h3>
-                          <p class="text-secondary mb-4">Acesse campanhas liberadas, copie links, acompanhe cliques, conversões, comissões acumuladas e solicitações de saque.</p>
+                          <span class="section-kicker mb-3">Vitrine</span>
+                          <h3 class="h4 mb-2">Página pública com identidade própria</h3>
+                          <p class="text-secondary mb-4">Personalize nome, banner, bio, cores e botão para deixar a loja com uma presença mais alinhada ao seu estilo.</p>
                         </div>
-                        <a href="cadastro.html?type=affiliate" class="btn btn-outline-primary">Criar conta de afiliado</a>
+                        <a href="loja.html" class="btn btn-outline-primary">Ver loja</a>
                       </div>
                       <div class="saas-bullet-grid">
-                        <span>Biblioteca de campanhas ativas</span>
-                        <span>Geração e cópia de links</span>
-                        <span>Histórico de cliques e conversões</span>
-                        <span>Comissões e materiais</span>
+                        <span>Slug público</span>
+                        <span>Banner e foto</span>
+                        <span>Cores e CTA</span>
+                        <span>Página pública por endereço</span>
                       </div>
                     </div>
                   </article>
@@ -189,55 +189,31 @@
           </div>
         </section>
 
-        <section class="section-shell pt-0">
-          <div class="row g-3">
-            <div class="col-12 col-md-6 col-xl-3"><article class="card border-0 shadow-sm proof-card h-100"><div class="card-body p-4"><p class="proof-value">24h</p><p class="proof-label mb-0">para um anunciante publicar seu primeiro catálogo</p></div></article></div>
-            <div class="col-12 col-md-6 col-xl-3"><article class="card border-0 shadow-sm proof-card h-100"><div class="card-body p-4"><p class="proof-value">3x</p><p class="proof-label mb-0">mais velocidade para gerar links</p></div></article></div>
-            <div class="col-12 col-md-6 col-xl-3"><article class="card border-0 shadow-sm proof-card h-100"><div class="card-body p-4"><p class="proof-value">98%</p><p class="proof-label mb-0">aderência simulada em jornadas no celular</p></div></article></div>
-            <div class="col-12 col-md-6 col-xl-3"><article class="card border-0 shadow-sm proof-card h-100"><div class="card-body p-4"><p class="proof-value">1 base</p><p class="proof-label mb-0">para rastreamento, saques e marca própria</p></div></article></div>
-          </div>
-        </section>
-
-        <section class="section-shell pt-0">
+        <section id="organizacao" class="section-shell pt-0">
           <div class="row g-4">
             <div class="col-12 col-lg-5">
-              <span class="section-kicker">Benefícios principais</span>
-              <h2 class="section-title">Desenhado para crescer como produto, não como página isolada</h2>
-              <p class="section-copy">A estrutura prepara o caminho para monitoramento, trilha de auditoria, monetização por plano e identidade por operação.</p>
+              <span class="section-kicker">Organização</span>
+              <h2 class="section-title">Separação clara entre conta, loja e catálogo</h2>
+              <p class="section-copy">Cada área agora tem um papel mais nítido, o que reduz atrito no dia a dia e deixa o painel mais intuitivo.</p>
             </div>
             <div class="col-12 col-lg-7">
               <div class="row g-3">
-                <div class="col-12 col-md-6"><article class="card border-0 shadow-sm feature-card h-100"><div class="card-body p-4"><h3 class="h6 mb-2">Arquitetura por operação</h3><p class="text-secondary mb-0">Base pronta para marcas independentes e domínios próprios.</p></div></article></div>
-                <div class="col-12 col-md-6"><article class="card border-0 shadow-sm feature-card h-100"><div class="card-body p-4"><h3 class="h6 mb-2">Rastreamento no centro do produto</h3><p class="text-secondary mb-0">Links, cliques, atribuição e antifraude fazem parte da estrutura principal.</p></div></article></div>
-                <div class="col-12 col-md-6"><article class="card border-0 shadow-sm feature-card h-100"><div class="card-body p-4"><h3 class="h6 mb-2">Painéis por papel</h3><p class="text-secondary mb-0">Cada perfil enxerga só o que precisa, com experiência própria.</p></div></article></div>
-                <div class="col-12 col-md-6"><article class="card border-0 shadow-sm feature-card h-100"><div class="card-body p-4"><h3 class="h6 mb-2">Preparado para vender mais</h3><p class="text-secondary mb-0">Planos mensais, taxa operacional e marca própria entram sem refazer o produto.</p></div></article></div>
+                <div class="col-12 col-md-6"><article class="card border-0 shadow-sm feature-card h-100"><div class="card-body p-4"><h3 class="h6 mb-2">Dados pessoais</h3><p class="text-secondary mb-0">Informações privadas ficam separadas da configuração visual da loja.</p></div></article></div>
+                <div class="col-12 col-md-6"><article class="card border-0 shadow-sm feature-card h-100"><div class="card-body p-4"><h3 class="h6 mb-2">Categorias dedicadas</h3><p class="text-secondary mb-0">A organização da vitrine acontece em uma página própria, sem misturar fluxos.</p></div></article></div>
+                <div class="col-12 col-md-6"><article class="card border-0 shadow-sm feature-card h-100"><div class="card-body p-4"><h3 class="h6 mb-2">Admin enxuto</h3><p class="text-secondary mb-0">O backoffice acompanha usuários e base da plataforma sem módulos paralelos.</p></div></article></div>
+                <div class="col-12 col-md-6"><article class="card border-0 shadow-sm feature-card h-100"><div class="card-body p-4"><h3 class="h6 mb-2">Publicação direta</h3><p class="text-secondary mb-0">A loja pública continua acessível por slug e recebe os produtos já categorizados.</p></div></article></div>
               </div>
             </div>
-          </div>
-        </section>
-
-        <section id="planos" class="section-shell pt-0">
-          <div class="row g-4 align-items-end">
-            <div class="col-12 col-lg-7">
-              <span class="section-kicker">Planos</span>
-              <h2 class="section-title">Modelo comercial preparado para escalar</h2>
-              <p class="section-copy">A estrutura do produto já aponta para cobrança recorrente por anunciante, com variação por volume, recursos e personalização da marca.</p>
-            </div>
-          </div>
-          <div class="row g-4 mt-1">
-            <div class="col-12 col-lg-4"><article class="card border-0 shadow-sm pricing-card h-100"><div class="card-body p-4"><p class="pricing-plan">Inicial</p><h3 class="pricing-price">R$ 297<span>/mês</span></h3><p class="text-secondary">Para programas em começo de operação.</p><ul class="pricing-list"><li>Até 100 afiliados</li><li>Links rastreáveis</li><li>Painel principal</li><li>Produtos e campanhas</li></ul><a href="cadastro.html?type=advertiser" class="btn btn-outline-primary w-100">Começar</a></div></article></div>
-            <div class="col-12 col-lg-4"><article class="card border-0 shadow-sm pricing-card is-featured h-100"><div class="card-body p-4"><p class="pricing-plan">Crescimento</p><h3 class="pricing-price">R$ 697<span>/mês</span></h3><p class="text-secondary">Para equipes com maior necessidade de governança.</p><ul class="pricing-list"><li>Até 1.000 afiliados</li><li>Comissões e saques</li><li>Relatórios avançados</li><li>Aprovações e regras</li></ul><a href="cadastro.html?type=advertiser" class="btn btn-primary w-100">Falar com vendas</a></div></article></div>
-            <div class="col-12 col-lg-4"><article class="card border-0 shadow-sm pricing-card h-100"><div class="card-body p-4"><p class="pricing-plan">Marca própria</p><h3 class="pricing-price">Sob consulta</h3><p class="text-secondary">Para operações com várias marcas e domínio próprio.</p><ul class="pricing-list"><li>Ambiente dedicado</li><li>Identidade visual por cliente</li><li>Domínio personalizado</li><li>Suporte de implantação</li></ul><a href="mailto:contato@afiliados.com" class="btn btn-outline-primary w-100">Solicitar proposta</a></div></article></div>
           </div>
         </section>
 
         <section id="faq" class="section-shell pt-0">
-          <div class="row g-4"><div class="col-12 col-lg-6"><span class="section-kicker">Perguntas frequentes</span><h2 class="section-title">Dúvidas comuns sobre a plataforma</h2></div></div>
+          <div class="row g-4"><div class="col-12 col-lg-6"><span class="section-kicker">Perguntas frequentes</span><h2 class="section-title">Dúvidas comuns sobre a base atual</h2></div></div>
           <div class="row g-3 mt-1">
-            <div class="col-12 col-lg-6"><article class="card border-0 shadow-sm feature-card h-100"><div class="card-body p-4"><h3 class="h6 mb-2">É para afiliado individual ou para empresa?</h3><p class="text-secondary mb-0">A plataforma foi pensada para empresas criarem e operarem seu próprio programa de afiliados, com uma área específica para parceiros.</p></div></article></div>
-            <div class="col-12 col-lg-6"><article class="card border-0 shadow-sm feature-card h-100"><div class="card-body p-4"><h3 class="h6 mb-2">A plataforma suporta múltiplos perfisó</h3><p class="text-secondary mb-0">Sim. A arquitetura contempla administrador, anunciante e afiliado, com painéis, regras e permissões dedicadas.</p></div></article></div>
-            <div class="col-12 col-lg-6"><article class="card border-0 shadow-sm feature-card h-100"><div class="card-body p-4"><h3 class="h6 mb-2">O rastreamento já foi pensado como núcleo do produto?</h3><p class="text-secondary mb-0">Sim. A estrutura inclui links rastreáveis, registro de clique, atribuição de conversão, cálculo de comissão e antifraude básico.</p></div></article></div>
-            <div class="col-12 col-lg-6"><article class="card border-0 shadow-sm feature-card h-100"><div class="card-body p-4"><h3 class="h6 mb-2">É possível evoluir para marca própria?</h3><p class="text-secondary mb-0">Sim. O desenho do produto já considera domínio personalizado, identidade visual por cliente e ambientes independentes.</p></div></article></div>
+            <div class="col-12 col-lg-6"><article class="card border-0 shadow-sm feature-card h-100"><div class="card-body p-4"><h3 class="h6 mb-2">Serve para montar uma vitrine simples?</h3><p class="text-secondary mb-0">Sim. O fluxo foi remodelado para priorizar catálogo, categorias e página pública, sem módulos adicionais no caminho.</p></div></article></div>
+            <div class="col-12 col-lg-6"><article class="card border-0 shadow-sm feature-card h-100"><div class="card-body p-4"><h3 class="h6 mb-2">Ainda existe área administrativa?</h3><p class="text-secondary mb-0">Sim. O admin segue cuidando de usuários e da saúde da base, mas com menos complexidade operacional.</p></div></article></div>
+            <div class="col-12 col-lg-6"><article class="card border-0 shadow-sm feature-card h-100"><div class="card-body p-4"><h3 class="h6 mb-2">Posso personalizar a página pública?</h3><p class="text-secondary mb-0">Sim. Nome, slug, banner, bio, cores e botão continuam configuráveis na área da loja.</p></div></article></div>
+            <div class="col-12 col-lg-6"><article class="card border-0 shadow-sm feature-card h-100"><div class="card-body p-4"><h3 class="h6 mb-2">A captura automática de produto continua?</h3><p class="text-secondary mb-0">Sim. Ela continua como apoio no cadastro, mas agora o produto não depende de módulos adicionais para fechar o fluxo.</p></div></article></div>
           </div>
         </section>
 
@@ -245,12 +221,12 @@
           <div class="cta-band">
             <div>
               <span class="cta-band-kicker">Próximo passo</span>
-              <h2 class="h3 mb-2">Comece com o perfil certo e entre em uma operação pronta para crescer</h2>
-              <p class="mb-0 cta-band-copy">Se você é anunciante, configure campanhas e parceiros. Se é afiliado, entre para divulgar ofertas com links rastreáveis e visão de ganhos.</p>
+              <h2 class="h3 mb-2">Comece com uma base mais direta para publicar seus produtos</h2>
+              <p class="mb-0 cta-band-copy">Crie sua conta, organize o catálogo, ajuste a identidade da loja e publique uma página pronta para compartilhar.</p>
             </div>
             <div class="d-flex flex-column flex-sm-row gap-3">
-              <a href="cadastro.html?type=advertiser" class="btn btn-light btn-lg">Criar conta de anunciante</a>
-              <a href="cadastro.html?type=affiliate" class="btn btn-outline-light btn-lg">Criar conta de afiliado</a>
+              <a href="cadastro.html" class="btn btn-light btn-lg">Criar conta</a>
+              <a href="login.html" class="btn btn-outline-light btn-lg">Entrar</a>
             </div>
           </div>
         </section>
@@ -267,7 +243,7 @@
           <div class="row g-4 align-items-end">
             <div class="col-12 col-xl-4">
               <p class="store-topbar-kicker mb-1">Loja pública</p>
-              <h1 id="heroTitle" class="h2 mb-0">Loja de afiliado</h1>
+              <h1 id="heroTitle" class="h2 mb-0">Loja</h1>
             </div>
             <div class="col-12 col-xl-8">
               <div class="row g-3">
@@ -313,24 +289,23 @@
     <div class="container">
       <div class="row g-4">
         <div class="col-12 col-lg-4">
-          <a class="navbar-brand d-inline-flex mb-2" href="index.html">Afiliados</a>
-          <p class="site-footer-copy mb-3">Plataforma para empresas criarem seu programa de afiliados, ativarem parceiros, rastrearem cliques e operarem comissões com governança.</p>
-          <p class="small text-secondary mb-0">Base preparada para campanhas, saques, marca própria e domínio personalizado.</p>
+          <a class="navbar-brand d-inline-flex mb-2" href="index.html">Vitrine</a>
+          <p class="site-footer-copy mb-3">Base enxuta para organizar produtos, categorias, identidade visual e uma página pública com mais clareza.</p>
+          <p class="small text-secondary mb-0">Fluxo focado em catálogo e loja, sem módulos paralelos fora do escopo.</p>
         </div>
         <div class="col-6 col-lg-2">
           <p class="site-footer-heading">Produto</p>
           <div class="site-footer-links is-column">
             <a href="#como-funciona">Como funciona</a>
-            <a href="#solucoes">Soluções</a>
-            <a href="#planos">Planos</a>
+            <a href="#recursos">Recursos</a>
+            <a href="#organizacao">Organização</a>
             <a href="#faq">Perguntas</a>
           </div>
         </div>
         <div class="col-6 col-lg-2">
-          <p class="site-footer-heading">Perfis</p>
+          <p class="site-footer-heading">Acesso</p>
           <div class="site-footer-links is-column">
-            <a href="cadastro.html?type=advertiser">Anunciantes</a>
-            <a href="cadastro.html?type=affiliate">Afiliados</a>
+            <a href="cadastro.html">Criar conta</a>
             <a href="login.html">Entrar</a>
             <a href="recuperar-senha.html">Recuperar senha</a>
           </div>
@@ -338,9 +313,9 @@
         <div class="col-12 col-lg-4">
           <p class="site-footer-heading">Contato</p>
           <div class="site-footer-links is-column">
-            <a href="mailto:contato@afiliados.com">contato@afiliados.com</a>
-            <a href="mailto:vendas@afiliados.com">vendas@afiliados.com</a>
-            <span class="text-secondary">Política de privacidade e termos entram na próxima etapa institucional.</span>
+            <a href="mailto:contato@vitrine.com">contato@vitrine.com</a>
+            <a href="mailto:suporte@vitrine.com">suporte@vitrine.com</a>
+            <span class="text-secondary">A loja pública continua disponível por slug, com produtos e categorias publicados.</span>
           </div>
         </div>
       </div>
@@ -354,4 +329,3 @@
   <script src="assets/js/index.js"></script>
 </body>
 </html>
-

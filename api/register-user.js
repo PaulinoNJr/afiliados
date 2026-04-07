@@ -21,7 +21,7 @@ module.exports = async (req, res) => {
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ ok: false, error: 'Método não permitido.' });
+    return res.status(405).json({ ok: false, error: 'Metodo nao permitido.' });
   }
 
   const email = String(req.body?.email || '').trim().toLowerCase();
@@ -42,7 +42,7 @@ module.exports = async (req, res) => {
   if (!passwordValidation.ok) {
     return res.status(400).json({
       ok: false,
-      error: 'A senha não atende aos requisitos mínimos de segurança.'
+      error: 'A senha nao atende aos requisitos minimos de seguranca.'
     });
   }
 
@@ -75,7 +75,7 @@ module.exports = async (req, res) => {
       email,
       password,
       metadata: {
-        account_type: metadata.account_type || 'advertiser',
+        account_type: 'advertiser',
         company_name: metadata.company_name || null,
         first_name: metadata.first_name || null,
         last_name: metadata.last_name || null,

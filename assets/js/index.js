@@ -121,16 +121,11 @@
     updateCanonical(url);
   }
 
-  function updateSearchSummary(total, filtered) {
-    return { total, filtered };
-  }
-
   function buildStoreCategories(products = []) {
     const categoriesMap = new Map();
 
     products.forEach((product) => {
-      if (!product.category_id) return;
-      if (categoriesMap.has(product.category_id)) return;
+      if (!product.category_id || categoriesMap.has(product.category_id)) return;
       categoriesMap.set(product.category_id, {
         id: product.category_id,
         name: product.category_name || 'Geral',
@@ -203,6 +198,7 @@
     state.categories = [];
     state.products = [];
     state.filteredProducts = [];
+
     document.body.classList.remove('storefront-mode');
     document.body.style.removeProperty('--store-page-bg');
     document.body.style.removeProperty('--store-text-color');
@@ -211,15 +207,15 @@
 
     refs.marketingCardContent.classList.remove('d-none');
     refs.homeMarketingSection.classList.remove('d-none');
-    refs.homeHeroBadge.textContent = 'Plataforma para programas de afiliados';
-    refs.homeHeroTitle.textContent = 'Crie, gerencie e amplie seu programa de afiliados em um só lugar';
-    refs.homeHeroDescription.textContent = 'Publique campanhas, organize produtos, aprove parceiros, gere links rastreáveis e acompanhe cliques, conversões e comissões com clareza.';
+    refs.homeHeroBadge.textContent = 'Catalogo, loja e pagina publica';
+    refs.homeHeroTitle.textContent = 'Monte sua vitrine com foco em produtos, categorias e identidade visual';
+    refs.homeHeroDescription.textContent = 'Cadastre produtos, organize a navegacao da loja e publique uma pagina mais limpa para compartilhar seus itens.';
     resetStoreUi();
     finishResolvingPage();
 
     updateSeo({
-      title: 'Programa de Afiliados | Plataforma para Anunciantes e Afiliados',
-      description: 'Crie, gerencie e amplie seu programa de afiliados com uma plataforma para campanhas, links rastreáveis, cliques, conversões e comissões.',
+      title: 'Vitrine | Catalogo, Loja e Pagina Publica',
+      description: 'Organize produtos, categorias e uma pagina publica personalizada em um fluxo mais simples.',
       image: defaultImage(),
       url: `${window.location.origin}/`
     });
@@ -227,10 +223,10 @@
     updateStructuredData({
       '@context': 'https://schema.org',
       '@type': 'SoftwareApplication',
-      name: 'Afiliados',
+      name: 'Vitrine',
       applicationCategory: 'BusinessApplication',
       operatingSystem: 'Web',
-      description: 'Plataforma para empresas criarem seu próprio programa de afiliados, ativarem parceiros e acompanharem resultados comerciais.',
+      description: 'Base para cadastrar produtos, organizar categorias e publicar uma loja com identidade propria.',
       offers: {
         '@type': 'Offer',
         price: '0',
@@ -251,7 +247,7 @@
     const pageBackground = normalizeHexColor(store.page_background, DEFAULT_PAGE_BACKGROUND);
     const buttonTextColor = normalizeHexColor(store.button_text_color, DEFAULT_BUTTON_TEXT);
 
-    refs.heroTitle.textContent = store.store_name || 'Loja de afiliado';
+    refs.heroTitle.textContent = store.store_name || 'Loja';
     refs.emptyStateTitle.textContent = 'Nenhum produto publicado ainda';
     refs.emptyStateDescription.textContent = 'Esta loja ainda não publicou produtos.';
     refs.marketingCardContent.classList.add('d-none');
@@ -283,7 +279,7 @@
     }
 
     updateSeo({
-      title: `${store.store_name} | Loja de Afiliados`,
+      title: `${store.store_name} | Loja`,
       description,
       image: store.banner_url || store.photo_url || defaultImage(),
       url: window.StoreUtils.getStoreUrl(store.slug)
@@ -292,7 +288,7 @@
     updateStructuredData({
       '@context': 'https://schema.org',
       '@type': 'Store',
-      name: store.store_name || 'Loja de afiliados',
+      name: store.store_name || 'Loja',
       description,
       image: store.banner_url || store.photo_url || defaultImage(),
       url: window.StoreUtils.getStoreUrl(store.slug)
@@ -305,6 +301,7 @@
     state.categories = [];
     state.products = [];
     state.filteredProducts = [];
+
     document.body.classList.remove('storefront-mode');
     document.body.style.removeProperty('--store-page-bg');
     document.body.style.removeProperty('--store-text-color');
@@ -322,8 +319,8 @@
     finishResolvingPage();
 
     updateSeo({
-      title: 'Loja não encontrada | Afiliados',
-      description: 'Essa loja pública não foi encontrada.',
+      title: 'Loja nao encontrada | Vitrine',
+      description: 'Essa loja publica nao foi encontrada.',
       image: defaultImage(),
       url: window.location.href
     });
@@ -331,8 +328,8 @@
     updateStructuredData({
       '@context': 'https://schema.org',
       '@type': 'WebPage',
-      name: 'Loja não encontrada | Afiliados',
-      description: 'Essa loja pública não foi encontrada.',
+      name: 'Loja nao encontrada | Vitrine',
+      description: 'Essa loja publica nao foi encontrada.',
       url: window.location.href
     });
   }
@@ -386,13 +383,13 @@
 
       const title = document.createElement('h2');
       title.className = 'h6 mb-2';
-      title.textContent = item.titulo || 'Produto sem título';
+      title.textContent = item.titulo || 'Produto sem titulo';
 
       const categoryBadge = document.createElement('div');
       categoryBadge.className = 'store-category-pill mb-2';
       categoryBadge.textContent = item.category_name || 'Geral';
 
-      const descriptionText = item.descricao || 'Sem descrição.';
+      const descriptionText = item.descricao || 'Sem descricao.';
       const desc = document.createElement('p');
       desc.className = 'text-secondary small mb-1 product-desc is-collapsed';
       desc.textContent = descriptionText;
@@ -429,11 +426,11 @@
 
       const link = document.createElement('a');
       link.className = 'btn btn-primary mt-auto';
-      link.href = isValidHttpUrl(item.link_afiliado) ? item.link_afiliado : '#';
+      link.href = isValidHttpUrl(item.product_url) ? item.product_url : '#';
       link.textContent = ctaLabel;
       link.target = '_blank';
       link.rel = 'noopener noreferrer nofollow';
-      link.classList.toggle('disabled', !isValidHttpUrl(item.link_afiliado));
+      link.classList.toggle('disabled', !isValidHttpUrl(item.product_url));
       link.style.borderColor = accentColor;
       link.dataset.buttonStyle = buttonStyle;
       if (buttonStyle === 'outline') {
@@ -468,17 +465,8 @@
       return title.includes(term) || desc.includes(term) || categoryName.includes(term);
     });
 
-    if (!term && categoryId === 'all') {
-      state.filteredProducts = sortProducts(filteredBase);
-      renderProducts(state.filteredProducts);
-      updateSearchSummary(state.products.length, state.filteredProducts.length);
-      return;
-    }
-
     state.filteredProducts = sortProducts(filteredBase);
-
     renderProducts(state.filteredProducts);
-    updateSearchSummary(state.products.length, state.filteredProducts.length);
   }
 
   async function loadHome() {
@@ -491,10 +479,9 @@
     refs.notFoundState.classList.add('d-none');
     refs.productsGrid.innerHTML = '';
 
-    const { data: storeRows, error: storeError } = await window.db
-      .rpc('get_public_store_by_slug', {
-        store_slug: slug
-      });
+    const { data: storeRows, error: storeError } = await window.db.rpc('get_public_store_by_slug', {
+      store_slug: slug
+    });
 
     if (storeError) throw storeError;
 
@@ -508,10 +495,9 @@
 
     applyStoreHero(store);
 
-    const { data: products, error: productsError } = await window.db
-      .rpc('get_public_products_by_profile', {
-        store_profile_id: store.id
-      });
+    const { data: products, error: productsError } = await window.db.rpc('get_public_products_by_profile', {
+      store_profile_id: store.id
+    });
 
     if (productsError) throw productsError;
 
@@ -535,7 +521,7 @@
     if (window.AppConfig?.missingConfig) {
       applyNotFoundState();
       finishResolvingPage();
-      showStatus('Configure o Supabase em assets/js/config.js para carregar as lojas públicas.', 'warning');
+      showStatus('Configure o Supabase em assets/js/config.js para carregar as lojas publicas.', 'warning');
       return;
     }
 
@@ -544,7 +530,7 @@
     } catch (err) {
       refs.loading.classList.add('d-none');
       finishResolvingPage();
-      showStatus(`Erro ao carregar página pública: ${err.message}`, 'danger');
+      showStatus(`Erro ao carregar pagina publica: ${err.message}`, 'danger');
     }
   }
 
@@ -570,10 +556,6 @@
   }
 
   function init() {
-    window.criarConta = function criarConta() {
-      window.location.href = '/login.html';
-    };
-
     refs.searchInput.addEventListener('input', applyFilter);
     refs.storeCategoryFilter?.addEventListener('change', applyFilter);
     refs.sortProducts.addEventListener('change', applyFilter);
@@ -584,5 +566,3 @@
 
   document.addEventListener('DOMContentLoaded', init);
 })();
-
-

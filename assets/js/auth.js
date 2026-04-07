@@ -1,14 +1,12 @@
 (() => {
   const ROLE_LABELS = {
-    admin: 'admin',
-    advertiser: 'anunciante',
-    affiliate: 'afiliado'
+    admin: 'administrador',
+    advertiser: 'gestor'
   };
 
   const DASHBOARD_ROUTES = {
     admin: 'dashboard-admin.html',
-    advertiser: 'dashboard-anunciante.html',
-    affiliate: 'dashboard-afiliado.html'
+    advertiser: 'dashboard-anunciante.html'
   };
 
   function syncWorkspaceOffsets() {
@@ -28,21 +26,20 @@
 
   function ensureClient() {
     if (!window.db) {
-      throw new Error('Supabase não configurado. Atualize assets/js/config.js.');
+      throw new Error('Supabase nao configurado. Atualize assets/js/config.js.');
     }
   }
 
   function normalizeRole(role) {
     const normalized = String(role || '').trim().toLowerCase();
     if (normalized === 'produtor') return 'advertiser';
-    if (normalized === 'admin' || normalized === 'advertiser' || normalized === 'affiliate') return normalized;
+    if (normalized === 'admin' || normalized === 'advertiser') return normalized;
     return 'advertiser';
   }
 
-  function normalizeAccountType(accountType, role = '') {
+  function normalizeAccountType(accountType) {
     const normalized = String(accountType || '').trim().toLowerCase();
-    if (normalized === 'affiliate' || normalized === 'advertiser') return normalized;
-    return normalizeRole(role) === 'affiliate' ? 'affiliate' : 'advertiser';
+    return normalized === 'advertiser' ? normalized : 'advertiser';
   }
 
   function getRoleLabel(role) {
@@ -83,7 +80,7 @@
     return { data, error };
   }
 
-  async function register(email, password, profileData = {}) {
+  async function register() {
     throw new Error('Cadastro direto pelo frontend foi desativado. Use os endpoints seguros do backend.');
   }
 
@@ -92,7 +89,7 @@
     return {
       ...profile,
       role: normalizeRole(profile.role),
-      account_type: normalizeAccountType(profile.account_type, profile.role),
+      account_type: normalizeAccountType(profile.account_type),
       company_name: profile.company_name || null
     };
   }
@@ -162,10 +159,6 @@
 
     document.querySelectorAll('[data-advertiser-only="true"]').forEach((element) => {
       element.classList.toggle('d-none', !['advertiser', 'admin'].includes(normalizedRole));
-    });
-
-    document.querySelectorAll('[data-affiliate-only="true"]').forEach((element) => {
-      element.classList.toggle('d-none', normalizedRole !== 'affiliate');
     });
 
     if (!actions) return;
