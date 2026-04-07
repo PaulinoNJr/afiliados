@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Loja | Vitrine</title>
-  <meta name="description" content="Configure sua loja personalizada." />
+  <meta name="description" content="Personalize sua loja publica em etapas, com identidade, visual e pagina dinamica." />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
@@ -28,478 +28,370 @@
 
   <main class="py-4 py-lg-5 admin-main app-shell-main">
     <div class="container">
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 page-header-row">
-        <div>
-          <h1 class="h3 mb-1">Configurações da loja</h1>
-          <p class="text-secondary mb-0">Organize a identidade visual e os elementos públicos da sua vitrine em um único lugar.</p>
+      <section class="admin-hero-panel p-4 p-lg-5 mb-4">
+        <div class="row g-4 align-items-center">
+          <div class="col-12 col-xl-8">
+            <p class="admin-eyebrow mb-2">Personalizacao da loja</p>
+            <h1 class="h2 mb-2">Organize sua pagina publica em etapas claras</h1>
+            <p class="mb-0 text-secondary">Separamos a personalizacao em um fluxo logico para deixar o painel mais simples: identidade, endereco, visual base, conversao e pagina dinamica.</p>
+          </div>
+          <div class="col-12 col-xl-4">
+            <div class="d-grid gap-2 d-sm-flex justify-content-xl-end page-header-actions">
+              <a id="headerStorePublicLink" href="index.html" class="btn btn-outline-primary">Ver pagina publica</a>
+              <a href="admin.html" class="btn btn-outline-dark">Voltar ao painel</a>
+            </div>
+          </div>
         </div>
-        <div class="d-flex flex-wrap gap-2 page-header-actions">
-          <a id="headerStorePublicLink" href="index.html" class="btn btn-outline-dark" target="_blank" rel="noopener noreferrer">Ver página pública</a>
-          <a href="perfil.html" class="btn btn-outline-secondary">Dados pessoais</a>
-          <a href="admin.html" class="btn btn-outline-primary">Voltar ao painel</a>
-          <button id="saveStoreBtn" type="submit" form="storeProfileForm" class="btn btn-primary">Salvar alterações</button>
-        </div>
-      </div>
+      </section>
 
-      <section class="workspace-menu" aria-label="Navegação do sistema">
+      <section class="workspace-menu" aria-label="Navegacao do sistema">
         <div class="workspace-menu-shell">
           <a href="admin.html" class="workspace-menu-link">Painel</a>
           <a href="loja.html" class="workspace-menu-link is-active" aria-current="page">Loja</a>
           <a href="perfil.html" class="workspace-menu-link">Perfil</a>
           <a href="produtos.html" class="workspace-menu-link">Produtos</a>
           <a href="categorias.html" class="workspace-menu-link">Categorias</a>
-          <a href="users.html" class="workspace-menu-link d-none" data-admin-only="true">Usuários</a>
+          <a href="users.html" class="workspace-menu-link d-none" data-admin-only="true">Usuarios</a>
         </div>
       </section>
 
-      <div id="statusMessage" class="alert d-none" role="alert"></div>
+      <div id="statusMessage" class="alert d-none mt-4" role="alert"></div>
+      <div id="builderStatusMessage" class="alert d-none mt-3" role="alert"></div>
 
-      <form id="storeProfileForm" novalidate>
-        <div class="row g-4">
-          <div class="col-12 col-xl-8">
-            <div class="card border-0 shadow-sm store-settings-card mb-4">
-              <div class="card-body p-4 p-lg-4">
-                <div class="store-settings-section-head">
-                  <div>
-                    <p class="store-settings-kicker mb-1">Identidade da loja</p>
-                    <h2 class="h5 mb-1">Informações públicas principais</h2>
-                    <p class="text-secondary small mb-0">As imagens enviadas ficam salvas no bucket <strong>store-assets</strong> do Supabase Storage, em uma pasta separada por usuário.</p>
+      <section class="personalization-flow mt-4">
+        <div class="personalization-flow-head">
+          <div>
+            <p class="store-settings-kicker mb-1">Fluxo guiado</p>
+            <h2 class="h4 mb-1">Personalize com menos ruido</h2>
+            <p class="text-secondary mb-0">Cada etapa agrupa um tipo de decisao. Assim fica mais facil ajustar a loja sem se perder no meio das configuracoes.</p>
+          </div>
+          <div class="personalization-stepper" role="tablist" aria-label="Etapas da personalizacao">
+            <button type="button" class="personalization-step-btn is-active" data-step-target="1" aria-selected="true">1. Identidade</button>
+            <button type="button" class="personalization-step-btn" data-step-target="2" aria-selected="false">2. Endereco</button>
+            <button type="button" class="personalization-step-btn" data-step-target="3" aria-selected="false">3. Visual base</button>
+            <button type="button" class="personalization-step-btn" data-step-target="4" aria-selected="false">4. Conversao</button>
+            <button type="button" class="personalization-step-btn" data-step-target="5" aria-selected="false">5. Pagina dinamica</button>
+          </div>
+        </div>
+
+        <form id="storeProfileForm" novalidate>
+          <section class="personalization-panel is-active" data-step-panel="1">
+            <div class="row g-4 align-items-start">
+              <div class="col-12 col-xl-7">
+                <div class="card border-0 shadow-sm h-100">
+                  <div class="card-body p-4 p-lg-4">
+                    <p class="store-settings-kicker mb-1">Etapa 1</p>
+                    <h3 class="h5 mb-2">Identidade da loja</h3>
+                    <p class="text-secondary small mb-4">Defina o nome, a mensagem principal e o conteudo institucional que aparecera no topo da sua pagina publica.</p>
+                    <div class="row g-3">
+                      <div class="col-12">
+                        <label for="storeName" class="form-label">Nome da loja</label>
+                        <input id="storeName" type="text" class="form-control" placeholder="Ex.: Achadinhos da Ana" />
+                      </div>
+                      <div class="col-12">
+                        <label for="headline" class="form-label">Headline da loja</label>
+                        <input id="headline" type="text" class="form-control" placeholder="Ex.: As melhores ofertas selecionadas para sua audiencia" />
+                      </div>
+                      <div class="col-12">
+                        <label for="storeBio" class="form-label">Bio da loja</label>
+                        <textarea id="storeBio" class="form-control" rows="4" placeholder="Explique rapidamente o que a sua vitrine entrega e porque as pessoas devem acompanhar."></textarea>
+                      </div>
+                      <div class="col-12">
+                        <label for="bannerUpload" class="form-label">Enviar banner</label>
+                        <input id="bannerUpload" type="file" class="form-control" accept="image/*" />
+                        <small id="bannerUploadStatus" class="d-block mt-2 text-secondary">Envie uma imagem horizontal para destacar sua identidade visual.</small>
+                      </div>
+                      <div class="col-12">
+                        <label for="storeBannerUrl" class="form-label">URL do banner</label>
+                        <input id="storeBannerUrl" type="url" class="form-control" placeholder="https://..." />
+                      </div>
+                    </div>
                   </div>
-                  <span class="badge text-bg-light store-settings-badge">Público</span>
                 </div>
+              </div>
 
-                <div class="row g-3">
-                  <div class="col-12">
-                    <label for="storeName" class="form-label">Nome da loja</label>
-                    <input id="storeName" type="text" class="form-control" maxlength="120" required />
-                  </div>
-                  <div class="col-12">
-                    <label for="headline" class="form-label">Headline da loja</label>
-                    <input id="headline" type="text" class="form-control" maxlength="120" placeholder="Ex.: Achados da semana com curadoria própria" />
-                  </div>
-                  <div class="col-12">
-                    <label for="storeBio" class="form-label">Bio</label>
-                    <textarea id="storeBio" class="form-control" rows="4" maxlength="300" placeholder="Explique o foco da sua loja."></textarea>
-                  </div>
-                  <div class="col-12 col-lg-6">
-                    <label for="bannerUpload" class="form-label">Banner da loja</label>
-                    <input id="bannerUpload" type="file" class="form-control" accept="image/*" />
-                    <small id="bannerUploadStatus" class="d-block mt-2 text-secondary">Tamanho recomendado do banner: 1600 x 400 px. Use imagem horizontal para melhor encaixe. Envie JPG, PNG, WEBP ou GIF com até 5 MB.</small>
-                  </div>
-                  <div class="col-12 col-lg-6">
-                    <label for="storeBannerUrl" class="form-label">Banner por URL</label>
-                    <input id="storeBannerUrl" type="url" class="form-control" placeholder="https://imagem..." />
+              <div class="col-12 col-xl-5">
+                <div class="card border-0 shadow-sm h-100">
+                  <div class="card-body p-4 p-lg-4">
+                    <p class="store-settings-kicker mb-1">Preview rapido</p>
+                    <h3 class="h5 mb-3">Como sua identidade aparece</h3>
+                    <div id="storePreviewCard" class="store-preview-card">
+                      <div class="store-preview-profile">
+                        <img id="photoPreview" class="store-preview-avatar d-none" alt="Foto do perfil" />
+                        <div>
+                          <strong id="profileNamePreview">Seu nome</strong>
+                          <small id="profilePhonePreview" class="d-block text-secondary">Telefone nao informado</small>
+                        </div>
+                      </div>
+                      <img id="storeBannerPreview" class="store-preview-banner d-none" alt="Banner da loja" />
+                      <div class="store-preview-surface">
+                        <h4 id="storeNamePreview" class="h5 mb-2">Sua loja</h4>
+                        <p id="headlinePreview" class="mb-2 text-secondary">Adicione uma headline para destacar sua proposta.</p>
+                        <p id="storeBioPreview" class="mb-3 text-secondary">Adicione uma bio para apresentar sua loja.</p>
+                        <div class="d-flex flex-column align-items-start gap-2">
+                          <a id="storePublicUrlLink" href="index.html" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener">Abrir pagina publica</a>
+                          <small id="storePublicUrl" class="text-secondary">Pagina publica indisponivel.</small>
+                          <button id="ctaPreviewBtn" type="button" class="btn btn-primary btn-sm">Ver produto</button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div class="card border-0 shadow-sm store-settings-card mb-4">
-              <div class="card-body p-4 p-lg-4">
-                <div class="store-settings-section-head">
-                  <div>
-                    <p class="store-settings-kicker mb-1">Slug da página</p>
-                    <h2 class="h5 mb-1">Endereço público da sua vitrine</h2>
-                    <p class="text-secondary small mb-0">Confira a disponibilidade antes de trocar. Por segurança, a alteração só pode ser feita uma vez a cada 7 dias.</p>
-                  </div>
-                  <span class="badge text-bg-light store-settings-badge">Controlado</span>
-                </div>
+            <div class="personalization-panel-nav">
+              <span class="text-secondary small">Comece pela mensagem e pelo banner da sua loja.</span>
+              <button type="button" class="btn btn-primary" data-step-action="next">Continuar</button>
+            </div>
+          </section>
 
-                <div class="row g-3 align-items-end">
-                  <div class="col-12 col-lg-8">
-                    <label for="storeSlug" class="form-label">Slug público</label>
-                    <div class="input-group">
-                      <span class="input-group-text">/</span>
-                      <input id="storeSlug" type="text" class="form-control" maxlength="80" placeholder="minha-loja" required />
+          <section class="personalization-panel" data-step-panel="2" hidden>
+            <div class="row g-4 align-items-start">
+              <div class="col-12 col-xl-7">
+                <div class="card border-0 shadow-sm h-100">
+                  <div class="card-body p-4 p-lg-4">
+                    <p class="store-settings-kicker mb-1">Etapa 2</p>
+                    <h3 class="h5 mb-2">Endereco publico da loja</h3>
+                    <p class="text-secondary small mb-4">Aqui voce organiza o slug da pagina publica e revisa como o link ficara para divulgacao.</p>
+                    <div class="row g-3">
+                      <div class="col-12">
+                        <label for="storeSlug" class="form-label">Slug da loja</label>
+                        <div class="input-group">
+                          <span class="input-group-text">/</span>
+                          <input id="storeSlug" type="text" class="form-control" placeholder="meu-slug" />
+                          <button id="checkSlugBtn" type="button" class="btn btn-outline-primary">Checar disponibilidade</button>
+                        </div>
+                        <small id="storeSlugFeedback" class="d-block mt-2 text-secondary">Use um endereco curto, simples e facil de lembrar.</small>
+                        <small id="storeSlugSchedule" class="d-block mt-2 text-secondary">Verifique o slug antes de salvar. Se voce trocar agora, outra alteracao so sera liberada daqui a 7 dias.</small>
+                      </div>
                     </div>
-                    <small id="storeSlugFeedback" class="d-block mt-2 text-secondary">Use letras minúsculas, números e hifens.</small>
-                    <small id="storeSlugSchedule" class="d-block mt-2 text-secondary">Verifique o slug antes de salvar. Se você trocar agora, outra alteração só será liberada daqui a 7 dias.</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12 col-xl-5">
+                <div class="card border-0 shadow-sm h-100">
+                  <div class="card-body p-4 p-lg-4">
+                    <p class="store-settings-kicker mb-1">Boas praticas</p>
+                    <h3 class="h5 mb-3">Como escolher um bom slug</h3>
+                    <div class="personalization-helper-list">
+                      <span>Prefira nomes curtos e faceis de compartilhar.</span>
+                      <span>Evite termos genericos demais e numeros sem necessidade.</span>
+                      <span>Mantenha o mesmo nome usado nas redes para fortalecer a marca.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="personalization-panel-nav">
+              <button type="button" class="btn btn-outline-secondary" data-step-action="prev">Voltar</button>
+              <div class="d-flex gap-2">
+                <button id="saveStoreBtn" type="submit" class="btn btn-outline-primary">Salvar alteracoes</button>
+                <button type="button" class="btn btn-primary" data-step-action="next">Continuar</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="personalization-panel" data-step-panel="3" hidden>
+            <div class="card border-0 shadow-sm">
+              <div class="card-body p-4 p-lg-4">
+                <p class="store-settings-kicker mb-1">Etapa 3</p>
+                <h3 class="h5 mb-2">Visual base da loja</h3>
+                <p class="text-secondary small mb-4">Ajuste as cores e estilos principais que alimentam a loja padrao e tambem servem de base para o preview da pagina dinamica.</p>
+                <div class="row g-3">
+                  <div class="col-12 col-md-6 col-xl-3">
+                    <label for="accentColor" class="form-label">Cor primaria</label>
+                    <input id="accentColor" type="color" class="form-control form-control-color w-100" />
+                  </div>
+                  <div class="col-12 col-md-6 col-xl-3">
+                    <label for="textColor" class="form-label">Cor do texto</label>
+                    <input id="textColor" type="color" class="form-control form-control-color w-100" />
+                  </div>
+                  <div class="col-12 col-md-6 col-xl-3">
+                    <label for="pageBackground" class="form-label">Fundo da pagina</label>
+                    <input id="pageBackground" type="color" class="form-control form-control-color w-100" />
+                  </div>
+                  <div class="col-12 col-md-6 col-xl-3">
+                    <label for="buttonTextColor" class="form-label">Texto do botao</label>
+                    <input id="buttonTextColor" type="color" class="form-control form-control-color w-100" />
                   </div>
                   <div class="col-12 col-lg-4">
-                    <button id="checkSlugBtn" type="button" class="btn btn-outline-primary w-100">Checar disponibilidade</button>
+                    <label for="ctaLabel" class="form-label">Texto padrao do CTA</label>
+                    <input id="ctaLabel" type="text" class="form-control" placeholder="Ver produto" />
                   </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="card border-0 shadow-sm store-settings-card">
-              <div class="card-body p-4 p-lg-4">
-                <div class="store-settings-section-head">
-                  <div>
-                    <p class="store-settings-kicker mb-1">Aparência da vitrine</p>
-                    <h2 class="h5 mb-1">Tema e elementos visuais</h2>
-                    <p class="text-secondary small mb-0">Cores, botão e estilo dos cards são personalizações comuns em plataformas de criação de loja. Aqui você configura o essencial de forma simples.</p>
-                  </div>
-                  <span class="badge text-bg-light store-settings-badge">Tema</span>
-                </div>
-
-                <div class="row g-3">
-                  <div class="col-12 col-md-6 col-xl-4">
-                    <label for="accentColor" class="form-label">Cor principal</label>
-                    <input id="accentColor" type="color" class="form-control form-control-color" value="#0d6efd" title="Escolha a cor principal da loja" />
-                  </div>
-                  <div class="col-12 col-md-6 col-xl-4">
-                    <label for="textColor" class="form-label">Cor do texto</label>
-                    <input id="textColor" type="color" class="form-control form-control-color" value="#152238" title="Escolha a cor principal do texto" />
-                  </div>
-                  <div class="col-12 col-md-6 col-xl-4">
-                    <label for="pageBackground" class="form-label">Cor de fundo</label>
-                    <input id="pageBackground" type="color" class="form-control form-control-color" value="#f3f6fb" title="Escolha a cor de fundo da página" />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="buttonTextColor" class="form-label">Cor do texto do botão</label>
-                    <input id="buttonTextColor" type="color" class="form-control form-control-color" value="#ffffff" title="Escolha a cor do texto do botão" />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="ctaLabel" class="form-label">Texto do botão</label>
-                    <input id="ctaLabel" type="text" class="form-control" maxlength="40" placeholder="Ver produto" />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="buttonStyle" class="form-label">Estilo do botão</label>
+                  <div class="col-12 col-lg-4">
+                    <label for="buttonStyle" class="form-label">Estilo do botao</label>
                     <select id="buttonStyle" class="form-select">
-                      <option value="solid">Sólido</option>
-                      <option value="outline">Contornado</option>
-                      <option value="pill">Pill arredondado</option>
-                    </select>
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="cardStyle" class="form-label">Estilo dos cards</label>
-                    <select id="cardStyle" class="form-select">
-                      <option value="soft">Suave</option>
-                      <option value="outline">Contorno limpo</option>
-                      <option value="glass">Glass</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12 col-xl-4">
-            <div class="store-settings-sidebar">
-              <div class="card border-0 shadow-sm store-settings-card mb-4">
-                <div class="card-body p-4 p-lg-4">
-                  <div class="store-settings-section-head">
-                    <div>
-                      <p class="store-settings-kicker mb-1">Acesso rápido</p>
-                      <h2 class="h5 mb-1">Dados pessoais separados</h2>
-                      <p class="text-secondary small mb-0">Seu cadastro pessoal agora fica em uma página própria, acessível também pelo círculo no topo direito.</p>
-                    </div>
-                    <span class="badge text-bg-light store-settings-badge">Privado</span>
-                  </div>
-
-                  <div class="d-grid gap-2">
-                    <a href="perfil.html" class="btn btn-outline-primary">Abrir dados pessoais</a>
-                    <p class="small text-secondary mb-0">Nome, telefone, email da conta e foto do perfil ficam centralizados ali.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="card border-0 shadow-sm store-settings-card">
-                <div class="card-body p-4 p-lg-4">
-                  <p class="store-settings-kicker mb-1">Prévia</p>
-                  <h2 class="h5 mb-3">Como sua página pode ficar</h2>
-                  <div class="dashboard-profile-card mb-3">
-                    <img id="photoPreview" class="dashboard-avatar d-none" alt="Foto do perfil" />
-                    <div>
-                      <p id="profileNamePreview" class="fw-semibold mb-1">Seu nome</p>
-                      <p id="profilePhonePreview" class="small text-secondary mb-0">Telefone não informado</p>
-                    </div>
-                  </div>
-                  <img id="storeBannerPreview" class="store-banner-preview d-none mb-3" alt="Prévia do banner da loja" />
-                  <div id="storePreviewCard" class="public-store-card">
-                    <p id="storeNamePreview" class="fw-semibold mb-1">Sua loja</p>
-                    <p id="headlinePreview" class="small mb-2 text-secondary">Adicione uma headline para destacar sua proposta.</p>
-                    <p id="storeBioPreview" class="small text-secondary mb-3">Adicione uma bio para apresentar sua loja.</p>
-                    <p id="storePublicUrl" class="small mb-3 text-break">Página pública indisponível.</p>
-                    <div class="d-grid gap-2">
-                      <a id="storePublicUrlLink" href="index.html" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener noreferrer">Abrir página pública</a>
-                      <a href="produtos.html" class="btn btn-outline-dark btn-sm">Abrir página administrativa</a>
-                      <button id="ctaPreviewBtn" type="button" class="btn btn-primary btn-sm" disabled>Ver produto</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </form>
-
-      <section class="page-builder-workspace mt-4 mt-xl-5">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-          <div>
-            <h2 class="h4 mb-1">Editor visual da pagina</h2>
-            <p class="text-secondary mb-0">Monte a experiencia publica por blocos, ajuste conversao e veja a preview antes de publicar.</p>
-          </div>
-          <button id="saveBuilderBtn" type="button" class="btn btn-dark">Salvar pagina</button>
-        </div>
-
-        <div id="builderStatusMessage" class="alert d-none" role="alert"></div>
-
-        <div class="row g-4">
-          <div class="col-12 col-xxl-4">
-            <div class="card border-0 shadow-sm store-settings-card mb-4">
-              <div class="card-body p-4">
-                <div class="store-settings-section-head">
-                  <div>
-                    <p class="store-settings-kicker mb-1">Tema e SEO</p>
-                    <h3 class="h5 mb-1">Base visual da pagina</h3>
-                    <p class="text-secondary small mb-0">Tema, tipografia, identidade e metadados publicos.</p>
-                  </div>
-                  <span class="badge text-bg-light store-settings-badge">Builder</span>
-                </div>
-
-                <div class="row g-3">
-                  <div class="col-12">
-                    <label for="pageStatus" class="form-label">Status da pagina</label>
-                    <select id="pageStatus" class="form-select">
-                      <option value="published">Publicada</option>
-                      <option value="draft">Rascunho</option>
-                    </select>
-                  </div>
-                  <div class="col-12">
-                    <label for="themePreset" class="form-label">Tema base</label>
-                    <select id="themePreset" class="form-select">
-                      <option value="moderno">Moderno</option>
-                      <option value="elegante">Elegante</option>
-                      <option value="vibrante">Vibrante</option>
-                    </select>
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="builderPrimaryColor" class="form-label">Cor primaria</label>
-                    <input id="builderPrimaryColor" type="color" class="form-control form-control-color" />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="builderSecondaryColor" class="form-label">Cor secundaria</label>
-                    <input id="builderSecondaryColor" type="color" class="form-control form-control-color" />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="builderTextColor" class="form-label">Cor do texto</label>
-                    <input id="builderTextColor" type="color" class="form-control form-control-color" />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="builderBackgroundColor" class="form-label">Fundo da pagina</label>
-                    <input id="builderBackgroundColor" type="color" class="form-control form-control-color" />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="builderSurfaceColor" class="form-label">Fundo dos cards</label>
-                    <input id="builderSurfaceColor" type="color" class="form-control form-control-color" />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="builderAccentSoft" class="form-label">Cor suave</label>
-                    <input id="builderAccentSoft" type="color" class="form-control form-control-color" />
-                  </div>
-                  <div class="col-12">
-                    <label for="builderFontFamily" class="form-label">Tipografia principal</label>
-                    <select id="builderFontFamily" class="form-select">
-                      <option value="'Manrope', 'Segoe UI', sans-serif">Manrope</option>
-                      <option value="Georgia, 'Times New Roman', serif">Serif elegante</option>
-                      <option value="'Trebuchet MS', 'Segoe UI', sans-serif">Trebuchet</option>
-                    </select>
-                  </div>
-                  <div class="col-12">
-                    <label for="builderHeadingFamily" class="form-label">Tipografia dos titulos</label>
-                    <select id="builderHeadingFamily" class="form-select">
-                      <option value="'Space Grotesk', 'Segoe UI', sans-serif">Space Grotesk</option>
-                      <option value="'Manrope', 'Segoe UI', sans-serif">Manrope</option>
-                      <option value="Georgia, 'Times New Roman', serif">Serif</option>
-                    </select>
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="builderBorderRadius" class="form-label">Raio de borda</label>
-                    <input id="builderBorderRadius" type="range" class="form-range" min="8" max="40" step="1" />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="builderSpacingScale" class="form-label">Espacamento</label>
-                    <select id="builderSpacingScale" class="form-select">
-                      <option value="compact">Compacto</option>
-                      <option value="comfortable">Confortavel</option>
-                      <option value="airy">Arejado</option>
-                    </select>
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="builderButtonStyle" class="form-label">Estilo dos botoes</label>
-                    <select id="builderButtonStyle" class="form-select">
                       <option value="solid">Solido</option>
                       <option value="outline">Outline</option>
                       <option value="pill">Pill</option>
                     </select>
                   </div>
-                  <div class="col-12 col-md-6">
-                    <label for="builderCardLayout" class="form-label">Layout dos cards</label>
-                    <select id="builderCardLayout" class="form-select">
+                  <div class="col-12 col-lg-4">
+                    <label for="cardStyle" class="form-label">Estilo do card</label>
+                    <select id="cardStyle" class="form-select">
                       <option value="soft">Soft</option>
                       <option value="outline">Outline</option>
                       <option value="glass">Glass</option>
                     </select>
                   </div>
-                  <div class="col-12">
-                    <label for="seoTitle" class="form-label">Titulo SEO</label>
-                    <input id="seoTitle" type="text" class="form-control" maxlength="120" />
-                  </div>
-                  <div class="col-12">
-                    <label for="seoDescription" class="form-label">Meta description</label>
-                    <textarea id="seoDescription" class="form-control" rows="3" maxlength="180"></textarea>
-                  </div>
-                  <div class="col-12">
-                    <label for="seoOgImageUrl" class="form-label">Imagem de compartilhamento</label>
-                    <input id="seoOgImageUrl" type="url" class="form-control" placeholder="https://imagem..." />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="seoFaviconUrl" class="form-label">Favicon/logo</label>
-                    <input id="seoFaviconUrl" type="url" class="form-control" placeholder="https://favicon..." />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="seoLogoUrl" class="form-label">Logo da pagina</label>
-                    <input id="seoLogoUrl" type="url" class="form-control" placeholder="https://logo..." />
-                  </div>
                 </div>
               </div>
             </div>
 
-            <div class="card border-0 shadow-sm store-settings-card mb-4">
-              <div class="card-body p-4">
-                <div class="store-settings-section-head">
-                  <div>
-                    <p class="store-settings-kicker mb-1">Conversao</p>
-                    <h3 class="h5 mb-1">Elementos reutilizaveis</h3>
-                    <p class="text-secondary small mb-0">Prova social, promocao, countdown e WhatsApp flutuante.</p>
-                  </div>
-                  <span class="badge text-bg-light store-settings-badge">Growth</span>
-                </div>
-
-                <div class="row g-3">
-                  <div class="col-12">
-                    <label for="socialProofText" class="form-label">Prova social</label>
-                    <input id="socialProofText" type="text" class="form-control" maxlength="80" placeholder="Produto em alta" />
-                  </div>
-                  <div class="col-12">
-                    <label for="highlightBadgeText" class="form-label">Selo de destaque</label>
-                    <input id="highlightBadgeText" type="text" class="form-control" maxlength="40" placeholder="Destaque" />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <div class="form-check form-switch mt-2">
-                      <input id="promoBannerEnabled" class="form-check-input" type="checkbox" />
-                      <label class="form-check-label" for="promoBannerEnabled">Banner promocional</label>
-                    </div>
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <div class="form-check form-switch mt-2">
-                      <input id="countdownEnabled" class="form-check-input" type="checkbox" />
-                      <label class="form-check-label" for="countdownEnabled">Countdown</label>
-                    </div>
-                  </div>
-                  <div class="col-12">
-                    <label for="promoBannerText" class="form-label">Texto do banner</label>
-                    <input id="promoBannerText" type="text" class="form-control" maxlength="120" />
-                  </div>
-                  <div class="col-12">
-                    <label for="promoBannerLink" class="form-label">Link do banner</label>
-                    <input id="promoBannerLink" type="text" class="form-control" placeholder="#produtos ou https://..." />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="countdownLabel" class="form-label">Rotulo do countdown</label>
-                    <input id="countdownLabel" type="text" class="form-control" maxlength="60" />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="countdownEndAt" class="form-label">Data final</label>
-                    <input id="countdownEndAt" type="datetime-local" class="form-control" />
-                  </div>
-                  <div class="col-12">
-                    <div class="form-check form-switch mt-2">
-                      <input id="whatsappEnabled" class="form-check-input" type="checkbox" />
-                      <label class="form-check-label" for="whatsappEnabled">Botao flutuante do WhatsApp</label>
-                    </div>
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="whatsappPhone" class="form-label">WhatsApp</label>
-                    <input id="whatsappPhone" type="text" class="form-control" placeholder="5511999999999" />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label for="floatingCtaLabel" class="form-label">Rotulo flutuante</label>
-                    <input id="floatingCtaLabel" type="text" class="form-control" maxlength="40" />
-                  </div>
-                  <div class="col-12">
-                    <label for="whatsappMessage" class="form-label">Mensagem inicial</label>
-                    <textarea id="whatsappMessage" class="form-control" rows="3" maxlength="180"></textarea>
-                  </div>
-                </div>
+            <div class="personalization-panel-nav">
+              <button type="button" class="btn btn-outline-secondary" data-step-action="prev">Voltar</button>
+              <div class="d-flex gap-2">
+                <button id="saveStoreBtnSecondary" type="submit" class="btn btn-outline-primary">Salvar visual base</button>
+                <button type="button" class="btn btn-primary" data-step-action="next">Ir para conversao</button>
               </div>
             </div>
+          </section>
+        </form>
 
-            <div class="card border-0 shadow-sm store-settings-card">
-              <div class="card-body p-4">
-                <div class="store-settings-section-head">
-                  <div>
-                    <p class="store-settings-kicker mb-1">Blocos</p>
-                    <h3 class="h5 mb-1">Estrutura da pagina</h3>
-                    <p class="text-secondary small mb-0">Adicione, remova, ative ou reordene os blocos visuais da pagina.</p>
+        <section class="personalization-panel" data-step-panel="4" hidden>
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4 p-lg-4">
+              <p class="store-settings-kicker mb-1">Etapa 4</p>
+              <h3 class="h5 mb-2">Conversao, tema e identidade avancada</h3>
+              <p class="text-secondary small mb-4">Ajuste o tema da pagina dinamica, os elementos de conversao e os dados de SEO que fortalecem a performance da sua vitrine.</p>
+
+              <div class="row g-4">
+                <div class="col-12 col-xl-6">
+                  <h4 class="h6 mb-3">Tema base</h4>
+                  <div class="row g-3">
+                    <div class="col-12">
+                      <label for="pageStatus" class="form-label">Status da pagina</label>
+                      <select id="pageStatus" class="form-select">
+                        <option value="draft">Rascunho</option>
+                        <option value="published">Publicada</option>
+                      </select>
+                    </div>
+                    <div class="col-12">
+                      <label for="themePreset" class="form-label">Tema base</label>
+                      <select id="themePreset" class="form-select">
+                        <option value="moderno">Moderno</option>
+                        <option value="elegante">Elegante</option>
+                        <option value="vibrante">Vibrante</option>
+                      </select>
+                    </div>
+                    <div class="col-6 col-lg-4"><label for="builderPrimaryColor" class="form-label">Primaria</label><input id="builderPrimaryColor" type="color" class="form-control form-control-color w-100" /></div>
+                    <div class="col-6 col-lg-4"><label for="builderSecondaryColor" class="form-label">Secundaria</label><input id="builderSecondaryColor" type="color" class="form-control form-control-color w-100" /></div>
+                    <div class="col-6 col-lg-4"><label for="builderTextColor" class="form-label">Texto</label><input id="builderTextColor" type="color" class="form-control form-control-color w-100" /></div>
+                    <div class="col-6 col-lg-4"><label for="builderBackgroundColor" class="form-label">Fundo</label><input id="builderBackgroundColor" type="color" class="form-control form-control-color w-100" /></div>
+                    <div class="col-6 col-lg-4"><label for="builderSurfaceColor" class="form-label">Superficie</label><input id="builderSurfaceColor" type="color" class="form-control form-control-color w-100" /></div>
+                    <div class="col-6 col-lg-4"><label for="builderAccentSoft" class="form-label">Accent soft</label><input id="builderAccentSoft" type="color" class="form-control form-control-color w-100" /></div>
+                    <div class="col-12 col-lg-6"><label for="builderFontFamily" class="form-label">Tipografia base</label><input id="builderFontFamily" type="text" class="form-control" placeholder="Inter, system-ui, sans-serif" /></div>
+                    <div class="col-12 col-lg-6"><label for="builderHeadingFamily" class="form-label">Tipografia titulos</label><input id="builderHeadingFamily" type="text" class="form-control" placeholder="Poppins, Inter, sans-serif" /></div>
+                    <div class="col-12 col-lg-4"><label for="builderBorderRadius" class="form-label">Raio</label><input id="builderBorderRadius" type="number" min="0" class="form-control" /></div>
+                    <div class="col-12 col-lg-4"><label for="builderSpacingScale" class="form-label">Espacamento</label><select id="builderSpacingScale" class="form-select"><option value="compact">Compacto</option><option value="comfortable">Confortavel</option><option value="airy">Amplo</option></select></div>
+                    <div class="col-12 col-lg-4"><label for="builderButtonStyle" class="form-label">Botoes</label><select id="builderButtonStyle" class="form-select"><option value="solid">Solido</option><option value="outline">Outline</option><option value="soft">Soft</option></select></div>
+                    <div class="col-12"><label for="builderCardLayout" class="form-label">Layout dos cards</label><select id="builderCardLayout" class="form-select"><option value="grid">Grid padrao</option><option value="editorial">Editorial</option><option value="compact">Compacto</option></select></div>
                   </div>
-                  <span class="badge text-bg-light store-settings-badge">Dnd</span>
                 </div>
 
-                <div class="row g-2 mb-3">
-                  <div class="col-8">
-                    <select id="blockTypeSelect" class="form-select"></select>
-                  </div>
-                  <div class="col-4">
-                    <button id="addBlockBtn" type="button" class="btn btn-outline-primary w-100">Adicionar</button>
+                <div class="col-12 col-xl-6">
+                  <h4 class="h6 mb-3">SEO e conversao</h4>
+                  <div class="row g-3">
+                    <div class="col-12"><label for="seoTitle" class="form-label">Titulo SEO</label><input id="seoTitle" type="text" class="form-control" placeholder="Titulo da pagina publica" /></div>
+                    <div class="col-12"><label for="seoDescription" class="form-label">Meta description</label><textarea id="seoDescription" class="form-control" rows="3" placeholder="Resumo curto para busca e compartilhamento"></textarea></div>
+                    <div class="col-12 col-lg-6"><label for="seoOgImageUrl" class="form-label">Imagem Open Graph</label><input id="seoOgImageUrl" type="url" class="form-control" placeholder="https://..." /></div>
+                    <div class="col-12 col-lg-6"><label for="seoFaviconUrl" class="form-label">Favicon</label><input id="seoFaviconUrl" type="url" class="form-control" placeholder="https://..." /></div>
+                    <div class="col-12"><label for="seoLogoUrl" class="form-label">Logo da pagina</label><input id="seoLogoUrl" type="url" class="form-control" placeholder="https://..." /></div>
+                    <div class="col-12"><label for="socialProofText" class="form-label">Prova social</label><input id="socialProofText" type="text" class="form-control" placeholder="Ex.: Produto em alta esta semana" /></div>
+                    <div class="col-12"><label for="highlightBadgeText" class="form-label">Selo visual</label><input id="highlightBadgeText" type="text" class="form-control" placeholder="Ex.: Recomendado" /></div>
+                    <div class="col-12 col-lg-4 form-check form-switch ps-5"><input id="promoBannerEnabled" class="form-check-input" type="checkbox" /><label for="promoBannerEnabled" class="form-check-label">Banner promocional</label></div>
+                    <div class="col-12 col-lg-8"><label for="promoBannerText" class="form-label">Texto promocional</label><input id="promoBannerText" type="text" class="form-control" placeholder="Frete gratis por tempo limitado" /></div>
+                    <div class="col-12"><label for="promoBannerLink" class="form-label">Link do banner</label><input id="promoBannerLink" type="url" class="form-control" placeholder="https://..." /></div>
+                    <div class="col-12 col-lg-4 form-check form-switch ps-5"><input id="countdownEnabled" class="form-check-input" type="checkbox" /><label for="countdownEnabled" class="form-check-label">Contador regressivo</label></div>
+                    <div class="col-12 col-lg-4"><label for="countdownLabel" class="form-label">Rotulo do contador</label><input id="countdownLabel" type="text" class="form-control" placeholder="Oferta encerra em" /></div>
+                    <div class="col-12 col-lg-4"><label for="countdownEndAt" class="form-label">Fim do contador</label><input id="countdownEndAt" type="datetime-local" class="form-control" /></div>
+                    <div class="col-12 col-lg-4 form-check form-switch ps-5"><input id="whatsappEnabled" class="form-check-input" type="checkbox" /><label for="whatsappEnabled" class="form-check-label">WhatsApp flutuante</label></div>
+                    <div class="col-12 col-lg-4"><label for="whatsappPhone" class="form-label">Numero</label><input id="whatsappPhone" type="text" class="form-control" placeholder="5511999999999" /></div>
+                    <div class="col-12 col-lg-4"><label for="floatingCtaLabel" class="form-label">Rotulo do botao</label><input id="floatingCtaLabel" type="text" class="form-control" placeholder="Falar no WhatsApp" /></div>
+                    <div class="col-12"><label for="whatsappMessage" class="form-label">Mensagem inicial</label><textarea id="whatsappMessage" class="form-control" rows="3" placeholder="Ola, vim pela sua pagina e quero saber mais."></textarea></div>
                   </div>
                 </div>
-
-                <div id="pageBlocksList" class="page-blocks-list"></div>
               </div>
             </div>
           </div>
 
-          <div class="col-12 col-xxl-8">
-            <div class="card border-0 shadow-sm store-settings-card mb-4">
-              <div class="card-body p-4">
-                <div class="store-settings-section-head">
-                  <div>
-                    <p class="store-settings-kicker mb-1">Edicao do bloco</p>
-                    <h3 id="blockEditorTitle" class="h5 mb-1">Selecione um bloco</h3>
-                    <p id="blockEditorHint" class="text-secondary small mb-0">Use a lista ao lado para editar o conteudo e a configuracao de cada parte da pagina.</p>
+          <div class="personalization-panel-nav">
+            <button type="button" class="btn btn-outline-secondary" data-step-action="prev">Voltar</button>
+            <button type="button" class="btn btn-primary" data-step-action="next">Ir para blocos e preview</button>
+          </div>
+        </section>
+
+        <section class="personalization-panel" data-step-panel="5" hidden>
+          <div class="row g-4 align-items-start">
+            <div class="col-12 col-xxl-4">
+              <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                  <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+                    <div>
+                      <p class="store-settings-kicker mb-1">Etapa 5</p>
+                      <h3 class="h5 mb-1">Blocos da pagina</h3>
+                      <p class="text-secondary small mb-0">Ative, desative, reordene e ajuste o conteudo de cada bloco.</p>
+                    </div>
+                    <button id="saveBuilderBtn" type="button" class="btn btn-primary">Salvar pagina</button>
                   </div>
-                  <span class="badge text-bg-light store-settings-badge">Editor</span>
+                  <div class="row g-2 align-items-end mb-3">
+                    <div class="col-12 col-lg-8">
+                      <label for="blockTypeSelect" class="form-label">Adicionar bloco</label>
+                      <select id="blockTypeSelect" class="form-select"></select>
+                    </div>
+                    <div class="col-12 col-lg-4 d-grid">
+                      <button id="addBlockBtn" type="button" class="btn btn-outline-primary">Adicionar</button>
+                    </div>
+                  </div>
+                  <div id="pageBlocksList" class="page-blocks-list d-grid gap-3"></div>
                 </div>
+              </div>
 
-                <div id="blockEditorEmpty" class="builder-empty-state">
-                  <strong>Nenhum bloco selecionado</strong>
-                  <p class="mb-0 text-secondary">Escolha um bloco para editar seus textos, links e variacoes.</p>
+              <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                  <p class="store-settings-kicker mb-1">Editor do bloco</p>
+                  <h3 id="blockEditorTitle" class="h5 mb-2">Selecione um bloco</h3>
+                  <p id="blockEditorHint" class="text-secondary small mb-3">Escolha um item da lista para editar o conteudo.</p>
+                  <div id="blockEditorEmpty" class="builder-empty-state">
+                    <strong>Nenhum bloco selecionado</strong>
+                    <span>Use a lista acima para abrir as configuracoes do bloco desejado.</span>
+                  </div>
+                  <div id="blockEditorFields" class="row g-3"></div>
                 </div>
-
-                <div id="blockEditorFields" class="row g-3 d-none"></div>
               </div>
             </div>
 
-            <div class="card border-0 shadow-sm store-settings-card">
-              <div class="card-body p-4">
-                <div class="store-settings-section-head">
-                  <div>
-                    <p class="store-settings-kicker mb-1">Preview</p>
-                    <h3 class="h5 mb-1">Pagina publica renderizada</h3>
-                    <p class="text-secondary small mb-0">A preview usa o mesmo renderer da pagina publica para reduzir diferenca entre painel e vitrine.</p>
-                  </div>
-                  <span class="badge text-bg-light store-settings-badge">Live</span>
+            <div class="col-12 col-xxl-8">
+              <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                  <p class="store-settings-kicker mb-1">Preview em tempo real</p>
+                  <h3 class="h5 mb-3">Pagina dinamica da afiliada</h3>
+                  <div id="pageBuilderPreview" class="page-builder-preview"></div>
                 </div>
-
-                <div id="pageBuilderPreview" class="page-builder-preview"></div>
               </div>
             </div>
           </div>
-        </div>
+
+          <div class="personalization-panel-nav">
+            <button type="button" class="btn btn-outline-secondary" data-step-action="prev">Voltar</button>
+            <span class="text-secondary small">Quando terminar, salve a pagina dinamica para publicar os blocos.</span>
+          </div>
+        </section>
       </section>
     </div>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   <script src="assets/js/config.js"></script>
   <script src="assets/js/auth.js"></script>
   <script src="assets/js/store-utils.js"></script>
   <script src="assets/js/page-builder.js"></script>
   <script src="assets/js/app-shell.js"></script>
+  <script src="assets/js/store-customization-steps.js"></script>
   <script src="assets/js/store-page-editor.js"></script>
   <script src="assets/js/store.js"></script>
 </body>
