@@ -191,7 +191,7 @@
 
       refs.logoutBtn.addEventListener('click', async () => {
         await window.Auth.logout();
-        window.location.href = 'login.html';
+        window.location.href = 'index.html';
       });
     } catch (err) {
       showStatus(`Erro ao iniciar os dados pessoais: ${err.message}`, 'danger');
