@@ -72,6 +72,37 @@
     return slug || null;
   }
 
+  function getStoreSlugFromHostname(hostname = window.location.hostname) {
+    const host = String(hostname || '').trim().toLowerCase();
+    if (!host || host === 'localhost' || host === '127.0.0.1') return null;
+    if (host.endsWith('.vercel.app')) return null;
+
+    const segments = host.split('.').filter(Boolean);
+    if (segments.length < 3) return null;
+
+    const candidate = normalizeStoreSlug(segments[0]);
+    if (!candidate || candidate === 'www' || isReservedSlug(candidate)) return null;
+    return candidate;
+  }
+
+  function getPublicStoreContext({
+    pathname = window.location.pathname,
+    hostname = window.location.hostname
+  } = {}) {
+    const subdomainSlug = getStoreSlugFromHostname(hostname);
+    if (subdomainSlug) {
+      return {
+        slug: subdomainSlug,
+        mode: 'subdomain'
+      };
+    }
+
+    return {
+      slug: getStoreSlugFromPath(pathname),
+      mode: 'path'
+    };
+  }
+
   function getStoreUrl(slug) {
     const normalized = normalizeStoreSlug(slug);
     return normalized ? `${window.location.origin}/${normalized}` : `${window.location.origin}/`;
@@ -251,6 +282,8 @@
     validateStoreSlug,
     isReservedSlug,
     getStoreSlugFromPath,
+    getStoreSlugFromHostname,
+    getPublicStoreContext,
     getStoreUrl,
     escapeHtml,
     formatPhone,

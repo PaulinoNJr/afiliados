@@ -1,15 +1,19 @@
-# Projeto Vitrine Mercado Livre
+# Vitrine
 
-Base para organizar uma loja pública simples com:
+Base de catalogo, loja publica e page builder para afiliados usando Vercel + Supabase.
 
-- frontend em HTML + Bootstrap 5 + JavaScript puro
-- autenticação e banco no Supabase
+## O que existe hoje
+
+- frontend em HTML + Bootstrap + JavaScript puro
+- autenticacao e banco no Supabase
 - deploy preparado para Vercel
-- área pública em `index.html`
-- área de gestão para produtos, categorias, loja e usuários
-- captura automática de título, preço e imagem via `/api/preview`
+- painel para loja, perfil, produtos, categorias e usuarios
+- pagina publica por slug
+- editor visual de pagina com blocos dinamicos
+- temas personalizaveis com presets
+- analytics para page view, clique em CTA e clique em produto
 
-## Estrutura
+## Estrutura principal
 
 ```text
 .
@@ -27,124 +31,104 @@ Base para organizar uma loja pública simples com:
 |-- perfil.html
 |-- users.html
 |-- api/
-|   |-- preview.js
-|   |-- preview-debug.js
-|   |-- register-user.js
-|   |-- admin-create-user.js
-|   `-- admin-manage-user.js
 |-- assets/
 |   |-- css/
+|   |   `-- style.css
 |   `-- js/
+|       |-- auth.js
+|       |-- app-shell.js
+|       |-- store-utils.js
+|       |-- page-builder.js
+|       |-- page-analytics.js
+|       |-- store-page-editor.js
+|       `-- ...
 `-- supabase/
     |-- schema.sql
     |-- email-template-confirmation.html
     `-- email-template-recovery.html
 ```
 
-## 1) Configurar Supabase
+## Setup rapido
 
 1. Crie um projeto no Supabase.
-2. No SQL Editor, execute [`supabase/schema.sql`](./supabase/schema.sql).
-3. Em `Authentication > Providers`, deixe email/senha ativo.
-4. Em `Authentication > URL Configuration`, adicione:
-- `Site URL`: URL da Vercel ou `http://localhost:3000`
-- `Redirect URLs`: inclua `http://localhost:3000/ativacao`, `http://localhost:3000/ativacao.html`, `http://localhost:3000/recuperar-senha`, `http://localhost:3000/recuperar-senha.html` e as URLs finais da Vercel
-5. Em `Authentication > Email Templates > Confirm signup`, copie o conteúdo de [`supabase/email-template-confirmation.html`](./supabase/email-template-confirmation.html).
-6. Em `Authentication > Email Templates > Reset password`, copie o conteúdo de [`supabase/email-template-recovery.html`](./supabase/email-template-recovery.html).
-7. O schema já promove `paulino.covabra@gmail.com` para perfil `admin`.
-
-## 2) Configurar variáveis do frontend
-
-Edite [`assets/js/config.js`](./assets/js/config.js):
-
-- `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
-- `RECAPTCHA_SITE_KEY` se quiser ativar proteção do cadastro direto no frontend
-
-## 3) Configurar variáveis do backend
-
-As funções em `api/` usam:
-
-- `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `RECAPTCHA_SECRET_KEY` se o cadastro protegido estiver ativo
-
-Importante:
-
-- Configure essas variáveis na Vercel.
-- Em ambiente local com `vercel dev`, use `.env.local`.
-- `SUPABASE_SERVICE_ROLE_KEY` nunca deve ir para o frontend.
-
-## 4) Rodar localmente
+2. Execute [supabase/schema.sql](./supabase/schema.sql) no SQL Editor.
+3. Configure `SUPABASE_URL` e `SUPABASE_ANON_KEY` em [assets/js/config.js](./assets/js/config.js).
+4. Configure na Vercel as variaveis de backend usadas pela pasta `api/`.
+5. Rode localmente com:
 
 ```bash
 npm i -g vercel
 vercel dev
 ```
 
-Abra:
+## Fluxo principal
 
-- `http://localhost:3000/index.html`
-- `http://localhost:3000/login.html`
-- `http://localhost:3000/admin.html`
+1. Ajuste a identidade da loja em `loja.html`.
+2. Organize as categorias em `categorias.html`.
+3. Cadastre os produtos em `produtos.html`.
+4. Monte a pagina publica no editor visual da propria `loja.html`.
+5. Compartilhe a loja em `/{slug}`.
 
-## 5) Fluxo principal
+## Page builder
 
-1. Crie a conta em `cadastro.html`.
-2. Ative o email em `ativacao.html`.
-3. Entre pelo `login.html`.
-4. No painel:
-- ajuste a loja em `loja.html`
-- organize categorias em `categorias.html`
-- cadastre produtos em `produtos.html`
-5. A página pública por slug aparece em `/{slug}`.
+Blocos iniciais:
 
-Perfis ativos:
+- `hero`
+- `products`
+- `cta`
+- `testimonials`
+- `video`
+- `faq`
+- `footer`
 
-- `admin`: gerencia usuários e acompanha a base
-- `advertiser`: gestor da loja, produtos e categorias
+Cada bloco pode:
 
-## 6) Captura automática de produto
+- ser ativado ou desativado
+- ser reordenado
+- ter configuracao propria
+- ser salvo no banco
 
-O endpoint [`/api/preview`](./api/preview.js) tenta preencher:
+## Temas e conversao
 
-- nome do produto
-- imagem principal
-- preço
-- descrição
+Presets:
 
-Você pode usar o campo de link do produto em `produtos.html` e clicar em `Preencher`.
+- `moderno`
+- `elegante`
+- `vibrante`
 
-## 7) Open.Claw opcional
+Elementos disponiveis:
 
-O projeto ainda aceita Open.Claw como fonte principal de captura. Variáveis:
+- CTA destacado
+- prova social
+- selo visual
+- countdown opcional
+- banner promocional opcional
+- botao flutuante de WhatsApp
 
-- `OPENCLAW_BASE_URL`
-- `OPENCLAW_GATEWAY_TOKEN`
-- `OPENCLAW_GATEWAY_PASSWORD`
-- `OPENCLAW_AGENT_ID`
-- `OPENCLAW_MODEL`
-- `OPENCLAW_TIMEOUT_MS`
+## Analytics
 
-Se falhar, o sistema continua com fallback.
+Tabelas novas:
 
-## 8) Recuperação de senha
+- `store_pages`
+- `store_page_blocks`
+- `store_page_analytics`
 
-O fluxo implementado:
+RPCs novas:
 
-- responde de forma neutra
-- valida o link antes de consumir o token
-- usa regras mínimas de senha
-- devolve o usuário ao login após a troca
+- `get_public_store_page(text)`
+- `track_store_page_event(...)`
 
-## 9) Limitações da captura
+Eventos rastreados:
 
-A captura automática pode falhar quando:
+- visualizacao de pagina
+- clique em produto
+- clique em CTA
+- origem por `utm_source`, `utm_medium` e `utm_campaign`
 
-- o site de destino bloqueia bots
-- o conteúdo depende de JavaScript
-- faltam metatags úteis
-- Open.Claw não está configurada
+## Preparado para evolucao futura
 
-Nesses casos, o formulário permite edição manual.
+- suporte a subdominio por afiliado na camada de URL publica
+- expansao de blocos adicionais
+- dashboard de analytics
+- dominio customizado
+- templates de pagina por nicho

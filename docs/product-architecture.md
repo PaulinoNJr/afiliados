@@ -1,92 +1,148 @@
 # Arquitetura do Produto
 
-## Direção atual
+## Direcao atual
 
-O projeto foi reposicionado para um escopo mais enxuto:
+O projeto deixou de ser apenas uma vitrine simples e passou a ter duas camadas principais:
 
-- catálogo de produtos
-- categorias
-- página pública por slug
-- personalização visual da loja
-- gestão de usuários
+- operacao da loja: perfil, loja, categorias, produtos e administracao
+- experiencia publica: pagina dinamica por blocos com foco em conversao
 
-## Módulos ativos
+## Modulos ativos
 
-### 1. Público
+### 1. Loja publica
 
-Objetivo: apresentar o produto e renderizar lojas públicas.
+Objetivo:
 
-Páginas:
+- resolver a loja por slug
+- aplicar tema personalizado
+- montar a pagina a partir de blocos
+- registrar analytics de navegacao e clique
 
-- `/`
-- `/{slug}`
+Arquivos centrais:
 
-### 2. Gestão da loja
+- `index.html`
+- `assets/js/index.js`
+- `assets/js/page-builder.js`
+- `assets/js/page-analytics.js`
 
-Objetivo: manter a base da loja organizada.
+### 2. Gestao da loja
 
-Páginas:
+Objetivo:
 
-- `/admin`
-- `/dashboard-anunciante`
-- `/produtos`
-- `/categorias`
-- `/loja`
-- `/perfil`
+- manter identidade da loja
+- gerenciar SEO e configuracoes de conversao
+- editar a pagina publica visualmente
 
-### 3. Admin
+Arquivos centrais:
 
-Objetivo: governar acessos e acompanhar a saúde da base.
+- `loja.html`
+- `assets/js/store.js`
+- `assets/js/store-page-editor.js`
 
-Páginas:
+### 3. Catalogo
 
-- `/dashboard-admin`
-- `/users`
+Objetivo:
 
-## Navegação
+- organizar produtos e categorias
+- sustentar o bloco de produtos da pagina publica
 
-### Gestor
+Arquivos centrais:
 
-- Painel
-- Loja
-- Perfil
-- Produtos
-- Categorias
+- `produtos.html`
+- `categorias.html`
+- `assets/js/products.js`
+- `assets/js/categories.js`
 
-### Admin
+### 4. Admin
 
-- Painel
-- Usuários
-- Loja
-- Perfil
-- Produtos
-- Categorias
+Objetivo:
 
-## Princípios da remodelagem
+- governar usuarios e a base
 
-- uma tela para cada responsabilidade principal
-- separação clara entre dados pessoais e identidade da loja
-- catálogo e categorias como centro da rotina
-- página pública como saída natural do trabalho no painel
-- backoffice restrito à gestão de usuários e visão geral da base
+Arquivos centrais:
 
-## Estrutura de dados
+- `dashboard-admin.html`
+- `users.html`
 
-O modelo atual precisa de poucas entidades:
+## Renderer reutilizavel
 
-- `user_profiles`
-- `product_categories`
-- `produtos`
+O renderer da pagina publica e o preview do painel usam a mesma base:
 
-Além disso:
+- temas e presets em `page-builder.js`
+- biblioteca de blocos em `page-builder.js`
+- renderizacao publica e preview com o mesmo codigo
 
-- funções para slug público
-- função de ativação de conta
-- funções públicas para buscar loja e produtos por slug
+Isso reduz divergencia entre:
 
-## Próximos passos possíveis
+- o que o afiliado edita
+- o que o visitante realmente ve
 
-- melhorar o editor visual da loja
-- adicionar upload mais rico de mídia
-- criar indicadores simples de qualidade do catálogo
-- evoluir importação de produtos em lote
+## Blocos iniciais
+
+- `hero`
+- `products`
+- `cta`
+- `testimonials`
+- `video`
+- `faq`
+- `footer`
+
+Cada bloco possui:
+
+- `enabled`
+- `position`
+- `config`
+
+## Temas
+
+Presets base:
+
+- `moderno`
+- `elegante`
+- `vibrante`
+
+Configuracoes principais:
+
+- cor primaria
+- cor secundaria
+- cor do texto
+- fundo da pagina
+- superficie dos cards
+- tipografia
+- raio de borda
+- estilo dos botoes
+- layout dos cards
+- escala de espacamento
+
+## Conversao
+
+Camada de conversao separada da estrutura dos blocos:
+
+- prova social
+- badge de destaque
+- banner promocional
+- countdown
+- CTA principal
+- WhatsApp flutuante
+
+## SEO e identidade
+
+Cada pagina pode ter:
+
+- titulo dinamico
+- meta description
+- imagem de compartilhamento
+- favicon/logo
+- logo da pagina
+
+## URL publica
+
+Hoje:
+
+- `meusite.com/slug`
+
+Preparado para evolucao:
+
+- `slug.meusite.com`
+
+Essa preparacao foi concentrada em `assets/js/store-utils.js` para evitar espalhar regra de URL pelo projeto.

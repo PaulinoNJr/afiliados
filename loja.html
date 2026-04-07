@@ -224,6 +224,272 @@
           </div>
         </div>
       </form>
+
+      <section class="page-builder-workspace mt-4 mt-xl-5">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+          <div>
+            <h2 class="h4 mb-1">Editor visual da pagina</h2>
+            <p class="text-secondary mb-0">Monte a experiencia publica por blocos, ajuste conversao e veja a preview antes de publicar.</p>
+          </div>
+          <button id="saveBuilderBtn" type="button" class="btn btn-dark">Salvar pagina</button>
+        </div>
+
+        <div id="builderStatusMessage" class="alert d-none" role="alert"></div>
+
+        <div class="row g-4">
+          <div class="col-12 col-xxl-4">
+            <div class="card border-0 shadow-sm store-settings-card mb-4">
+              <div class="card-body p-4">
+                <div class="store-settings-section-head">
+                  <div>
+                    <p class="store-settings-kicker mb-1">Tema e SEO</p>
+                    <h3 class="h5 mb-1">Base visual da pagina</h3>
+                    <p class="text-secondary small mb-0">Tema, tipografia, identidade e metadados publicos.</p>
+                  </div>
+                  <span class="badge text-bg-light store-settings-badge">Builder</span>
+                </div>
+
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label for="pageStatus" class="form-label">Status da pagina</label>
+                    <select id="pageStatus" class="form-select">
+                      <option value="published">Publicada</option>
+                      <option value="draft">Rascunho</option>
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <label for="themePreset" class="form-label">Tema base</label>
+                    <select id="themePreset" class="form-select">
+                      <option value="moderno">Moderno</option>
+                      <option value="elegante">Elegante</option>
+                      <option value="vibrante">Vibrante</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="builderPrimaryColor" class="form-label">Cor primaria</label>
+                    <input id="builderPrimaryColor" type="color" class="form-control form-control-color" />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="builderSecondaryColor" class="form-label">Cor secundaria</label>
+                    <input id="builderSecondaryColor" type="color" class="form-control form-control-color" />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="builderTextColor" class="form-label">Cor do texto</label>
+                    <input id="builderTextColor" type="color" class="form-control form-control-color" />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="builderBackgroundColor" class="form-label">Fundo da pagina</label>
+                    <input id="builderBackgroundColor" type="color" class="form-control form-control-color" />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="builderSurfaceColor" class="form-label">Fundo dos cards</label>
+                    <input id="builderSurfaceColor" type="color" class="form-control form-control-color" />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="builderAccentSoft" class="form-label">Cor suave</label>
+                    <input id="builderAccentSoft" type="color" class="form-control form-control-color" />
+                  </div>
+                  <div class="col-12">
+                    <label for="builderFontFamily" class="form-label">Tipografia principal</label>
+                    <select id="builderFontFamily" class="form-select">
+                      <option value="'Manrope', 'Segoe UI', sans-serif">Manrope</option>
+                      <option value="Georgia, 'Times New Roman', serif">Serif elegante</option>
+                      <option value="'Trebuchet MS', 'Segoe UI', sans-serif">Trebuchet</option>
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <label for="builderHeadingFamily" class="form-label">Tipografia dos titulos</label>
+                    <select id="builderHeadingFamily" class="form-select">
+                      <option value="'Space Grotesk', 'Segoe UI', sans-serif">Space Grotesk</option>
+                      <option value="'Manrope', 'Segoe UI', sans-serif">Manrope</option>
+                      <option value="Georgia, 'Times New Roman', serif">Serif</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="builderBorderRadius" class="form-label">Raio de borda</label>
+                    <input id="builderBorderRadius" type="range" class="form-range" min="8" max="40" step="1" />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="builderSpacingScale" class="form-label">Espacamento</label>
+                    <select id="builderSpacingScale" class="form-select">
+                      <option value="compact">Compacto</option>
+                      <option value="comfortable">Confortavel</option>
+                      <option value="airy">Arejado</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="builderButtonStyle" class="form-label">Estilo dos botoes</label>
+                    <select id="builderButtonStyle" class="form-select">
+                      <option value="solid">Solido</option>
+                      <option value="outline">Outline</option>
+                      <option value="pill">Pill</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="builderCardLayout" class="form-label">Layout dos cards</label>
+                    <select id="builderCardLayout" class="form-select">
+                      <option value="soft">Soft</option>
+                      <option value="outline">Outline</option>
+                      <option value="glass">Glass</option>
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <label for="seoTitle" class="form-label">Titulo SEO</label>
+                    <input id="seoTitle" type="text" class="form-control" maxlength="120" />
+                  </div>
+                  <div class="col-12">
+                    <label for="seoDescription" class="form-label">Meta description</label>
+                    <textarea id="seoDescription" class="form-control" rows="3" maxlength="180"></textarea>
+                  </div>
+                  <div class="col-12">
+                    <label for="seoOgImageUrl" class="form-label">Imagem de compartilhamento</label>
+                    <input id="seoOgImageUrl" type="url" class="form-control" placeholder="https://imagem..." />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="seoFaviconUrl" class="form-label">Favicon/logo</label>
+                    <input id="seoFaviconUrl" type="url" class="form-control" placeholder="https://favicon..." />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="seoLogoUrl" class="form-label">Logo da pagina</label>
+                    <input id="seoLogoUrl" type="url" class="form-control" placeholder="https://logo..." />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card border-0 shadow-sm store-settings-card mb-4">
+              <div class="card-body p-4">
+                <div class="store-settings-section-head">
+                  <div>
+                    <p class="store-settings-kicker mb-1">Conversao</p>
+                    <h3 class="h5 mb-1">Elementos reutilizaveis</h3>
+                    <p class="text-secondary small mb-0">Prova social, promocao, countdown e WhatsApp flutuante.</p>
+                  </div>
+                  <span class="badge text-bg-light store-settings-badge">Growth</span>
+                </div>
+
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label for="socialProofText" class="form-label">Prova social</label>
+                    <input id="socialProofText" type="text" class="form-control" maxlength="80" placeholder="Produto em alta" />
+                  </div>
+                  <div class="col-12">
+                    <label for="highlightBadgeText" class="form-label">Selo de destaque</label>
+                    <input id="highlightBadgeText" type="text" class="form-control" maxlength="40" placeholder="Destaque" />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <div class="form-check form-switch mt-2">
+                      <input id="promoBannerEnabled" class="form-check-input" type="checkbox" />
+                      <label class="form-check-label" for="promoBannerEnabled">Banner promocional</label>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <div class="form-check form-switch mt-2">
+                      <input id="countdownEnabled" class="form-check-input" type="checkbox" />
+                      <label class="form-check-label" for="countdownEnabled">Countdown</label>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <label for="promoBannerText" class="form-label">Texto do banner</label>
+                    <input id="promoBannerText" type="text" class="form-control" maxlength="120" />
+                  </div>
+                  <div class="col-12">
+                    <label for="promoBannerLink" class="form-label">Link do banner</label>
+                    <input id="promoBannerLink" type="text" class="form-control" placeholder="#produtos ou https://..." />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="countdownLabel" class="form-label">Rotulo do countdown</label>
+                    <input id="countdownLabel" type="text" class="form-control" maxlength="60" />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="countdownEndAt" class="form-label">Data final</label>
+                    <input id="countdownEndAt" type="datetime-local" class="form-control" />
+                  </div>
+                  <div class="col-12">
+                    <div class="form-check form-switch mt-2">
+                      <input id="whatsappEnabled" class="form-check-input" type="checkbox" />
+                      <label class="form-check-label" for="whatsappEnabled">Botao flutuante do WhatsApp</label>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="whatsappPhone" class="form-label">WhatsApp</label>
+                    <input id="whatsappPhone" type="text" class="form-control" placeholder="5511999999999" />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="floatingCtaLabel" class="form-label">Rotulo flutuante</label>
+                    <input id="floatingCtaLabel" type="text" class="form-control" maxlength="40" />
+                  </div>
+                  <div class="col-12">
+                    <label for="whatsappMessage" class="form-label">Mensagem inicial</label>
+                    <textarea id="whatsappMessage" class="form-control" rows="3" maxlength="180"></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card border-0 shadow-sm store-settings-card">
+              <div class="card-body p-4">
+                <div class="store-settings-section-head">
+                  <div>
+                    <p class="store-settings-kicker mb-1">Blocos</p>
+                    <h3 class="h5 mb-1">Estrutura da pagina</h3>
+                    <p class="text-secondary small mb-0">Adicione, remova, ative ou reordene os blocos visuais da pagina.</p>
+                  </div>
+                  <span class="badge text-bg-light store-settings-badge">Dnd</span>
+                </div>
+
+                <div class="row g-2 mb-3">
+                  <div class="col-8">
+                    <select id="blockTypeSelect" class="form-select"></select>
+                  </div>
+                  <div class="col-4">
+                    <button id="addBlockBtn" type="button" class="btn btn-outline-primary w-100">Adicionar</button>
+                  </div>
+                </div>
+
+                <div id="pageBlocksList" class="page-blocks-list"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-xxl-8">
+            <div class="card border-0 shadow-sm store-settings-card mb-4">
+              <div class="card-body p-4">
+                <div class="store-settings-section-head">
+                  <div>
+                    <p class="store-settings-kicker mb-1">Edicao do bloco</p>
+                    <h3 id="blockEditorTitle" class="h5 mb-1">Selecione um bloco</h3>
+                    <p id="blockEditorHint" class="text-secondary small mb-0">Use a lista ao lado para editar o conteudo e a configuracao de cada parte da pagina.</p>
+                  </div>
+                  <span class="badge text-bg-light store-settings-badge">Editor</span>
+                </div>
+
+                <div id="blockEditorEmpty" class="builder-empty-state">
+                  <strong>Nenhum bloco selecionado</strong>
+                  <p class="mb-0 text-secondary">Escolha um bloco para editar seus textos, links e variacoes.</p>
+                </div>
+
+                <div id="blockEditorFields" class="row g-3 d-none"></div>
+              </div>
+            </div>
+
+            <div class="card border-0 shadow-sm store-settings-card">
+              <div class="card-body p-4">
+                <div class="store-settings-section-head">
+                  <div>
+                    <p class="store-settings-kicker mb-1">Preview</p>
+                    <h3 class="h5 mb-1">Pagina publica renderizada</h3>
+                    <p class="text-secondary small mb-0">A preview usa o mesmo renderer da pagina publica para reduzir diferenca entre painel e vitrine.</p>
+                  </div>
+                  <span class="badge text-bg-light store-settings-badge">Live</span>
+                </div>
+
+                <div id="pageBuilderPreview" class="page-builder-preview"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   </main>
 
@@ -232,7 +498,9 @@
   <script src="assets/js/config.js"></script>
   <script src="assets/js/auth.js"></script>
   <script src="assets/js/store-utils.js"></script>
+  <script src="assets/js/page-builder.js"></script>
   <script src="assets/js/app-shell.js"></script>
+  <script src="assets/js/store-page-editor.js"></script>
   <script src="assets/js/store.js"></script>
 </body>
 </html>

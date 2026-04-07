@@ -612,9 +612,300 @@ as $$
   from normalized;
 $$;
 
+create table if not exists public.store_pages (
+  id uuid primary key default gen_random_uuid(),
+  profile_id uuid not null unique references auth.users(id) on delete cascade,
+  status text not null default 'published',
+  theme_key text not null default 'moderno',
+  title text,
+  description text,
+  theme_settings jsonb not null default '{}'::jsonb,
+  seo_settings jsonb not null default '{}'::jsonb,
+  conversion_settings jsonb not null default '{}'::jsonb,
+  page_settings jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint ck_store_pages_status check (status in ('draft', 'published')),
+  constraint ck_store_pages_theme_key check (theme_key in ('moderno', 'elegante', 'vibrante'))
+);
+
+create index if not exists idx_store_pages_profile on public.store_pages (profile_id);
+
+create or replace function public.prepare_store_page()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  new.status := case
+    when lower(coalesce(new.status, '')) = 'draft' then 'draft'
+    else 'published'
+  end;
+
+  new.theme_key := case
+    when lower(coalesce(new.theme_key, '')) in ('moderno', 'elegante', 'vibrante') then lower(new.theme_key)
+    else 'moderno'
+  end;
+
+  new.title := nullif(trim(coalesce(new.title, '')), '');
+  new.description := nullif(trim(coalesce(new.description, '')), '');
+  new.theme_settings := coalesce(new.theme_settings, '{}'::jsonb);
+  new.seo_settings := coalesce(new.seo_settings, '{}'::jsonb);
+  new.conversion_settings := coalesce(new.conversion_settings, '{}'::jsonb);
+  new.page_settings := coalesce(new.page_settings, '{}'::jsonb);
+
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_store_pages_prepare on public.store_pages;
+create trigger trg_store_pages_prepare
+before insert or update on public.store_pages
+for each row
+execute function public.prepare_store_page();
+
+drop trigger if exists trg_store_pages_updated_at on public.store_pages;
+create trigger trg_store_pages_updated_at
+before update on public.store_pages
+for each row
+execute function public.set_updated_at();
+
+create table if not exists public.store_page_blocks (
+  id uuid primary key default gen_random_uuid(),
+  page_id uuid not null references public.store_pages(id) on delete cascade,
+  profile_id uuid not null references auth.users(id) on delete cascade,
+  block_type text not null,
+  label text,
+  is_enabled boolean not null default true,
+  position integer not null default 0,
+  config jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint ck_store_page_blocks_type check (block_type in ('hero', 'products', 'cta', 'testimonials', 'video', 'faq', 'footer'))
+);
+
+create unique index if not exists idx_store_page_blocks_unique_type on public.store_page_blocks (page_id, block_type);
+create index if not exists idx_store_page_blocks_profile_position on public.store_page_blocks (profile_id, position, created_at);
+
+create or replace function public.prepare_store_page_block()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  new.block_type := lower(coalesce(new.block_type, ''));
+  new.label := nullif(trim(coalesce(new.label, '')), '');
+  new.position := greatest(coalesce(new.position, 0), 0);
+  new.config := coalesce(new.config, '{}'::jsonb);
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_store_page_blocks_prepare on public.store_page_blocks;
+create trigger trg_store_page_blocks_prepare
+before insert or update on public.store_page_blocks
+for each row
+execute function public.prepare_store_page_block();
+
+drop trigger if exists trg_store_page_blocks_updated_at on public.store_page_blocks;
+create trigger trg_store_page_blocks_updated_at
+before update on public.store_page_blocks
+for each row
+execute function public.set_updated_at();
+
+create table if not exists public.store_page_analytics (
+  id uuid primary key default gen_random_uuid(),
+  profile_id uuid not null references auth.users(id) on delete cascade,
+  page_id uuid references public.store_pages(id) on delete set null,
+  product_id uuid references public.produtos(id) on delete set null,
+  event_name text not null,
+  event_source text,
+  block_type text,
+  page_slug text,
+  visitor_id text,
+  referrer_url text,
+  utm_source text,
+  utm_medium text,
+  utm_campaign text,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  constraint ck_store_page_analytics_event check (event_name in ('page_view', 'product_click', 'cta_click'))
+);
+
+create index if not exists idx_store_page_analytics_profile_created on public.store_page_analytics (profile_id, created_at desc);
+create index if not exists idx_store_page_analytics_event_created on public.store_page_analytics (event_name, created_at desc);
+create index if not exists idx_store_page_analytics_utm on public.store_page_analytics (utm_source, utm_medium, utm_campaign);
+
+create or replace function public.get_public_store_page(store_slug text)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  with selected_store as (
+    select
+      profile.user_id,
+      profile.store_name,
+      profile.slug,
+      profile.headline,
+      profile.bio,
+      profile.photo_url,
+      profile.banner_url,
+      profile.accent_color,
+      profile.text_color,
+      profile.page_background,
+      profile.button_text_color,
+      profile.button_style,
+      profile.card_style,
+      profile.cta_label
+    from public.user_profiles profile
+    where profile.slug = public.normalize_slug(store_slug)
+    limit 1
+  ),
+  selected_page as (
+    select page.*
+    from public.store_pages page
+    join selected_store store_item on store_item.user_id = page.profile_id
+    limit 1
+  ),
+  selected_blocks as (
+    select jsonb_agg(
+      jsonb_build_object(
+        'id', block.id,
+        'page_id', block.page_id,
+        'profile_id', block.profile_id,
+        'type', block.block_type,
+        'label', coalesce(block.label, block.block_type),
+        'enabled', block.is_enabled,
+        'position', block.position,
+        'config', coalesce(block.config, '{}'::jsonb)
+      )
+      order by block.position asc, block.created_at asc
+    ) as items
+    from public.store_page_blocks block
+    join selected_page page on page.id = block.page_id
+  )
+  select case
+    when exists (select 1 from selected_store) then jsonb_build_object(
+      'store',
+      (
+        select jsonb_build_object(
+          'id', store_item.user_id,
+          'store_name', store_item.store_name,
+          'slug', store_item.slug,
+          'headline', store_item.headline,
+          'bio', store_item.bio,
+          'photo_url', store_item.photo_url,
+          'banner_url', store_item.banner_url,
+          'accent_color', store_item.accent_color,
+          'text_color', store_item.text_color,
+          'page_background', store_item.page_background,
+          'button_text_color', store_item.button_text_color,
+          'button_style', store_item.button_style,
+          'card_style', store_item.card_style,
+          'cta_label', store_item.cta_label
+        )
+        from selected_store store_item
+      ),
+      'page',
+      (
+        select jsonb_build_object(
+          'id', page.id,
+          'profile_id', page.profile_id,
+          'status', page.status,
+          'theme_key', page.theme_key,
+          'title', page.title,
+          'description', page.description,
+          'theme_settings', page.theme_settings,
+          'seo_settings', page.seo_settings,
+          'conversion_settings', page.conversion_settings,
+          'page_settings', page.page_settings
+        )
+        from selected_page page
+      ),
+      'blocks',
+      coalesce((select items from selected_blocks), '[]'::jsonb)
+    )
+    else null
+  end;
+$$;
+
+create or replace function public.track_store_page_event(
+  store_profile_id uuid,
+  page_slug text,
+  event_name text,
+  event_source text default null,
+  block_type text default null,
+  product_id uuid default null,
+  visitor_id text default null,
+  referrer_url text default null,
+  utm_source text default null,
+  utm_medium text default null,
+  utm_campaign text default null,
+  payload jsonb default '{}'::jsonb
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  normalized_event text := case
+    when lower(coalesce(event_name, '')) in ('page_view', 'product_click', 'cta_click') then lower(event_name)
+    else 'page_view'
+  end;
+  resolved_page_id uuid;
+begin
+  if store_profile_id is null then
+    return;
+  end if;
+
+  select page.id
+  into resolved_page_id
+  from public.store_pages page
+  where page.profile_id = store_profile_id
+  limit 1;
+
+  insert into public.store_page_analytics (
+    profile_id,
+    page_id,
+    product_id,
+    event_name,
+    event_source,
+    block_type,
+    page_slug,
+    visitor_id,
+    referrer_url,
+    utm_source,
+    utm_medium,
+    utm_campaign,
+    payload
+  )
+  values (
+    store_profile_id,
+    resolved_page_id,
+    product_id,
+    normalized_event,
+    nullif(trim(coalesce(event_source, '')), ''),
+    nullif(trim(coalesce(block_type, '')), ''),
+    public.normalize_slug(page_slug),
+    nullif(trim(coalesce(visitor_id, '')), ''),
+    nullif(trim(coalesce(referrer_url, '')), ''),
+    nullif(trim(coalesce(utm_source, '')), ''),
+    nullif(trim(coalesce(utm_medium, '')), ''),
+    nullif(trim(coalesce(utm_campaign, '')), ''),
+    coalesce(payload, '{}'::jsonb)
+  );
+end;
+$$;
+
 alter table public.user_profiles enable row level security;
 alter table public.product_categories enable row level security;
 alter table public.produtos enable row level security;
+alter table public.store_pages enable row level security;
+alter table public.store_page_blocks enable row level security;
+alter table public.store_page_analytics enable row level security;
 
 drop policy if exists "Perfil proprio ou admin pode ler" on public.user_profiles;
 create policy "Perfil proprio ou admin pode ler"
@@ -696,6 +987,71 @@ create policy "Exclusao de produtos por dono ou admin"
   to authenticated
   using (public.is_advertiser_or_admin(profile_id));
 
+drop policy if exists "Leitura de paginas por dono ou admin" on public.store_pages;
+create policy "Leitura de paginas por dono ou admin"
+  on public.store_pages
+  for select
+  to authenticated
+  using (public.is_advertiser_or_admin(profile_id));
+
+drop policy if exists "Insercao de paginas por dono ou admin" on public.store_pages;
+create policy "Insercao de paginas por dono ou admin"
+  on public.store_pages
+  for insert
+  to authenticated
+  with check (public.is_advertiser_or_admin(profile_id));
+
+drop policy if exists "Atualizacao de paginas por dono ou admin" on public.store_pages;
+create policy "Atualizacao de paginas por dono ou admin"
+  on public.store_pages
+  for update
+  to authenticated
+  using (public.is_advertiser_or_admin(profile_id))
+  with check (public.is_advertiser_or_admin(profile_id));
+
+drop policy if exists "Exclusao de paginas por dono ou admin" on public.store_pages;
+create policy "Exclusao de paginas por dono ou admin"
+  on public.store_pages
+  for delete
+  to authenticated
+  using (public.is_advertiser_or_admin(profile_id));
+
+drop policy if exists "Leitura de blocos por dono ou admin" on public.store_page_blocks;
+create policy "Leitura de blocos por dono ou admin"
+  on public.store_page_blocks
+  for select
+  to authenticated
+  using (public.is_advertiser_or_admin(profile_id));
+
+drop policy if exists "Insercao de blocos por dono ou admin" on public.store_page_blocks;
+create policy "Insercao de blocos por dono ou admin"
+  on public.store_page_blocks
+  for insert
+  to authenticated
+  with check (public.is_advertiser_or_admin(profile_id));
+
+drop policy if exists "Atualizacao de blocos por dono ou admin" on public.store_page_blocks;
+create policy "Atualizacao de blocos por dono ou admin"
+  on public.store_page_blocks
+  for update
+  to authenticated
+  using (public.is_advertiser_or_admin(profile_id))
+  with check (public.is_advertiser_or_admin(profile_id));
+
+drop policy if exists "Exclusao de blocos por dono ou admin" on public.store_page_blocks;
+create policy "Exclusao de blocos por dono ou admin"
+  on public.store_page_blocks
+  for delete
+  to authenticated
+  using (public.is_advertiser_or_admin(profile_id));
+
+drop policy if exists "Leitura de analytics por dono ou admin" on public.store_page_analytics;
+create policy "Leitura de analytics por dono ou admin"
+  on public.store_page_analytics
+  for select
+  to authenticated
+  using (public.is_advertiser_or_admin(profile_id));
+
 grant usage on schema public to anon, authenticated;
 grant execute on function public.is_admin() to authenticated;
 grant execute on function public.is_advertiser_or_admin(uuid) to authenticated;
@@ -703,10 +1059,15 @@ grant execute on function public.finalize_account_activation() to authenticated;
 grant execute on function public.get_public_store_by_slug(text) to anon, authenticated;
 grant execute on function public.get_public_products_by_profile(uuid) to anon, authenticated;
 grant execute on function public.get_public_products_featured_by_profile(uuid) to anon, authenticated;
+grant execute on function public.get_public_store_page(text) to anon, authenticated;
+grant execute on function public.track_store_page_event(uuid, text, text, text, text, uuid, text, text, text, text, text, jsonb) to anon, authenticated;
 grant execute on function public.check_public_slug_availability(text, uuid) to anon, authenticated;
 grant select, insert, update on public.user_profiles to authenticated;
 grant select, insert, update, delete on public.product_categories to authenticated;
 grant select, insert, update, delete on public.produtos to authenticated;
+grant select, insert, update, delete on public.store_pages to authenticated;
+grant select, insert, update, delete on public.store_page_blocks to authenticated;
+grant select on public.store_page_analytics to authenticated;
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
@@ -767,6 +1128,39 @@ set role = 'advertiser',
     account_type = 'advertiser'
 where role not in ('admin', 'advertiser')
    or account_type <> 'advertiser';
+
+insert into public.store_pages (profile_id, status, theme_key, title, description)
+select
+  profile.user_id,
+  'published',
+  'moderno',
+  profile.store_name,
+  coalesce(profile.headline, profile.bio)
+from public.user_profiles profile
+on conflict (profile_id) do update
+set title = coalesce(public.store_pages.title, excluded.title),
+    description = coalesce(public.store_pages.description, excluded.description);
+
+insert into public.store_page_blocks (page_id, profile_id, block_type, label, position, config)
+select
+  page.id,
+  page.profile_id,
+  block_seed.block_type,
+  block_seed.label,
+  block_seed.position,
+  block_seed.config
+from public.store_pages page
+cross join (
+  values
+    ('hero', 'Hero principal', 0, jsonb_build_object('eyebrow', 'Pagina personalizada', 'title', 'Sua pagina pronta para conversao', 'subtitle', 'Organize produtos, destaque sua proposta e compartilhe sua selecao com identidade propria.', 'primaryCtaLabel', 'Ver produtos', 'secondaryCtaLabel', 'Falar no WhatsApp')),
+    ('products', 'Lista de produtos', 1, jsonb_build_object('title', 'Produtos em destaque', 'subtitle', 'Use filtros, busca e cards mais claros para acelerar a decisao.', 'showSearch', true, 'showCategoryFilter', true, 'showSort', true, 'limit', 24)),
+    ('cta', 'CTA principal', 2, jsonb_build_object('badge', 'Oferta principal', 'title', 'Direcione para a acao que mais converte', 'description', 'Use este bloco para reforcar a chamada principal da pagina.', 'buttonLabel', 'Comprar agora', 'buttonHref', '#produtos')),
+    ('testimonials', 'Depoimentos', 3, jsonb_build_object('title', 'Quem ja comprou aprovou', 'items', jsonb_build_array(jsonb_build_object('quote', 'Curadoria clara e produtos bem apresentados.', 'name', 'Cliente 1', 'role', 'Compradora'), jsonb_build_object('quote', 'Achei o produto certo muito mais rapido.', 'name', 'Cliente 2', 'role', 'Cliente recorrente')))),
+    ('video', 'Video incorporado', 4, jsonb_build_object('title', 'Veja a oferta em detalhes', 'subtitle', 'Adicione um video de review, demonstracao ou oferta.', 'embedUrl', '')),
+    ('faq', 'FAQ', 5, jsonb_build_object('title', 'Perguntas frequentes', 'items', jsonb_build_array(jsonb_build_object('question', 'Como funciona a compra?', 'answer', 'O clique leva para o parceiro responsavel pela oferta.'), jsonb_build_object('question', 'Os produtos mudam com frequencia?', 'answer', 'Sim. Mantenha sua selecao atualizada para sustentar a conversao.')))),
+    ('footer', 'Rodape personalizado', 6, jsonb_build_object('title', 'Sua marca, seus links e seus contatos', 'description', 'Use o rodape para reforcar identidade, suporte e navegacao final.'))
+) as block_seed(block_type, label, position, config)
+on conflict (page_id, block_type) do nothing;
 
 insert into public.user_profiles (user_id, role, account_type, activation_status, activation_confirmed_at, slug, store_name)
 select id, 'admin', 'advertiser', 'active', now(), public.generate_unique_store_slug(email, id), 'Administrador'
