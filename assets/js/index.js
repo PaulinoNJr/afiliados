@@ -59,6 +59,10 @@
     }
   }
 
+  function getProductUrl(item = {}) {
+    return String(item.product_url || item.link_afiliado || '').trim();
+  }
+
   function normalizeAccentColor(value) {
     const raw = String(value || '').trim().toLowerCase();
     return /^#([0-9a-f]{6}|[0-9a-f]{3})$/.test(raw) ? raw : DEFAULT_ACCENT;
@@ -426,11 +430,12 @@
 
       const link = document.createElement('a');
       link.className = 'btn btn-primary mt-auto';
-      link.href = isValidHttpUrl(item.product_url) ? item.product_url : '#';
+      const productUrl = getProductUrl(item);
+      link.href = isValidHttpUrl(productUrl) ? productUrl : '#';
       link.textContent = ctaLabel;
       link.target = '_blank';
       link.rel = 'noopener noreferrer nofollow';
-      link.classList.toggle('disabled', !isValidHttpUrl(item.product_url));
+      link.classList.toggle('disabled', !isValidHttpUrl(productUrl));
       link.style.borderColor = accentColor;
       link.dataset.buttonStyle = buttonStyle;
       if (buttonStyle === 'outline') {

@@ -6,6 +6,7 @@
     profile: null,
     role: 'advertiser',
     isAdmin: false,
+    productUrlField: 'product_url',
     categories: [],
     products: [],
     visibleProducts: [],
@@ -184,11 +185,28 @@
     return state.products.filter((item) => item.category_id === categoryId).length;
   }
 
+  function getProductUrlValue(item = {}) {
+    return String(item.product_url || item.link_afiliado || '').trim();
+  }
+
+  function normalizeProductRecord(item = {}) {
+    return {
+      ...item,
+      product_url: getProductUrlValue(item)
+    };
+  }
+
+  function isMissingProductUrlColumnError(error) {
+    const message = String(error?.message || '').toLowerCase();
+    return message.includes('product_url') && message.includes('does not exist');
+  }
+
   function hydrateProducts(items = []) {
     return items.map((item) => {
+      const normalizedItem = normalizeProductRecord(item);
       const category = getCategoryById(item.category_id);
       return {
-        ...item,
+        ...normalizedItem,
         category_name: category?.name || 'Sem categoria',
         category_slug: category?.slug || '',
         category_sort_order: Number(category?.sort_order || 0)
@@ -378,7 +396,7 @@
   function beginEdit(item) {
     state.editingId = item.id;
     state.productMeta = extractProductMeta(item);
-    refs.productUrl.value = item.product_url || '';
+    refs.productUrl.value = getProductUrlValue(item);
     refs.titulo.value = item.titulo || '';
     refs.categoriaId.value = item.category_id || getDefaultCategoryId();
     refs.imagemUrl.value = item.imagem_url || '';
@@ -500,7 +518,7 @@
       products = products.filter((item) => [
         item.titulo,
         item.descricao,
-        item.product_url,
+        getProductUrlValue(item),
         item.category_name
       ].map(normalizeForSearch).join(' ').includes(term));
     }
@@ -547,11 +565,31 @@
   async function loadProducts() {
     setListLoading(true);
     try {
-      const { data, error } = await window.db
+      let data = null;
+      let error = null;
+
+      const currentQuery = await window.db
         .from('produtos')
         .select('id, titulo, preco, imagem_url, product_url, descricao, source_url, created_at, updated_at, profile_id, category_id, ml_item_id, ml_currency, ml_permalink, ml_thumbnail, ml_pictures')
         .eq('profile_id', state.session.user.id)
         .order('updated_at', { ascending: false });
+
+      data = currentQuery.data;
+      error = currentQuery.error;
+
+      if (error && isMissingProductUrlColumnError(error)) {
+        const legacyQuery = await window.db
+          .from('produtos')
+          .select('id, titulo, preco, imagem_url, link_afiliado, descricao, source_url, created_at, updated_at, profile_id, category_id, ml_item_id, ml_currency, ml_permalink, ml_thumbnail, ml_pictures')
+          .eq('profile_id', state.session.user.id)
+          .order('updated_at', { ascending: false });
+
+        data = legacyQuery.data;
+        error = legacyQuery.error;
+        if (!error) state.productUrlField = 'link_afiliado';
+      } else if (!error) {
+        state.productUrlField = 'product_url';
+      }
 
       if (error) throw error;
       state.products = hydrateProducts(data || []);
@@ -647,7 +685,7 @@
     }
 
     const payload = {
-      product_url: productUrl,
+      [state.productUrlField]: productUrl,
       titulo,
       category_id: categoryId,
       imagem_url: imagemUrl || null,
@@ -723,7 +761,7 @@
         item.category_name || '',
         item.category_sort_order ?? '',
         Number(item.preco || 0).toFixed(2),
-        item.product_url || '',
+        getProductUrlValue(item),
         item.imagem_url || '',
         item.descricao || '',
         item.created_at || ''
