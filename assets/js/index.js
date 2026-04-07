@@ -22,6 +22,8 @@
     homeHeroTitle: document.getElementById('homeHeroTitle'),
     homeHeroDescription: document.getElementById('homeHeroDescription'),
     heroTitle: document.getElementById('heroTitle'),
+    heroHeadline: document.getElementById('heroHeadline'),
+    heroBio: document.getElementById('heroBio'),
     marketingCardContent: document.getElementById('marketingCardContent'),
     storeBannerSection: document.getElementById('storeBannerSection'),
     storeBannerImage: document.getElementById('storeBannerImage'),
@@ -235,6 +237,10 @@
     refs.homeHeroBadge.textContent = 'Catalogo, loja e pagina publica';
     refs.homeHeroTitle.textContent = 'Monte sua vitrine com foco em produtos, categorias e identidade visual';
     refs.homeHeroDescription.textContent = 'Cadastre produtos, organize a navegacao da loja e publique uma pagina mais limpa para compartilhar seus itens.';
+    refs.heroHeadline.textContent = '';
+    refs.heroHeadline.classList.add('d-none');
+    refs.heroBio.textContent = '';
+    refs.heroBio.classList.add('d-none');
     resetStoreUi();
     finishResolvingPage();
 
@@ -271,8 +277,14 @@
     const textColor = normalizeHexColor(store.text_color, DEFAULT_TEXT);
     const pageBackground = normalizeHexColor(store.page_background, DEFAULT_PAGE_BACKGROUND);
     const buttonTextColor = normalizeHexColor(store.button_text_color, DEFAULT_BUTTON_TEXT);
+    const headline = String(store.headline || '').trim();
+    const bio = String(store.bio || '').trim();
 
     refs.heroTitle.textContent = store.store_name || 'Loja';
+    refs.heroHeadline.textContent = headline;
+    refs.heroHeadline.classList.toggle('d-none', !headline);
+    refs.heroBio.textContent = bio;
+    refs.heroBio.classList.toggle('d-none', !bio);
     refs.emptyStateTitle.textContent = 'Nenhum produto publicado ainda';
     refs.emptyStateDescription.textContent = 'Esta loja ainda não publicou produtos.';
     refs.marketingCardContent.classList.add('d-none');
