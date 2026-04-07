@@ -1,4 +1,6 @@
 (() => {
+  const DESKTOP_BREAKPOINT = 992;
+
   const FIXED_ROLE_BY_PAGE = {
     'dashboard-admin.html': 'admin',
     'dashboard-anunciante.html': 'advertiser',
@@ -8,7 +10,7 @@
   const MENUS = {
     admin: [
       { href: 'dashboard-admin.html', label: 'Painel' },
-      { href: 'users.html', label: 'Usuários' },
+      { href: 'users.html', label: 'Usuarios' },
       { href: 'loja.html', label: 'Loja' },
       { href: 'perfil.html', label: 'Perfil' },
       { href: 'produtos.html', label: 'Produtos' },
@@ -32,15 +34,21 @@
   function syncWorkspaceOffsets() {
     const root = document.documentElement;
     const topbar = document.querySelector('.navbar.sticky-top');
+    const menu = document.querySelector('.workspace-menu');
     const menuShell = document.querySelector('.workspace-menu-shell');
 
     if (topbar) {
       root.style.setProperty('--app-topbar-height', `${Math.ceil(topbar.offsetHeight)}px`);
     }
 
+    const shouldReserveMenuSpace = window.innerWidth >= DESKTOP_BREAKPOINT
+      && menu
+      && menuShell
+      && window.getComputedStyle(menu).display !== 'none';
+
     root.style.setProperty(
       '--workspace-menu-height',
-      menuShell ? `${Math.ceil(menuShell.offsetHeight + 16)}px` : '0px'
+      shouldReserveMenuSpace ? `${Math.ceil(menuShell.offsetHeight + 16)}px` : '0px'
     );
   }
 
@@ -71,17 +79,25 @@
     return link;
   }
 
+  function renderMenuIntoContainer(container, menuItems, currentPage) {
+    if (!container) return;
+
+    container.innerHTML = '';
+    menuItems.forEach((item) => {
+      container.appendChild(buildMenuItem(item, item.href === currentPage));
+    });
+  }
+
   function renderWorkspaceMenu(profile) {
-    const shell = document.querySelector('.workspace-menu-shell');
-    if (!shell || !window.Auth) return;
+    const containers = document.querySelectorAll('.workspace-menu-shell, .mobile-workspace-menu');
+    if (!containers.length || !window.Auth) return;
 
     const role = inferRole(profile);
     const menuItems = MENUS[role] || MENUS.advertiser;
     const currentPage = getCurrentPage();
 
-    shell.innerHTML = '';
-    menuItems.forEach((item) => {
-      shell.appendChild(buildMenuItem(item, item.href === currentPage));
+    containers.forEach((container) => {
+      renderMenuIntoContainer(container, menuItems, currentPage);
     });
 
     syncWorkspaceOffsets();

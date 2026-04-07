@@ -310,14 +310,14 @@ as $$
   );
 $$;
 
-create or replace function public.is_advertiser_or_admin(target_user_id uuid)
+create or replace function public.is_advertiser_or_admin(target_profile_id uuid default null)
 returns boolean
 language sql
 stable
 security definer
 set search_path = public
 as $$
-  select auth.uid() = target_user_id or public.is_admin();
+  select auth.uid() = target_profile_id or public.is_admin();
 $$;
 
 create or replace function public.finalize_account_activation()
@@ -491,7 +491,7 @@ returns table (
   titulo text,
   preco numeric,
   imagem_url text,
-  product_url text,
+  link_afiliado text,
   descricao text,
   created_at timestamptz
 )
@@ -510,7 +510,7 @@ as $$
     product.titulo,
     product.preco,
     product.imagem_url,
-    product.product_url,
+    product.product_url as link_afiliado,
     product.descricao,
     product.created_at
   from public.produtos product

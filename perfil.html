@@ -12,10 +12,16 @@
   <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm sticky-top">
     <div class="container">
       <a class="navbar-brand fw-bold" href="index.html">Vitrine</a>
-      <div class="ms-auto d-flex align-items-center gap-3 app-nav-actions">
-        <span id="userRoleBadge" class="badge text-bg-secondary">perfil</span>
-        <small id="userEmail" class="text-secondary d-none d-md-inline"></small>
-        <button id="logoutBtn" class="btn btn-outline-danger btn-sm" type="button">Sair</button>
+      <button class="navbar-toggler app-topbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#appTopbarMenu" aria-controls="appTopbarMenu" aria-expanded="false" aria-label="Alternar navegacao">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse app-topbar-collapse" id="appTopbarMenu">
+        <div class="ms-auto d-flex align-items-center gap-3 app-nav-actions">
+          <span id="userRoleBadge" class="badge text-bg-secondary">perfil</span>
+          <small id="userEmail" class="text-secondary d-none d-md-inline"></small>
+          <button id="logoutBtn" class="btn btn-outline-danger btn-sm" type="button">Sair</button>
+        </div>
+        <div class="mobile-workspace-menu d-lg-none" aria-label="Navegacao do sistema"></div>
       </div>
     </div>
   </nav>
