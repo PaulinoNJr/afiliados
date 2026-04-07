@@ -32,7 +32,12 @@ body.storefront-mode #homeHeroSection {
   display: none;
 }
 
+body.storefront-mode #homeTailwindSection {
+  display: none;
+}
+
 body.page-resolving #homeHeroSection,
+body.page-resolving #homeTailwindSection,
 body.page-resolving #homeMarketingSection,
 body.page-resolving #storeBannerSection,
 body.page-resolving #storeTopBar,
