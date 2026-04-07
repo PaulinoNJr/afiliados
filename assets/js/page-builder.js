@@ -746,7 +746,16 @@
 
         const body = createElement('div', 'affiliate-product-body');
         const title = createElement('h3', 'affiliate-product-title', product.titulo || 'Produto');
+        const hasDescription = Boolean(String(product.descricao || '').trim());
         const description = createElement('p', 'affiliate-product-copy', product.descricao || 'Produto sem descricao detalhada.');
+        const descriptionToggle = createElement('button', 'affiliate-product-more', 'Ler mais...');
+        descriptionToggle.type = 'button';
+        description.classList.toggle('is-collapsed', hasDescription);
+        descriptionToggle.classList.toggle('d-none', !hasDescription);
+        descriptionToggle.addEventListener('click', () => {
+          const isCollapsed = description.classList.toggle('is-collapsed');
+          descriptionToggle.textContent = isCollapsed ? 'Ler mais...' : 'Ler menos';
+        });
         const price = createElement('div', 'affiliate-price-tag', formatCurrency(product.preco));
         const link = createButton(block.config.ctaLabelOverride || context.store.cta_label || 'Ver produto', product.product_url || product.link_afiliado || '#', context.theme.buttonStyle, 'primary');
         link.classList.add('affiliate-product-link');
@@ -762,7 +771,7 @@
           }
         });
 
-        body.append(title, description, price, link);
+        body.append(title, description, descriptionToggle, price, link);
         card.append(visual);
         if (badges.childNodes.length) card.appendChild(badges);
         card.appendChild(body);

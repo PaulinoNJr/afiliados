@@ -2395,6 +2395,28 @@ body.page-resolving #dynamicStorePageSection {
   font-size: 1.04rem;
 }
 
+.affiliate-product-copy.is-collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.affiliate-product-more {
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--page-primary);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.affiliate-product-more:hover,
+.affiliate-product-more:focus {
+  text-decoration: underline;
+}
+
 .affiliate-price-tag {
   font-size: 1.2rem;
   font-weight: 800;
